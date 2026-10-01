@@ -118,6 +118,7 @@ body.bandit #chopBtn{ background:radial-gradient(circle at 35% 30%, #f0806a, #b8
   display:flex; gap:6px; padding:6px; background:var(--panel); border:1px solid var(--line); border-radius:16px; }
 .slot{ position:relative; width:56px; height:56px; border-radius:11px; background:rgba(255,255,255,.06); border:2px solid rgba(255,240,200,.16);
   display:flex; align-items:center; justify-content:center; cursor:pointer; touch-action:manipulation; }
+.slot.empty{ display:none; }
 .slot.sel{ border-color:var(--amber); background:rgba(242,184,75,.2); }
 .slot canvas{ width:48px; height:36px; display:block; }
 .slot .n{ position:absolute; left:4px; top:1px; font-size:11px; color:var(--dim); font-weight:700; }
@@ -178,6 +179,41 @@ html.sa #chopBtn{ right:calc(env(safe-area-inset-right,0px) + 36px); bottom:calc
   #placeBar{ width:92vw; box-sizing:border-box; }
   .tr .btn{ font-size:11px; padding:4px 7px; }
   #mm{ width:92px; height:92px; }
+}
+
+/* ===== ĐIỆN THOẠI NẰM NGANG / MÀN THẤP: thu gọn HUD để thấy hết, không phải cuộn ===== */
+@media (max-height:560px){
+  .hud.tl{ display:flex; flex-direction:row; align-items:center; gap:4px; top:calc(env(safe-area-inset-top,0px) + 6px); left:calc(env(safe-area-inset-left,0px) + 8px); }
+  html.sa .hud.tl{ top:calc(env(safe-area-inset-top,0px) + 10px); left:calc(env(safe-area-inset-left,0px) + 14px); }
+  .pill{ padding:2px 8px 2px 5px; gap:4px; border-radius:10px; }
+  .wood svg,.coin svg{ width:18px; height:18px; }
+  .wood span,.coin span{ font-size:17px; } .wood small,.coin small{ font-size:11px; } .coin em{ font-size:10px; }
+  .shopBtn{ font-size:12px; padding:4px 9px; }
+  .hud.tc{ top:calc(env(safe-area-inset-top,0px) + 6px); }
+  .timer{ padding:2px 10px; } .timer span{ font-size:17px; } .timer small{ font-size:10px; }
+  #roomPill{ top:calc(env(safe-area-inset-top,0px) + 32px) !important; font-size:11px !important; padding:1px 8px !important; }
+  .hud.tr{ top:calc(env(safe-area-inset-top,0px) + 6px); right:calc(env(safe-area-inset-right,0px) + 8px); gap:3px; }
+  html.sa .hud.tr{ right:calc(env(safe-area-inset-right,0px) + 14px); }
+  #mm{ width:72px; height:72px; border-radius:10px; }
+  .tr .row{ gap:3px; } .btn{ font-size:11px; padding:3px 7px; border-radius:9px; }
+  #hotbar{ gap:3px; padding:3px; border-radius:11px; bottom:calc(env(safe-area-inset-bottom,0px) + 6px); }
+  .slot{ width:38px; height:38px; border-radius:8px; } .slot canvas{ width:32px; height:24px; }
+  .slot .n{ font-size:9px; left:3px; top:0; } .slot .cnt{ font-size:10px; } .slot .t{ font-size:8px; }
+  #chopBtn{ width:68px; height:68px; bottom:calc(env(safe-area-inset-bottom,0px) + 14px); right:calc(env(safe-area-inset-right,0px) + 18px); }
+  #chopBtn svg{ width:40px; height:40px; }
+  #placeBar{ bottom:calc(env(safe-area-inset-bottom,0px) + 54px); padding:5px 8px; } #placeMsg{ font-size:12px; }
+  #toast{ top:calc(env(safe-area-inset-top,0px) + 56px); font-size:13px; padding:4px 10px; }
+  #stick{ width:96px; height:96px; margin:-48px 0 0 -48px; } #stick i{ left:26px; top:26px; width:44px; height:44px; }
+  /* cửa hàng: 3 thẻ ngang, vừa 1 màn hình */
+  .modal{ padding:6px; } .sheet{ max-height:98vh; padding:8px 10px; border-radius:14px; }
+  .sheet header{ margin-bottom:4px; } .sheet h2{ font-size:17px; } .sheet footer{ display:none; }
+  #shopCats{ margin-bottom:4px; gap:5px; } .tab.cat{ font-size:13px; padding:3px 12px; }
+  #shopTabs{ margin-bottom:6px; gap:5px; } .tab{ font-size:12px; padding:3px 9px; }
+  #shopGrid{ grid-template-columns:repeat(3,1fr); gap:6px; }
+  .shopcard{ padding:5px; gap:2px; border-radius:10px; }
+  .shopcard canvas{ width:auto; height:80px; aspect-ratio:auto; margin:0 auto; }
+  .shopcard h3{ font-size:13px; margin:0; } .shopcard p{ font-size:11px; line-height:1.15; }
+  .cost{ font-size:12px; gap:5px; } .buy{ font-size:13px; padding:3px 0; }
 }
 </style>
 </head>
@@ -1590,14 +1626,14 @@ function placeFarm(kind, tier, x, y){
   for (let i = 0; i < 16; i++) spawn({ k: 'dust', x: rand(f.x0, f.x1), y: rand(f.y0, f.y1), z: 4, vx: rand(-20, 20), vy: rand(-10, 10), vz: 10, size: rand(6, 12), life: rand(.5, 1), g: 0 });
   return f;
 }
-function totalIncome(){ let s = 0; for (const f of FARMS) s += f.inc; for (const d of DEFS) if (isMine(d.kind)) s += DEF_DATA[d.kind].tiers[d.tier].inc; return s; }
+function totalIncome(){ let s = 0; for (const f of FARMS) if (!f.remote) s += f.inc; for (const d of DEFS) if (isMine(d.kind) && !d.remote) s += DEF_DATA[d.kind].tiers[d.tier].inc; return s; }
 function updateFarms(dt){
   for (const f of FARMS) {
     f.alpha = Math.min(1, f.alpha + dt * 2.4);
     for (const an of f.animals) updateAnimal(an, dt);
     f.acc -= dt;
     if (f.acc <= 0) {
-      f.acc += 6; const g = f.inc / 10; player.coins += g; player.earned = (player.earned || 0) + g; sfxCoin();
+      f.acc += 6; const g = f.remote ? 0 : f.inc / 10; player.coins += g; player.earned = (player.earned || 0) + g; if (g) sfxCoin();
       addFloat(f.x, f.y0 - 6, '+' + (+g.toFixed(1)) + ' xu', '#ffe08a');
       for (let i = 0; i < 3; i++) spawn({ k: 'coin', x: f.x + rand(-14, 14), y: f.y0 + 20, z: rand(10, 20), vx: rand(-20, 20), vy: 0, vz: rand(90, 140), rot: 0, vr: 0, size: 3.4, life: .9, g: 420 });
       refreshCoins();
@@ -2167,7 +2203,7 @@ function updateDefs(dt){
     } else if (isMine(d.kind)) {
       d.acc -= dt;
       if (d.acc <= 0) {
-        d.acc += 6; const g = DEF_DATA[d.kind].tiers[d.tier].inc / 10; player.coins += g; player.earned = (player.earned || 0) + g; sfxDrill(hearVol({ x: d.x, y: d.cy })); sfxCoin();
+        d.acc += 6; const g = d.remote ? 0 : DEF_DATA[d.kind].tiers[d.tier].inc / 10; player.coins += g; player.earned = (player.earned || 0) + g; sfxDrill(hearVol({ x: d.x, y: d.cy })); if (g) sfxCoin();
         addFloat(d.x, d.cy - DEF_H[d.kind][d.tier] - 14, '+' + (+g.toFixed(1)) + ' xu', { mda: '#dfe3e6', mdong: '#ffb36b', mvang: '#ffe08a' }[d.kind]);
         for (let i = 0; i < 3; i++) spawn({ k: 'coin', x: d.x + rand(-12, 12), y: d.cy + 10, z: rand(10, 20), vx: rand(-20, 20), vy: 0, vz: rand(90, 140), rot: 0, vr: 0, size: 3.4, life: .9, g: 420 });
         refreshCoins();
@@ -2631,7 +2667,7 @@ function refreshShopIfOpen(){ if (shopOpen) renderShop(); }
 function buildHotbar(){
   const hb = $('hotbar'); hb.innerHTML = '';
   for (let i = 0; i < 8; i++) {
-    const s = document.createElement('div'); s.className = 'slot' + (i === selectedSlot ? ' sel' : ''); s.dataset.i = i;
+    const s = document.createElement('div'); s.className = 'slot' + (i === selectedSlot ? ' sel' : '') + (i > 0 && !slots[i] ? ' empty' : ''); s.dataset.i = i;
     const n = document.createElement('span'); n.className = 'n'; n.textContent = i + 1; s.appendChild(n);
     if (i === 0) { const d = document.createElement('div'); d.className = 'tool'; d.innerHTML = player.role === 'bandit' ? KNIFE_SVG : AXE_SVG; s.appendChild(d); }
     else if (slots[i]) {
@@ -2680,6 +2716,7 @@ function tryPlace(){
   if (!placing.ok) { toast(placing.reason, true); return; }
   const p = placing, it = slots[p.slot];
   if (p.def) { placeDef(p.kind, p.tier, p.x, p.y, p.o); lastDefO = p.o; } else placeFarm(p.kind, p.tier, p.x, p.y);
+  netBuilt({ def: p.def ? 1 : 0, k: p.kind, ti: p.tier, x: Math.round(p.x), y: Math.round(p.y), o: p.o }, true);
   it.n--; const more = it.n > 0;
   if (more) buildHotbar(); else { slots[p.slot] = null; cancelPlacing(); }
   refreshCoins(); sfxBuild();
@@ -2916,7 +2953,7 @@ function frame(ts){
 }
 
 /* ---------- 9. Multiplayer (v13): phòng chơi bằng mã. Mỗi máy tự chạy thế giới (cùng seed), gửi vị trí + nhát chặt cây ---------- */
-const Net = { on: false, host: false, code: '', id: Math.random().toString(36).slice(2, 8), send: () => {}, hostStarted: false, remotes: {}, n: 1, lk: 0, rx: 0 };
+const Net = { built: [], keys: {}, pending: [], on: false, host: false, code: '', id: Math.random().toString(36).slice(2, 8), send: () => {}, hostStarted: false, remotes: {}, n: 1, lk: 0, rx: 0 };
 function netHash(s){ let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
 function netRemote(f, m){
   let a = Net.remotes[f];
@@ -2929,10 +2966,29 @@ function updateRemote(a, dt){
   a.walkAmp += ((spd > 12 ? 1 : 0) - a.walkAmp) * Math.min(1, dt * 12); a.walkT += dt * spd * .085;
   if (a.swing >= 0) { a.swing += dt; if (a.swing >= SWING_T) a.swing = -1; }
 }
+function netApply(m, from){
+  const r = m.def ? placeDef(m.k, m.ti, m.x, m.y, m.o) : placeFarm(m.k, m.ti, m.x, m.y);
+  if (r) r.remote = from || true;
+}
+function netBuilt(m, mine){   /* ghi nhớ + gửi công trình đã đặt (mine=true: của mình) */
+  const key = [m.def, m.k, m.ti, m.x, m.y, m.o].join('|');
+  if (Net.keys[key]) return false; Net.keys[key] = 1; Net.built.push(m);
+  if (mine && Net.on) Net.send({ t: 'p', def: m.def, k: m.k, ti: m.ti, x: m.x, y: m.y, o: m.o });
+  return true;
+}
+function netFlushBuilt(){ if (!started) return; while (Net.pending.length) { const m = Net.pending.shift(); try { netApply(m, 'net'); } catch (e) {} } }
 function netOnMsg(m){
   if (!m || m.f === Net.id) return;
-  if (m.t === 's') {
-    const a = netRemote(m.f, m); a.seen = performance.now(); a.tx = m.x; a.ty = m.y; a.dir = m.d; a.role = m.r; a.name = m.n;
+  if (m.t === 'p') {
+    const b = { def: m.def, k: m.k, ti: m.ti, x: m.x, y: m.y, o: m.o };
+    if (netBuilt(b, false)) { Net.pending.push(b); netFlushBuilt(); }
+  } else if (m.t === 'b') {   /* chủ phòng gửi danh sách công trình cho người mới vào */
+    for (const b of (m.list || [])) if (netBuilt(b, false)) Net.pending.push(b);
+    netFlushBuilt();
+  } else if (m.t === 's') {
+    const isNew = !Net.remotes[m.f];
+    const a = netRemote(m.f, m);
+    if (isNew && Net.host && Net.built.length) Net.send({ t: 'b', list: Net.built }); a.seen = performance.now(); a.tx = m.x; a.ty = m.y; a.dir = m.d; a.role = m.r; a.name = m.n;
     if (m.sw && a.swing < 0) a.swing = 0;
     if (m.h) { Net.rx++; Net.hostStarted = !!m.st; if (!Net.host && started && m.st) matchLeft = m.ml; updateLobbyGo(); }
   } else if (m.t === 'h') {
@@ -2940,6 +2996,7 @@ function netOnMsg(m){
   }
 }
 function netTick(){
+  netFlushBuilt();
   const p = player;
   Net.send({ t: 's', n: p.name, lk: Net.lk, x: Math.round(p.x), y: Math.round(p.y), d: p.dir, sw: p.swing >= 0, r: p.role, h: Net.host ? 1 : 0, st: started ? 1 : 0, ml: Math.round(matchLeft) });
   const now = performance.now(); let n = 1;
@@ -3008,7 +3065,7 @@ function init(){
   initEconomy();
   onWoodChange();
   $('wood').textContent = '0';
-  window.__rh = { trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
+  window.__rh = { tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
   $('mkRoom').addEventListener('click', () => lobbyStart(true)); $('joinRoom').addEventListener('click', () => lobbyStart(false));
   $('goBtn').addEventListener('click', () => {
     initAudio(); started = true; matchLeft = MATCH_SECONDS; $('start').classList.add('hide');
