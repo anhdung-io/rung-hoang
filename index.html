@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <title>Rừng Hoang</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rừng Hoang">
+<meta name="theme-color" content="#10261a">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -137,6 +142,12 @@ body.placing #chopBtn{ display:none; }
 .cost span.bad{ color:#ff9c8a; }
 .buy{ font-family:var(--font); font-weight:800; font-size:16px; color:#2b1a05; background:linear-gradient(#ffd884,var(--amber)); border:2px solid #21140d; border-radius:11px; padding:5px 0; cursor:pointer; margin-top:2px; }
 .buy:disabled{ opacity:.35; cursor:default; }
+html,body{ touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-text-size-adjust:100%; }
+/* chạy từ biểu tượng ngoài màn hình chính: chừa thêm chỗ cho góc bo tròn của máy */
+html.sa .tl{ top:calc(env(safe-area-inset-top,0px) + 22px); left:calc(env(safe-area-inset-left,0px) + 26px); }
+html.sa .tr{ top:calc(env(safe-area-inset-top,0px) + 22px); right:calc(env(safe-area-inset-right,0px) + 26px); }
+html.sa .tc{ top:calc(env(safe-area-inset-top,0px) + 22px); }
+html.sa #chopBtn{ right:calc(env(safe-area-inset-right,0px) + 36px); bottom:calc(env(safe-area-inset-bottom,0px) + 40px); }
 @media (max-width:640px){
   #hotbar{ bottom:calc(env(safe-area-inset-bottom,0px) + 132px); gap:4px; padding:4px; }
   .slot{ width:40px; height:44px; } .slot canvas{ width:34px; height:26px; }
@@ -246,6 +257,10 @@ body.placing #chopBtn{ display:none; }
 </div>
 
 <script>
+/* chặn chụm 2 ngón làm phóng to trang (Safari iPhone bỏ qua user-scalable=no) + nhận biết chạy từ màn hình chính */
+['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1 || (e.scale && e.scale !== 1)) e.preventDefault(); }, { passive: false });
+if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('sa');
 (() => {
 'use strict';
 
