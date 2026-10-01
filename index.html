@@ -2888,7 +2888,7 @@ function frame(ts){
 }
 
 /* ---------- 9. Multiplayer (v13): phòng chơi bằng mã. Mỗi máy tự chạy thế giới (cùng seed), gửi vị trí + nhát chặt cây ---------- */
-const Net = { on: false, host: false, code: '', id: Math.random().toString(36).slice(2, 8), send: () => {}, hostStarted: false, remotes: {}, n: 1, lk: 0 };
+const Net = { on: false, host: false, code: '', id: Math.random().toString(36).slice(2, 8), send: () => {}, hostStarted: false, remotes: {}, n: 1, lk: 0, rx: 0 };
 function netHash(s){ let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
 function netRemote(f, m){
   let a = Net.remotes[f];
@@ -2906,7 +2906,7 @@ function netOnMsg(m){
   if (m.t === 's') {
     const a = netRemote(m.f, m); a.seen = performance.now(); a.tx = m.x; a.ty = m.y; a.dir = m.d; a.role = m.r; a.name = m.n;
     if (m.sw && a.swing < 0) a.swing = 0;
-    if (m.h) { Net.hostStarted = !!m.st; if (!Net.host && started && m.st) matchLeft = m.ml; updateLobbyGo(); }
+    if (m.h) { Net.rx++; Net.hostStarted = !!m.st; if (!Net.host && started && m.st) matchLeft = m.ml; updateLobbyGo(); }
   } else if (m.t === 'h') {
     const a = Net.remotes[m.f], t = trees[m.i]; if (a && t && t.state === 0) hitTree(t, a);
   }
@@ -2921,7 +2921,8 @@ function netTick(){
 function updateLobbyGo(){
   const b = $('goBtn'); if (started) return;
   const wait = Net.on && !Net.host && !Net.hostStarted;
-  b.disabled = wait; b.textContent = wait ? 'Chờ chủ phòng bắt đầu…' : 'Vào rừng';
+  b.disabled = false; b.textContent = wait ? 'Vào rừng (chủ phòng chưa bắt đầu)' : 'Vào rừng';   /* không khoá nút: lỡ tin 'chủ đã bắt đầu' không tới thì vẫn vào được */
+  if (Net.on && !Net.host) $('lobbyMsg').textContent = 'Đã vào phòng ' + Net.code + '. Tin nhận từ chủ phòng: ' + Net.rx + (Net.rx ? ' (đã nối ổn)' : ' (chưa nhận được gì)') + '.';
 }
 function netOpen(host, code, done){
   Net.host = host; Net.code = code;
@@ -2959,11 +2960,12 @@ function lobbyStart(host){
   const code = host ? Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('') : $('codeIn').value.trim().toUpperCase();
   if (code.length !== 4) { $('lobbyMsg').textContent = 'Mã phòng gồm 4 ký tự.'; Net.busy = false; return; }
   $('lobbyMsg').textContent = host ? 'Đang tạo phòng…' : 'Đang vào phòng…';
+  const tmo = setTimeout(() => { if (Net.busy) { Net.busy = false; $('lobbyMsg').textContent = 'Không nối được sau 12 giây. Hãy mở game bằng link github.io trên trình duyệt (không phải khung xem trước), kiểm tra mạng rồi thử lại.'; } }, 12000);
   netOpen(host, code, (ok, err) => {
-    Net.busy = false;
+    clearTimeout(tmo); Net.busy = false;
     if (!ok) { $('lobbyMsg').textContent = err; return; }
     enterMulti();
-    $('lobbyMsg').textContent = host ? 'Phòng ' + code + '. Gửi mã cho bạn bè, họ vào xong thì bấm Vào rừng.' : 'Đã vào phòng ' + code + '. Chờ chủ phòng bắt đầu.';
+    $('lobbyMsg').textContent = host ? 'Phòng ' + code + '. Gửi mã cho bạn bè, họ vào xong thì bấm Vào rừng.' : 'Đã vào phòng ' + code + '.';
     $('mkRoom').disabled = $('joinRoom').disabled = true;
   });
 }
