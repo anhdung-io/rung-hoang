@@ -256,7 +256,6 @@ body.lobby .hud.tl, body.lobby #hotbar, body.lobby #chopBtn, body.lobby .timer, 
 
 <div class="hud tc">
   <div class="pill" id="lobBanner" style="display:none;font-size:14px;font-weight:700;color:#ffe9b0;padding:4px 14px;max-width:80vw;text-align:center"></div>
-  <div class="pill timer"><span id="clock">20:00</span><small>còn lại</small></div>
 </div>
 
 <div class="hud tr">
@@ -2716,7 +2715,7 @@ function defPreview(kind, tier){
 }
 
 /* ---------- 7. HIỂN THỊ ---------- */
-const CH = 512, GS = 1.5;
+const CH = 512, GS = Math.min(window.devicePixelRatio || 1, 2) >= 2 ? 2 : 1.5;   /* v23: màn nét cao thì vẽ nền nét hơn (trước cố định 1.5 nên bị mờ khi phóng) */
 const chunks = new Map();
 const BLOT = ['#67993f', '#4f7f36', '#72a347', '#456f31'];
 function paintChunk(cx, cy){
@@ -2810,7 +2809,7 @@ function getChunk(cx, cy){
   if (c) return c;
   if (madeThisFrame >= 2) return null;
   madeThisFrame++; c = paintChunk(cx, cy); chunks.set(k, c);
-  if (chunks.size > 40) { let far = null, fd = -1; for (const [kk] of chunks) { const kx = Math.floor(kk / 1000), ky = kk % 1000; const d = Math.hypot(kx * CH - camera.x, ky * CH - camera.y); if (d > fd) { fd = d; far = kk; } } if (far !== null && far !== k) chunks.delete(far); }
+  if (chunks.size > (GS > 1.6 ? 24 : 40)) { let far = null, fd = -1; for (const [kk] of chunks) { const kx = Math.floor(kk / 1000), ky = kk % 1000; const d = Math.hypot(kx * CH - camera.x, ky * CH - camera.y); if (d > fd) { fd = d; far = kk; } } if (far !== null && far !== k) chunks.delete(far); }
   return c;
 }
 
@@ -3255,24 +3254,30 @@ function calcReward(winner){
   }
   return { lines, total: lines.reduce((s, l) => s + l[1], 0) };
 }
-function endGame(winner){
-  if (ended) return; ended = true;
+let resultShown = false;
+function showResult(winner){
+  if (resultShown) return; resultShown = true;
+  const dead = winner === 'dead'; if (dead) winner = 'bandit';
   if (winner === (player.role === 'bandit' ? 'bandit' : 'farmer')) sfxWin(); else sfxLose();
   const r = calcReward(winner), box = document.createElement('div');
   box.style.cssText = 'position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(8,16,10,.72);font-family:system-ui,sans-serif;color:#f4efd9;padding:16px;box-sizing:border-box';
   const card = document.createElement('div');
   card.style.cssText = 'background:#1d2d1c;border:2px solid #f2b84b;border-radius:16px;padding:20px 24px;max-width:380px;width:100%;text-align:center';
-  const h = document.createElement('h2'); h.style.cssText = 'margin:0 0 4px;font-size:26px;color:#f2b84b'; h.textContent = winner === 'farmer' ? 'DÂN LÀNG THẮNG' : 'CƯỚP THẮNG'; card.appendChild(h);
-  const sub = document.createElement('p'); sub.style.cssText = 'margin:0 0 14px;opacity:.85'; sub.textContent = winner === 'farmer' ? 'Hết giờ, vẫn còn dân sống sót.' : 'Toàn bộ dân làng đã bị hạ.'; card.appendChild(sub);
+  const h = document.createElement('h2'); h.style.cssText = 'margin:0 0 4px;font-size:26px;color:#f2b84b'; h.textContent = winner === 'farmer' ? 'DÂN LÀNG THẮNG' : (dead ? 'BẠN ĐÃ BỊ HẠ' : 'CƯỚP THẮNG'); card.appendChild(h);
+  const sub = document.createElement('p'); sub.style.cssText = 'margin:0 0 14px;opacity:.85'; sub.textContent = winner === 'farmer' ? 'Hết giờ, vẫn còn dân sống sót.' : (dead ? 'Bạn đã chơi đến khi gục ngã.' : 'Toàn bộ dân làng đã bị hạ.'); card.appendChild(sub);
   for (const l of r.lines) { const row = document.createElement('div'); row.style.cssText = 'display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.12)'; const a = document.createElement('span'); a.textContent = l[0]; const b = document.createElement('b'); b.textContent = '+' + l[1]; row.appendChild(a); row.appendChild(b); card.appendChild(row); }
   const tot = document.createElement('div'); tot.style.cssText = 'margin:14px 0;font-size:22px;font-weight:800'; tot.textContent = 'Thưởng của bạn: ' + r.total + ' xu'; card.appendChild(tot);
   const btn = document.createElement('button'); btn.textContent = 'Chơi lại'; btn.style.cssText = 'font:inherit;font-weight:700;font-size:18px;padding:10px 28px;border-radius:12px;border:2px solid #21140d;background:#f2b84b;color:#2b1a05'; btn.onclick = () => location.reload(); card.appendChild(btn);
   box.appendChild(card); document.body.appendChild(box);
 }
+function endGame(winner){
+  if (ended) return; ended = true; showResult(winner === 'bandit' && player.role !== 'bandit' && player.dead ? 'dead' : winner);
+}
 function checkEnd(){
   if (!started || ended) return;
   let alive = 0; for (const a of actors) if (a.role !== 'bandit' && !a.dead) alive++;
-  if (alive === 0) endGame('bandit'); else if (matchLeft <= 0) endGame('farmer');
+  if (alive === 0) endGame('bandit');   /* v23: không còn hết giờ, chơi đến khi dân chết hết */
+  else if (player.role !== 'bandit' && player.dead && !resultShown) showResult('dead');
 }
 
 function step(dt){
@@ -3295,7 +3300,6 @@ function step(dt){
   camera.x = clamp(camera.x, hw - 120, WORLD - hw + 120); camera.y = clamp(camera.y, hh - 120, WORLD - hh + 120);
   if (lobbyMode) { const lc = (v, lo, hi) => lo > hi ? (lo + hi) / 2 : clamp(v, lo, hi); camera.x = lc(camera.x, LB.x0 + hw - 50, LB.x1 - hw + 50); camera.y = lc(camera.y, LB.y0 + hh - 50, LB.y1 - hh + 50); }
   mmT -= dt; if (mmT <= 0) { mmT = .25; drawMini(); }
-  $('clock').textContent = fmtClock(matchLeft);
 }
 
 let last = 0;
