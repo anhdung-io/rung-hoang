@@ -263,7 +263,7 @@ body.lobby .hud.tl, body.lobby #hotbar, body.lobby #chopBtn, body.lobby .timer, 
   <canvas id="mm" width="224" height="224"></canvas>
   <div class="row">
     <button class="btn" id="menuBtn" aria-label="Menu">&#9776;</button>
-    <button class="btn" id="roleBtn">Phe: Dân làng</button>
+    
     <button class="btn" id="muteBtn">Tiếng: bật</button>
   </div>
 </div>
@@ -379,7 +379,8 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
   };
 }
 
-const WORLD = 3200;
+const FOREST = 3200;   /* khu rừng gốc, góc trên-trái (seed + toạ độ cũ giữ nguyên) */
+const WORLD = 4800;    /* toàn bản đồ: thêm vùng phía đông và phía nam */
 const CELL = 128;
 const REACH = 32;
 const SWING_T = 0.46;
@@ -426,21 +427,25 @@ const BRIDGE = (() => {
   return { x: n.x, y: n.y, ang: Math.atan2(b[1] - a[1], b[0] - a[0]) + Math.PI / 2, len: RW + 120, wid: 42 };
 })();
 function onBridge(x, y){
-  const dx = x - BRIDGE.x, dy = y - BRIDGE.y, ca = Math.cos(-BRIDGE.ang), sa = Math.sin(-BRIDGE.ang);
-  const lx = dx * ca - dy * sa, ly = dx * sa + dy * ca;
-  return Math.abs(lx) < BRIDGE.len / 2 && Math.abs(ly) < BRIDGE.wid / 2 - 2;
+  for (const B of BRIDGES) {
+    const dx = x - B.x, dy = y - B.y, ca = Math.cos(-B.ang), sa = Math.sin(-B.ang);
+    const lx = dx * ca - dy * sa, ly = dx * sa + dy * ca;
+    if (Math.abs(lx) < B.len / 2 && Math.abs(ly) < B.wid / 2 - 2) return true;
+  }
+  return false;
 }
 function inMountain(x, y, k){ const a = (x - MOUNT.x) / (MOUNT.rx * k), b = (y - MOUNT.y) / (MOUNT.ry * k); return a * a + b * b < 1; }
 function pathDist(x, y){ let d = 1e9; for (const p of PATHS) d = Math.min(d, nearestOnPoly(p, x, y).d); return d; }
 function terrainBlocked(x, y, m, forTree){
   if (nearestOnPoly(RIVER, x, y).d < RW / 2 + m) return true;
+  if (extraWater(x, y, m)) return true;
   if (inMountain(x, y, forTree ? 1.02 : .98)) return true;
   if (forTree && pathDist(x, y) < 38) return true;
   return false;
 }
-function isWater(x, y){ return nearestOnPoly(RIVER, x, y).d < RW / 2 + 8; }
-function noGrass(x, y){ return isWater(x, y) || inMountain(x, y, .94) || pathDist(x, y) < 24; }
-function waterBlocked(x, y){ return nearestOnPoly(RIVER, x, y).d < RW / 2 + 6 && !onBridge(x, y); }
+function isWater(x, y){ return nearestOnPoly(RIVER, x, y).d < RW / 2 + 8 || extraWater(x, y, 8); }
+function noGrass(x, y){ return biomeAt(x, y) !== 0 || isWater(x, y) || inMountain(x, y, .94) || pathDist(x, y) < 24; }
+function waterBlocked(x, y){ return (nearestOnPoly(RIVER, x, y).d < RW / 2 + 6 || extraWater(x, y, 6)) && !onBridge(x, y); }
 function strokePoly(c, pts, w, col){
   c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.lineJoin = 'round';
   c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); c.stroke();
@@ -450,6 +455,272 @@ function gAddRect(e, x0, y0, x1, y1){
   for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = gk(i, j); let a = grid.get(k); if (!a) { a = []; grid.set(k, a); } a.push(e); }
 }
 const mounts = [];
+/* ================= VÙNG MỚI (v17): sa mạc đá, đầm lầy, vùng tuyết, hồ lớn. Rừng cũ nằm góc trên-trái (0..FOREST), vùng mới ở phía đông và nam ================= */
+const wob = (t, s) => 30 * Math.sin(t * .0045 + s) + 15 * Math.sin(t * .011 + 2 * s);
+const VX = y => 3230 + wob(y, 1), HY = x => 3230 + wob(x, 3), DIV_Y = x => 1700 + 2.2 * wob(x, 2), DIV_X = y => 2400 + 2.2 * wob(y, 4);
+/* 0 rừng, 1 sa mạc đá (đông-bắc), 2 đầm lầy (đông-nam của rừng), 3 vùng tuyết (nam), 4 hồ lớn (góc đông-nam) */
+const BIOME_SLOW = [1, .92, .62, .78, 1];   /* v19: rừng, sa mạc, đầm lầy (bùn), tuyết, hồ: hệ số tốc độ đi bộ */
+function biomeAt(x, y){ if (y > HY(x)) return x < DIV_X(y) ? 3 : 4; if (x > VX(y)) return y < DIV_Y(x) ? 1 : 2; return 0; }
+const BIOME_NAMES = ['Khu rừng', 'Sa mạc đá', 'Đầm lầy', 'Vùng tuyết', 'Hồ lớn'];
+const REG_E = 4920;
+function run(f, a, b, step, vert){ const out = [], n = Math.max(1, Math.ceil(Math.abs(b - a) / step)); for (let i = 0; i <= n; i++) { const t = a + (b - a) * i / n; out.push(vert ? [f(t), t] : [t, f(t)]); } return out; }
+const X0S = DIV_X(HY(2400));
+const REGIONS = [null,
+  { col: '#d9bd82', pts: run(VX, -120, 1700, 70, true).concat(run(DIV_Y, VX(1700), REG_E, 70, false), [[REG_E, -120]]) },
+  { col: '#3f5b36', pts: run(DIV_Y, VX(1700), REG_E, 70, false).concat([[REG_E, HY(REG_E)]], run(HY, REG_E, VX(3240), 70, false), run(VX, 3240, 1700, 70, true)) },
+  { col: '#e9f1f4', pts: run(HY, -120, X0S, 70, false).concat(run(DIV_X, HY(X0S), REG_E, 70, true), [[-120, REG_E]]) },
+  { col: '#6f9a4a', pts: run(HY, X0S, REG_E, 70, false).concat([[REG_E, REG_E], [DIV_X(REG_E), REG_E]], run(DIV_X, REG_E, HY(X0S), 70, true)) }
+];
+for (let i = 1; i <= 4; i++) { let a = 1e9, b = 1e9, c2 = -1e9, d = -1e9; for (const p of REGIONS[i].pts) { a = Math.min(a, p[0]); b = Math.min(b, p[1]); c2 = Math.max(c2, p[0]); d = Math.max(d, p[1]); } REGIONS[i].bb = [a, b, c2, d]; }
+/* sông chảy tiếp xuống vùng tuyết, cầu thứ hai bắc qua sông ở vùng tuyết, hồ + đảo + cầu ván ra đảo, đầm lầy có vũng nước */
+const RIVER2 = smoothPoly([[1400, 3300], [1470, 3640], [1400, 4030], [1540, 4420], [1500, 4920]], 10);
+const LAKE = { x: 3700, y: 4130, rx: 760, ry: 470 }, ISLE = { x: 3700, y: 4140, rx: 170, ry: 105 };
+const SWAMP_POOLS = (() => {
+  const rg = mulberry32(5151), out = [];
+  for (let t = 0; t < 400 && out.length < 8; t++) {
+    const x = 3420 + rg() * 1250, y = 1900 + rg() * 1100, rx = 80 + rg() * 90, ry = rx * (.55 + rg() * .2);
+    if (x < VX(y) + 190 || y < DIV_Y(x) + 150 || y > HY(x) - 150) continue;
+    if (out.some(p => Math.hypot(p.x - x, (p.y - y) * 1.3) < p.rx + rx + 90)) continue;
+    out.push({ x, y, rx, ry, s: Math.floor(rg() * 99999) });
+  }
+  return out;
+})();
+const BRIDGE2 = (() => { const n = nearestOnPoly(RIVER2, 1430, 3900), a = RIVER2[n.i], b = RIVER2[n.i + 1]; return { x: n.x, y: n.y, ang: Math.atan2(b[1] - a[1], b[0] - a[0]) + Math.PI / 2, len: RW + 120, wid: 42 }; })();
+const CAUSE = { x: 3700, y: 3860, ang: Math.PI / 2, len: 420, wid: 46 };   /* cầu ván ra đảo giữa hồ */
+const BRIDGES = [BRIDGE, BRIDGE2, CAUSE];
+const ellIn = (e, x, y, m) => ((x - e.x) / (e.rx + m)) ** 2 + ((y - e.y) / (e.ry + m)) ** 2 < 1;
+/* m = lề an toàn (px) như các hàm nước cũ */
+function extraWater(x, y, m){
+  if (x < 3000 && y < 3250) return false;
+  if (nearestOnPoly(RIVER2, x, y).d < RW / 2 + m) return true;
+  if (ellIn(LAKE, x, y, m) && !ellIn(ISLE, x, y, -m)) return true;
+  for (const p of SWAMP_POOLS) if (ellIn(p, x, y, m)) return true;
+  return false;
+}
+function pickBandWP(b){
+  for (let i = 0; i < 20; i++) {
+    const x = rand(300, WORLD - 300), y = rand(300, WORLD - 300);
+    if (terrainBlocked(x, y, 60, false) || Math.hypot(x - b.x, y - b.y) < 400) continue;
+    return [x, y];
+  }
+  return null;
+}
+let curBiome = 0;
+function updateBiomeToast(){ if (!started) return; const b = biomeAt(player.x, player.y); if (b !== curBiome) { curBiome = b; toast('Bạn đang ở: ' + BIOME_NAMES[b] + (b === 2 ? '. Bùn làm bạn đi chậm.' : b === 3 ? '. Tuyết làm bạn đi chậm.' : b === 1 ? '. Cát hơi nặng chân.' : '.')); } }
+
+/* ----- sprite: cây/đá mới ----- */
+function paintCactus(c, vr){
+  const G = '#4f8a3a', D = '#376a2c', L = '#7fbf55', s = vr ? -1 : 1;
+  limb(c, 0, -34, s * 26, -34, 12, G, 2.4); limb(c, s * 26, -34, s * 26, -66, 12, G, 2.4);
+  limb(c, 0, -52, -s * 22, -52, 10, G, 2.4); limb(c, -s * 22, -52, -s * 22, -74, 10, G, 2.4);
+  box(c, -13, -104, 26, 108, 13, G, 2.6);
+  c.save(); c.beginPath(); c.roundRect(-13, -104, 26, 108, 13); c.clip();
+  c.fillStyle = D; c.fillRect(2, -110, 14, 120); c.fillStyle = L; c.globalAlpha = .7; c.fillRect(-12, -110, 5, 120); c.globalAlpha = 1;
+  c.strokeStyle = D; c.lineWidth = 1.4; for (const x of [-5, 2, 8]) { c.beginPath(); c.moveTo(x, -100); c.lineTo(x, 0); c.stroke(); }
+  c.fillStyle = '#f4efd9'; for (let i = 0; i < 22; i++) c.fillRect(-10 + (i * 7) % 20, -98 + i * 4.4, 1.6, 1.6);
+  c.restore();
+  ell(c, 0, -107, 5, 4, vr ? '#f2b84b' : '#ee85b0', 1.2); ell(c, s * 26, -69, 4, 3, '#ee85b0', 1.1);
+}
+function paintDead(c, K, vr, rng){
+  const s = vr ? -1 : 1;
+  paintTrunk(c, 78, 7, K.bark, false, rng);
+  const B = K.bark[0];
+  limb(c, 0, -52, -s * 30, -82, 5.4, B, 1.4); limb(c, -s * 30, -82, -s * 44, -108, 3.6, B, 1.2); limb(c, -s * 30, -82, -s * 20, -104, 3, B, 1.1);
+  limb(c, 0, -66, s * 28, -96, 5, B, 1.4); limb(c, s * 28, -96, s * 38, -124, 3.4, B, 1.2); limb(c, s * 28, -96, s * 50, -104, 3, B, 1.1);
+  limb(c, 0, -76, 0, -118, 4.6, B, 1.3); limb(c, 0, -104, -s * 10, -128, 2.8, B, 1.1);
+}
+function paintExtra(c, kind, vr, part, rng){
+  const K = TREE_KINDS[kind];
+  if (part === 'base') {
+    c.fillStyle = 'rgba(8,18,8,.30)'; c.beginPath(); c.ellipse(20, 6, kind === 4 ? 34 : 50, 15, 0, 0, TAU); c.fill();
+    if (kind === 4) paintCactus(c, vr); else if (kind === 5) paintDead(c, K, vr, rng);
+    else if (kind === 6) paintTrunk(c, 62, 8, K.bark, false, rng); else paintTrunk(c, 86, 11, K.bark, false, rng);
+    return;
+  }
+  if (kind === 6) { paintPine(c, K.leaf); c.fillStyle = 'rgba(255,255,255,.9)'; for (let i = 0; i < 26; i++) { c.beginPath(); c.ellipse((rng() - .5) * 90, -50 - rng() * 170, 3 + rng() * 5, 1.8 + rng() * 2, 0, 0, TAU); c.fill(); } }
+  else if (kind === 7) {
+    paintCanopy(c, rng, K.leaf, 0, -124, 46, 12, 24, 36);
+    c.lineCap = 'round';
+    for (let i = 0; i < 22; i++) { const x = (rng() - .5) * 110, y = -112 + Math.abs(x) * .15 + rng() * 14, l = 26 + rng() * 40; c.strokeStyle = i % 3 ? '#4f7a3a' : '#7fa84f'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + (rng() - .5) * 8, y + l * .5, x + (rng() - .5) * 10, y + l); c.stroke(); }
+  }
+}
+function rockSprite(seed, body, dark, hi, cap, capSz){
+  const rng = mulberry32(seed);
+  return mkSprite(80, 64, 40, 50, c => {
+    c.fillStyle = 'rgba(8,18,8,.28)'; c.beginPath(); c.ellipse(4, 2, 30, 9, 0, 0, TAU); c.fill();
+    const pts = [], n = 9;
+    for (let i = 0; i < n; i++) { const a = i / n * TAU + rng() * .3, rx = 24 + rng() * 5, ry = 18 + rng() * 5; pts.push([Math.cos(a) * rx, -14 + Math.sin(a) * ry * .95]); }
+    const P = () => { c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); };
+    P(); shape(c, body, 2.2); c.save(); c.clip();
+    c.fillStyle = dark; c.beginPath(); c.moveTo(0, -14); c.lineTo(30, 4); c.lineTo(30, 30); c.lineTo(-30, 30); c.closePath(); c.globalAlpha = .55; c.fill();
+    c.globalAlpha = .6; c.strokeStyle = dark; c.lineWidth = 1.2; for (let k = 0; k < 4; k++) { c.beginPath(); c.moveTo(-26, -24 + k * 9); c.lineTo(26, -22 + k * 9 + rng() * 4); c.stroke(); }
+    c.globalAlpha = .75; c.fillStyle = hi; c.beginPath(); c.ellipse(-8, -24, 14, 6, -.4, 0, TAU); c.fill();
+    c.globalAlpha = .95; c.fillStyle = cap; c.beginPath(); c.ellipse(-3, -28, capSz, capSz * .38, .1, 0, TAU); c.fill(); c.beginPath(); c.ellipse(14, -12, capSz * .45, capSz * .2, .4, 0, TAU); c.fill();
+    c.restore(); P(); c.lineWidth = 2.2; c.strokeStyle = OUT; c.stroke();
+  });
+}
+function buildBiomeSprites(){
+  SPR.rock[2] = rockSprite(61, '#c9a56b', '#8f6f3a', '#e8cf98', '#b89457', 12);   /* đá sa thạch */
+  SPR.rock[3] = rockSprite(73, '#8b9aa6', '#5d6b78', '#c7d6e0', '#f4fafc', 20);   /* đá phủ tuyết */
+}
+
+/* ----- vẽ nền theo chunk ----- */
+const sRng = (cx, cy, k) => mulberry32((((cx * 92821) ^ (cy * 68917) ^ (k * 40503)) >>> 0));
+function blots(c, cx, cy, cols, n, r0, r1, a0, a1, seed){
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+    const r = sRng(cx + dx, cy + dy, seed);
+    for (let i = 0; i < n; i++) {
+      const x = (cx + dx) * CH + r() * CH, y = (cy + dy) * CH + r() * CH, rad = r0 + r() * (r1 - r0), g = c.createRadialGradient(x, y, 0, x, y, rad);
+      g.addColorStop(0, cols[Math.floor(r() * cols.length)]); g.addColorStop(1, 'rgba(0,0,0,0)');
+      c.globalAlpha = a0 + r() * (a1 - a0); c.fillStyle = g; c.beginPath(); c.arc(x, y, rad, 0, TAU); c.fill();
+    }
+  }
+  c.globalAlpha = 1;
+}
+function ridges(c, cx, cy, n, seed, len0, len1, shadow, light, sw){
+  c.lineCap = 'round';
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+    const r = sRng(cx + dx, cy + dy, seed);
+    for (let i = 0; i < n; i++) {
+      const x = (cx + dx) * CH + r() * CH, y = (cy + dy) * CH + r() * CH, L = len0 + r() * (len1 - len0), bend = (r() - .3) * 44, tilt = (r() - .5) * 30;
+      for (const [ox, oy, col, w] of [[0, 5, shadow, sw * 2.2], [0, 0, light, sw]]) { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(x - L / 2 + ox, y + oy); c.quadraticCurveTo(x + ox, y - bend + oy, x + L / 2 + ox, y + tilt + oy); c.stroke(); }
+    }
+  }
+}
+function paintDesert(c, cx, cy){
+  blots(c, cx, cy, ['#e6cf98', '#c9a96c', '#d2b277', '#efdcaa'], 12, 70, 150, .25, .5, 11);
+  ridges(c, cx, cy, 4, 21, 130, 300, 'rgba(150,104,50,.28)', 'rgba(255,244,210,.55)', 3.4);
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {   /* mảng đất nứt khô */
+    const r = sRng(cx + dx, cy + dy, 31); if (r() > .5) continue;
+    const x = (cx + dx) * CH + r() * CH, y = (cy + dy) * CH + r() * CH, rad = 60 + r() * 60;
+    c.save(); c.translate(x, y); c.scale(1, .62);
+    c.fillStyle = 'rgba(176,138,84,.55)'; c.beginPath(); c.arc(0, 0, rad, 0, TAU); c.fill(); c.clip();
+    c.strokeStyle = 'rgba(88,60,28,.55)'; c.lineWidth = 1.5; c.lineJoin = 'round';
+    for (let k = 0; k < 14; k++) { let px = (r() - .5) * rad * 2, py = (r() - .5) * rad * 2; c.beginPath(); c.moveTo(px, py); for (let q = 0; q < 4; q++) { px += (r() - .5) * 46; py += (r() - .5) * 46; c.lineTo(px, py); } c.stroke(); }
+    c.restore();
+  }
+  const r = sRng(cx, cy, 41);
+  c.strokeStyle = 'rgba(150,104,50,.35)'; c.lineWidth = 1;
+  for (let i = 0; i < 40; i++) { const x = cx * CH + r() * CH, y = cy * CH + r() * CH, l = 6 + r() * 12; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + l / 2, y - 2, x + l, y); c.stroke(); }
+  for (let i = 0; i < 18; i++) { const x = cx * CH + r() * CH, y = cy * CH + r() * CH; c.fillStyle = r() < .5 ? '#a98a58' : '#e9d9aa'; c.beginPath(); c.ellipse(x, y, 1.6 + r() * 2, 1 + r() * 1.2, r(), 0, TAU); c.fill(); }
+  for (let i = 0; i < 9; i++) { const x = cx * CH + r() * CH, y = cy * CH + r() * CH; c.strokeStyle = r() < .5 ? '#a8914f' : '#c4aa63'; c.lineWidth = 1.1; for (let k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + k * 3, y - 4, x + k * 5, y - 8 - r() * 3); c.stroke(); } }
+  if (r() < .35) { const x = cx * CH + r() * CH, y = cy * CH + r() * CH; c.strokeStyle = '#efe6cf'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 10, y + 3); c.stroke(); c.fillStyle = '#efe6cf'; c.beginPath(); c.arc(x - 1, y - .5, 2.2, 0, TAU); c.arc(x + 11, y + 3.4, 2.2, 0, TAU); c.fill(); }
+}
+function paintSwamp(c, cx, cy){
+  const x0 = cx * CH, y0 = cy * CH;
+  blots(c, cx, cy, ['#4b6a3a', '#2f4a30', '#566f3a', '#3a3b2a'], 13, 60, 140, .3, .55, 12);
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {   /* bãi bùn */
+    const r = sRng(cx + dx, cy + dy, 22);
+    for (let i = 0; i < 3; i++) { const x = (cx + dx) * CH + r() * CH, y = (cy + dy) * CH + r() * CH, rad = 30 + r() * 60; c.save(); c.translate(x, y); c.scale(1, .55); const g = c.createRadialGradient(0, 0, 0, 0, 0, rad); g.addColorStop(0, 'rgba(90,70,40,.8)'); g.addColorStop(.7, 'rgba(80,64,38,.6)'); g.addColorStop(1, 'rgba(80,64,38,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, rad, 0, TAU); c.fill(); c.restore(); }
+  }
+  for (const p of SWAMP_POOLS) {
+    if (p.x + p.rx + 60 < x0 || p.x - p.rx - 60 > x0 + CH || p.y + p.ry + 60 < y0 || p.y - p.ry - 60 > y0 + CH) continue;
+    const rg = mulberry32(p.s);
+    for (const [k, col] of [[34, 'rgba(70,58,36,.55)'], [20, '#4a3d28'], [10, '#56733a']]) { c.fillStyle = col; c.beginPath(); c.ellipse(p.x, p.y, p.rx + k, p.ry + k * .75, 0, 0, TAU); c.fill(); }
+    for (const [k, col] of [[0, '#1f3b3d'], [-16, '#2a4f52'], [-34, '#33666a']]) { c.fillStyle = col; c.beginPath(); c.ellipse(p.x + k * .1, p.y - k * .06, Math.max(8, p.rx + k), Math.max(6, p.ry + k * .7), 0, 0, TAU); c.fill(); }
+    c.strokeStyle = 'rgba(200,236,224,.3)'; c.lineWidth = 1.3; for (let i = 0; i < 7; i++) { const a = rg() * TAU, d = .3 + rg() * .55; c.beginPath(); c.ellipse(p.x + Math.cos(a) * p.rx * d, p.y + Math.sin(a) * p.ry * d, 9 + rg() * 12, 2.4, 0, 0, Math.PI); c.stroke(); }
+    for (let i = 0; i < 10; i++) {   /* lá sen + hoa */
+      const a = rg() * TAU, d = Math.sqrt(rg()) * .85, x = p.x + Math.cos(a) * p.rx * d, y = p.y + Math.sin(a) * p.ry * d, r = 7 + rg() * 6, nt = rg() * TAU;
+      c.fillStyle = '#4f8f3a'; c.beginPath(); c.moveTo(x, y); c.arc(x, y, r, nt + .4, nt + TAU - .4); c.closePath(); c.fill(); c.strokeStyle = '#2f5a2a'; c.lineWidth = 1; c.stroke();
+      if (i % 4 === 0) { c.fillStyle = '#f3a6c4'; c.beginPath(); c.arc(x + 1, y - 1, 2.6, 0, TAU); c.fill(); c.fillStyle = '#f5d34b'; c.beginPath(); c.arc(x + 1, y - 1, 1, 0, TAU); c.fill(); }
+    }
+    for (let i = 0; i < 26; i++) {   /* lau sậy quanh bờ */
+      const a = rg() * TAU, x = p.x + Math.cos(a) * (p.rx + 14 + rg() * 12), y = p.y + Math.sin(a) * (p.ry + 10 + rg() * 10);
+      c.lineCap = 'round'; for (let k = -1; k <= 1; k++) { c.strokeStyle = k ? '#5c7d34' : '#7e9a45'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(x + k * 2, y); c.lineTo(x + k * 4, y - 16 - rg() * 12); c.stroke(); }
+      if (i % 3 === 0) { c.strokeStyle = '#6b4528'; c.lineWidth = 3.4; c.beginPath(); c.moveTo(x, y - 16); c.lineTo(x, y - 24); c.stroke(); }
+    }
+  }
+  const r = sRng(cx, cy, 42);
+  for (let i = 0; i < 70; i++) { const x = x0 + r() * CH, y = y0 + r() * CH; if (extraWater(x, y, 30)) continue; c.strokeStyle = r() < .5 ? '#2f4a22' : '#6c8f3e'; c.lineWidth = 1.2; c.lineCap = 'round'; for (let k = -1; k <= 1; k++) { c.beginPath(); c.moveTo(x + k * 2, y); c.quadraticCurveTo(x + k * 3, y - 4, x + k * 5, y - 8 - r() * 3); c.stroke(); } }
+  for (let i = 0; i < 16; i++) { const x = x0 + r() * CH, y = y0 + r() * CH; if (extraWater(x, y, 30)) continue; c.fillStyle = 'rgba(40,64,44,.55)'; c.beginPath(); c.ellipse(x, y, 12 + r() * 14, 4 + r() * 4, 0, 0, TAU); c.fill(); c.fillStyle = 'rgba(160,190,200,.25)'; c.beginPath(); c.ellipse(x - 2, y - 1, 6 + r() * 6, 1.5, 0, 0, TAU); c.fill(); }
+  for (let i = 0; i < 12; i++) { const x = x0 + r() * CH, y = y0 + r() * CH; if (extraWater(x, y, 30)) continue; c.fillStyle = r() < .5 ? '#7aa04a' : '#9a8f55'; c.beginPath(); c.ellipse(x, y, 5 + r() * 6, 2.4 + r() * 2, r(), 0, TAU); c.fill(); }
+}
+function paintSnow(c, cx, cy){
+  blots(c, cx, cy, ['#dbe8ee', '#f6fafc', '#cfe0e8', '#ffffff'], 12, 70, 150, .3, .6, 13);
+  ridges(c, cx, cy, 5, 23, 150, 330, 'rgba(120,152,178,.3)', 'rgba(255,255,255,.85)', 3.6);
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {   /* mảng băng */
+    const r = sRng(cx + dx, cy + dy, 32); if (r() > .45) continue;
+    const x = (cx + dx) * CH + r() * CH, y = (cy + dy) * CH + r() * CH, rad = 40 + r() * 70;
+    c.save(); c.translate(x, y); c.scale(1, .6); c.beginPath(); c.arc(0, 0, rad, 0, TAU);
+    const g = c.createRadialGradient(-rad * .3, -rad * .3, 0, 0, 0, rad); g.addColorStop(0, '#d7eef8'); g.addColorStop(1, '#a8d2e6'); c.fillStyle = g; c.fill(); c.strokeStyle = 'rgba(120,170,200,.8)'; c.lineWidth = 2; c.stroke(); c.clip();
+    c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 1.3; for (let k = 0; k < 9; k++) { let px = (r() - .5) * rad * 1.6, py = (r() - .5) * rad * 1.6; c.beginPath(); c.moveTo(px, py); for (let q = 0; q < 3; q++) { px += (r() - .5) * 40; py += (r() - .5) * 40; c.lineTo(px, py); } c.stroke(); }
+    c.restore();
+  }
+  const r = sRng(cx, cy, 43);
+  for (let i = 0; i < 30; i++) { const x = cx * CH + r() * CH, y = cy * CH + r() * CH; c.fillStyle = r() < .5 ? 'rgba(255,255,255,.9)' : 'rgba(150,180,205,.5)'; c.beginPath(); c.ellipse(x, y, 2 + r() * 3, 1.2 + r() * 1.4, r(), 0, TAU); c.fill(); }
+  for (let i = 0; i < 14; i++) { const x = cx * CH + r() * CH, y = cy * CH + r() * CH; c.lineCap = 'round'; for (let k = -2; k <= 2; k++) { c.strokeStyle = r() < .5 ? '#7d9a8c' : '#a9bfb3'; c.lineWidth = 1.1; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + k * 2, y - 4, x + k * 3.5, y - 7 - r() * 3); c.stroke(); } c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.ellipse(x, y + 1, 7, 2.2, 0, 0, TAU); c.fill(); }
+  if (r() < .5) { let x = cx * CH + r() * CH, y = cy * CH + r() * CH; const a = r() * TAU; for (let k = 0; k < 7; k++) { const px = x + Math.cos(a) * k * 9 + (k % 2 ? 3 : -3) * Math.sin(a), py = y + Math.sin(a) * k * 9 + (k % 2 ? -3 : 3) * Math.cos(a); c.fillStyle = 'rgba(120,150,178,.55)'; c.beginPath(); c.ellipse(px, py, 2.6, 1.6, a, 0, TAU); c.fill(); } }
+}
+const LAKE_WAVES = (() => { const rg = mulberry32(808), o = []; for (let i = 0; i < 160; i++) { const a = rg() * TAU, d = Math.sqrt(rg()) * .92; o.push([LAKE.x + Math.cos(a) * LAKE.rx * d, LAKE.y + Math.sin(a) * LAKE.ry * d, 10 + rg() * 20]); } return o; })();
+const LAKE_SHORE = (() => { const rg = mulberry32(909), o = []; for (let i = 0; i < 46; i++) { const a = rg() * TAU, k = 1.03 + rg() * .09; o.push([LAKE.x + Math.cos(a) * LAKE.rx * k, LAKE.y + Math.sin(a) * LAKE.ry * k, rg(), a]); } return o; })();
+function paintLake(c, cx, cy){
+  const x0 = cx * CH, y0 = cy * CH;
+  blots(c, cx, cy, ['#7fae55', '#5c8a3e', '#86b45a', '#a8b46a'], 12, 60, 130, .25, .5, 14);
+  const lb = [LAKE.x - LAKE.rx - 140, LAKE.y - LAKE.ry - 140, LAKE.x + LAKE.rx + 140, LAKE.y + LAKE.ry + 140];
+  if (x0 + CH > lb[0] && x0 < lb[2] && y0 + CH > lb[1] && y0 < lb[3]) {
+    c.save(); c.translate(LAKE.x, LAKE.y); c.scale(1, LAKE.ry / LAKE.rx);
+    const R = LAKE.rx, ring = (r, col) => { c.fillStyle = col; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill(); };
+    ring(R + 130, 'rgba(226,210,160,.35)'); ring(R + 96, 'rgba(226,210,160,.6)'); ring(R + 64, '#e3d3a0'); ring(R + 40, '#d4c08a'); ring(R + 18, '#9fd8d8');
+    ring(R, '#6cc3d2'); ring(R * .92, '#4aaec7');
+    const g = c.createRadialGradient(0, 0, R * .1, 0, 0, R * .88); g.addColorStop(0, '#1d5f8e'); g.addColorStop(.6, '#2a7fae'); g.addColorStop(1, '#3d98bf'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, R * .88, 0, TAU); c.fill();
+    c.restore();
+    c.lineCap = 'round'; for (const w of LAKE_WAVES) { c.strokeStyle = 'rgba(205,240,250,.5)'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(w[0] - w[2], w[1]); c.quadraticCurveTo(w[0], w[1] - 4, w[0] + w[2], w[1]); c.stroke(); }
+    c.fillStyle = 'rgba(255,255,255,.55)'; for (let i = 0; i < 40; i++) { const w = LAKE_WAVES[i]; c.beginPath(); c.arc(w[0] + 14, w[1] + 5, 1.6, 0, TAU); c.fill(); }
+    for (const s of LAKE_SHORE) {   /* sậy + khúc gỗ trôi dạt ven hồ */
+      const x = s[0], y = s[1]; if (s[2] < .65) { c.lineCap = 'round'; for (let k = -1; k <= 1; k++) { c.strokeStyle = k ? '#7a8f3c' : '#a3b04e'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(x + k * 2, y); c.lineTo(x + k * 4, y - 14 - s[2] * 10); c.stroke(); } c.strokeStyle = '#6b4528'; c.lineWidth = 3.2; c.beginPath(); c.moveTo(x, y - 14); c.lineTo(x, y - 21); c.stroke(); }
+      else if (s[2] < .8) { limb(c, x - 12, y, x + 12, y + 4, 5, '#9a7a52', 1.2); ell(c, x + 12, y + 4, 2.6, 2.6, '#e0c08a', .9); }
+      else { ell(c, x, y, 3.6, 2.2, '#f0e6cf', .8); ell(c, x + 8, y + 3, 2.4, 1.6, '#e0b6a0', .7); }
+    }
+    c.save(); c.translate(ISLE.x, ISLE.y); c.scale(1, ISLE.ry / ISLE.rx);
+    const IR = ISLE.rx; c.fillStyle = 'rgba(150,215,220,.7)'; c.beginPath(); c.arc(0, 0, IR + 26, 0, TAU); c.fill(); c.fillStyle = '#e6d5a2'; c.beginPath(); c.arc(0, 0, IR + 12, 0, TAU); c.fill();
+    c.fillStyle = '#6f9a4a'; c.beginPath(); c.arc(0, 0, IR - 12, 0, TAU); c.fill(); c.fillStyle = '#86b45a'; c.beginPath(); c.arc(-IR * .12, -IR * .1, IR * .7, 0, TAU); c.fill(); c.restore();
+    c.strokeStyle = '#3f6a2c'; c.lineWidth = 1.2; c.lineCap = 'round'; for (let i = 0; i < 24; i++) { const a = i * 2.4, d = .25 + (i * .137 % .6), x = ISLE.x + Math.cos(a) * ISLE.rx * d, y = ISLE.y + Math.sin(a) * ISLE.ry * d; for (let k = -1; k <= 1; k++) { c.beginPath(); c.moveTo(x + k * 2, y); c.lineTo(x + k * 3, y - 6); c.stroke(); } }
+  }
+  const r = sRng(cx, cy, 44);
+  for (let i = 0; i < 60; i++) { const x = x0 + r() * CH, y = y0 + r() * CH; if (biomeAt(x, y) !== 4 || extraWater(x, y, 70)) continue; c.strokeStyle = r() < .5 ? '#3e6a2c' : '#8ec062'; c.lineWidth = 1.1; c.lineCap = 'round'; for (let k = -1; k <= 1; k++) { c.beginPath(); c.moveTo(x + k * 2, y); c.quadraticCurveTo(x + k * 3, y - 3, x + k * 4.5, y - 6 - r() * 2); c.stroke(); } }
+  const FL = ['#f6f3e6', '#f5d34b', '#ee85b0', '#93c6f0'];
+  for (let i = 0; i < 10; i++) { const x = x0 + r() * CH, y = y0 + r() * CH; if (biomeAt(x, y) !== 4 || extraWater(x, y, 70)) continue; const col = FL[Math.floor(r() * 4)]; for (let k = 0; k < 3; k++) { const px = x + (r() - .5) * 14, py = y + (r() - .5) * 10; c.strokeStyle = '#3e6a2c'; c.lineWidth = .8; c.beginPath(); c.moveTo(px, py); c.lineTo(px, py + 4); c.stroke(); c.fillStyle = col; for (let p = 0; p < 5; p++) { c.beginPath(); c.arc(px + Math.cos(p * 1.256) * 1.6, py + Math.sin(p * 1.256) * 1.6, 1.15, 0, TAU); c.fill(); } c.fillStyle = '#f2b84b'; c.beginPath(); c.arc(px, py, .9, 0, TAU); c.fill(); } }
+}
+const BIO_PAINT = [null, paintDesert, paintSwamp, paintSnow, paintLake];
+function regPath(c, R){ c.beginPath(); R.pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); }
+function paintBiomes(c, cx, cy){
+  const x0 = cx * CH, y0 = cy * CH;
+  for (let id = 1; id <= 4; id++) {
+    const R = REGIONS[id], b = R.bb; if (x0 + CH < b[0] - 90 || x0 > b[2] + 90 || y0 + CH < b[1] - 90 || y0 > b[3] + 90) continue;
+    c.save(); regPath(c, R); c.clip(); c.fillStyle = R.col; c.fillRect(x0 - 2, y0 - 2, CH + 4, CH + 4); BIO_PAINT[id](c, cx, cy); c.restore();
+    c.lineJoin = 'round'; regPath(c, R); for (const [w, a] of [[80, .08], [54, .12], [30, .18]]) { c.lineWidth = w; c.strokeStyle = hexA(R.col, a); c.stroke(); }
+  }
+}
+const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; };
+
+/* ----- đặt cây, đá, mỏ quặng cho các vùng (cố định theo seed riêng, KHÔNG đụng rừng cũ) ----- */
+function genBiomes(){
+  const rg = mulberry32(4242);
+  const inReg = (x, y, id, m) => biomeAt(x, y) === id && biomeAt(x + m, y) === id && biomeAt(x - m, y) === id && biomeAt(x, y + m) === id && biomeAt(x, y - m) === id;
+  const spot = (id, margin) => { const b = REGIONS[id].bb, x = clamp(b[0] + rg() * (b[2] - b[0]), 140, WORLD - 140), y = clamp(b[1] + rg() * (b[3] - b[1]), 180, WORLD - 140); if (!inReg(x, y, id, margin) || terrainBlocked(x, y, 40, true)) return null; return [x, y]; };
+  const addOre = (kind, x, y) => { const rs = mulberry32(Math.floor(x * 3 + y)), ch = []; for (let i = 0; i < 9; i++) { const aa = rs() * TAU, dd = Math.sqrt(rs()) * (ORE_R - 14); ch.push([Math.cos(aa) * dd, Math.sin(aa) * dd * .7, 4 + rs() * 4, rs() * TAU]); } ORES.push({ kind, x, y, r: ORE_R, ch }); };
+  const oreSpec = [[1, [['mdong', 3], ['mvang', 2]]], [2, [['mda', 2], ['mdong', 2]]], [3, [['mda', 3], ['mvang', 2]]], [4, [['mdong', 1]]]];
+  for (const [id, list] of oreSpec) for (const [kind, n] of list) { let placed = 0; for (let t = 0; t < 4000 && placed < n; t++) { const p = spot(id, 150); if (!p || ORES.some(o => Math.hypot(o.x - p[0], o.y - p[1]) < 420)) continue; addOre(kind, p[0], p[1]); placed++; } }
+  addOre('mvang', ISLE.x, ISLE.y + 4);   /* mỏ vàng giữa đảo, đi qua cầu ván */
+  const free = (x, y, d) => !ORES.some(o => Math.hypot(o.x - x, o.y - y) < ORE_R + d) && !gQuery(x - 62, y - 62, x + 62, y + 62, []).some(e => (e.type === 'tree' || e.type === 'rock') && Math.hypot(e.x - x, e.y - y) < 58);
+  const treeSpec = [[1, [[4, 16], [5, 10]]], [2, [[7, 36], [5, 12]]], [3, [[6, 48]]], [4, [[0, 8], [2, 8], [3, 10]]]];
+  for (const [id, list] of treeSpec) for (const [kind, n] of list) {
+    let placed = 0;
+    for (let t = 0; t < 4000 && placed < n; t++) {
+      const p = spot(id, 70); if (!p || !free(p[0], p[1], 40)) continue;
+      const scale = .56 + rg() * .24, maxHp = Math.max(3, Math.round(TREE_KINDS[kind].hp * (.6 + scale) * .8));
+      const tr = { type: 'tree', x: p[0], y: p[1], kind, vr: rg() < .5 ? 0 : 1, scale, r: 9.5 * scale, hp: maxHp, maxHp, state: 0, grow: 1, shake: 0, shakeT: 0, fallT: 0, fallDir: 1, regrow: 0, fade: 0 };
+      trees.push(tr); gAdd(tr); placed++;
+    }
+  }
+  for (const [id, n, vr] of [[1, 20, 2], [3, 24, 3], [4, 10, 0]]) {
+    let placed = 0;
+    for (let t = 0; t < 4000 && placed < n; t++) { const p = spot(id, 70); if (!p || !free(p[0], p[1], 30)) continue; const s = .8 + rg() * .6, e = { type: 'rock', x: p[0], y: p[1], vr, scale: s, r: 14 * s }; rocks.push(e); gAdd(e); placed++; }
+  }
+  let placed = 0;
+  for (let t = 0; t < 4000 && placed < 28; t++) { const p = spot(2, 70); if (!p || !free(p[0], p[1], 30)) continue; const e = { type: 'bush', x: p[0], y: p[1], vr: rg() < .5 ? 0 : 1, scale: .8 + rg() * .5 }; bushes.push(e); gAdd(e); placed++; }
+}
+
 function genTerrainProps(){
   const rng = mulberry32(777);
   const peaks = [[2620,560,1.45],[2880,700,1.7],[2780,950,1.2],[2380,520,1.05],[2990,450,1.15],[2560,790,.85],[3060,860,1.0]];
@@ -460,7 +731,7 @@ function genTerrainProps(){
   for (let i = 0; i < 46; i++) {
     const a = rng() * TAU, d = Math.sqrt(rng()) * .92;
     const x = MOUNT.x + Math.cos(a) * d * MOUNT.rx, y = MOUNT.y + Math.sin(a) * d * MOUNT.ry;
-    if (x > WORLD - 60 || y < 120) continue;
+    if (x > FOREST - 60 || y < 120) continue;
     if (mounts.some(m => Math.hypot(m.x - x, m.y - y) < m.r + 34)) continue;
     if (nearestOnPoly(PATHS[1], x, y).d < 50) continue;
     const s = 1 + rng() * 1.2;
@@ -568,18 +839,22 @@ const TREE_KINDS = [
   { name: 'sồi',   bark: ['#6b4529', '#4d3019', '#8f6440'], leaf: ['#2a5c33', '#3f7d3c', '#69a84a', '#a3d466'], hp: 6 },
   { name: 'thông', bark: ['#5b3b24', '#3f2816', '#7a5232'], leaf: ['#1d4a34', '#2b6a45', '#3f8a58', '#7dbb86'], hp: 5 },
   { name: 'phong', bark: ['#6b4529', '#4d3019', '#8f6440'], leaf: ['#8f3d16', '#c8641c', '#e98d2b', '#f7cb5a'], hp: 5 },
-  { name: 'bạch dương', bark: ['#dcd8c8', '#a9a595', '#f4f1e6'], leaf: ['#3f7c37', '#67a83f', '#93c94f', '#c7e77d'], hp: 4 }
+  { name: 'bạch dương', bark: ['#dcd8c8', '#a9a595', '#f4f1e6'], leaf: ['#3f7c37', '#67a83f', '#93c94f', '#c7e77d'], hp: 4 },
+  { name: 'xương rồng', bark: ['#4f8a3a', '#376a2c', '#7fbf55'], leaf: ['#4f8a3a', '#376a2c', '#7fbf55', '#a8d878'], hp: 3 },
+  { name: 'cây khô', bark: ['#7a6650', '#4f3f2e', '#a8926f'], leaf: ['#7a6650', '#4f3f2e', '#a8926f', '#c9b48e'], hp: 4 },
+  { name: 'thông tuyết', bark: ['#5b3b24', '#3f2816', '#7a5232'], leaf: ['#2c5d52', '#3f7d6e', '#f2f8fb', '#ffffff'], hp: 5 },
+  { name: 'liễu đầm lầy', bark: ['#5a4d38', '#3a3022', '#7c6c50'], leaf: ['#33502d', '#4a6e3a', '#6f9448', '#a0bf62'], hp: 5 }
 ];
 
 const trees = [], rocks = [], bushes = [];
 const ORES = [];  /* mỏ quặng: máy khoan chỉ đặt được trên mỏ đúng loại */
 const ORE_COL = { mda: ['#a9afb5', '#7b8289', 'Đá'], mdong: ['#c8742f', '#8f4a1c', 'Đồng'], mvang: ['#f2c14e', '#b8861b', 'Vàng'] };
 const ORE_R = 64;
-const FIRE = { type: 'fire', x: WORLD / 2, y: WORLD / 2 + 10, y2: WORLD / 2 + 10 };
+const FIRE = { type: 'fire', x: FOREST / 2, y: FOREST / 2 + 10, y2: FOREST / 2 + 10 };
 
 function genWorld(){
   const rng = mulberry32(1337);
-  const cx = WORLD / 2, cy = WORLD / 2;
+  const cx = FOREST / 2, cy = FOREST / 2;
   gAdd(FIRE); FIRE.y = FIRE.y2;
   const nz = (x, y) => Math.sin(x * .0043 + 1.3) + Math.sin(y * .0051 + .4) + Math.sin((x + y) * .0031) + Math.sin((x - y) * .0027 + 2);
   let tries = 0;
@@ -587,13 +862,13 @@ function genWorld(){
     tries++;
     let x, y;
     if (trees.length % 3 === 0) {
-      const side = Math.floor(rng() * 4), t = rng() * WORLD, d = 40 + rng() * 200;
-      x = side === 0 ? d : side === 1 ? WORLD - d : t; y = side === 2 ? d + 60 : side === 3 ? WORLD - d : t;
-    } else { x = 50 + rng() * (WORLD - 100); y = 90 + rng() * (WORLD - 130); }
-    x = clamp(x, 40, WORLD - 40); y = clamp(y, 90, WORLD - 30);
+      const side = Math.floor(rng() * 4), t = rng() * FOREST, d = 40 + rng() * 200;
+      x = side === 0 ? d : side === 1 ? FOREST - d : t; y = side === 2 ? d + 60 : side === 3 ? FOREST - d : t;
+    } else { x = 50 + rng() * (FOREST - 100); y = 90 + rng() * (FOREST - 130); }
+    x = clamp(x, 40, FOREST - 40); y = clamp(y, 90, FOREST - 30);
     if (Math.hypot(x - cx, y - cy) < 190) continue;
     if (terrainBlocked(x, y, 34, true)) continue;
-    const inBorder = x < 260 || y < 300 || x > WORLD - 260 || y > WORLD - 260;
+    const inBorder = x < 260 || y < 300 || x > FOREST - 260 || y > FOREST - 260;
     if (!inBorder && nz(x, y) > 1.9 && rng() < 0.9) continue;
     const near = gQuery(x - 62, y - 62, x + 62, y + 62, []);
     let ok = true;
@@ -602,10 +877,10 @@ function genWorld(){
     const r = rng();
     let kind;
     if (Math.sin(x * .006 + y * .004) > .55 && r < .75) kind = 2;
-    else if (y < WORLD * .4 && r < .6) kind = 1;
+    else if (y < FOREST * .4 && r < .6) kind = 1;
     else if (r < .15) kind = 3;
     else if (r < .55) kind = 0;
-    else kind = y > WORLD * .6 ? 0 : 1;
+    else kind = y > FOREST * .6 ? 0 : 1;
     const scale = 0.56 + rng() * 0.24;
     const maxHp = Math.max(3, Math.round(TREE_KINDS[kind].hp * (0.6 + scale) * 0.8));
     const t = { type: 'tree', x, y, kind, vr: rng() < .5 ? 0 : 1, scale, r: 9.5 * scale, hp: maxHp, maxHp,
@@ -613,7 +888,7 @@ function genWorld(){
     trees.push(t); gAdd(t);
   }
   for (let i = 0; i < 90; i++) {
-    const x = 60 + rng() * (WORLD - 120), y = 100 + rng() * (WORLD - 160);
+    const x = 60 + rng() * (FOREST - 120), y = 100 + rng() * (FOREST - 160);
     if (Math.hypot(x - cx, y - cy) < 150 || terrainBlocked(x, y, 30, true)) continue;
     const near = gQuery(x - 45, y - 45, x + 45, y + 45, []);
     if (near.some(e => e.type !== 'bush' && Math.hypot(e.x - x, e.y - y) < 40)) continue;
@@ -622,7 +897,7 @@ function genWorld(){
     rocks.push(e); gAdd(e);
   }
   for (let i = 0; i < 190; i++) {
-    const x = 60 + rng() * (WORLD - 120), y = 100 + rng() * (WORLD - 160);
+    const x = 60 + rng() * (FOREST - 120), y = 100 + rng() * (FOREST - 160);
     if (Math.hypot(x - cx, y - cy) < 160 || terrainBlocked(x, y, 30, true)) continue;
     const near = gQuery(x - 30, y - 30, x + 30, y + 30, []);
     if (near.some(e => (e.type === 'tree' || e.type === 'rock') && Math.hypot(e.x - x, e.y - y) < 30)) continue;
@@ -635,7 +910,7 @@ function genWorld(){
     let placed = 0;
     for (let t = 0; t < 20000 && placed < n; t++) {
       const a = rg() * TAU, d = d0 + rg() * (d1 - d0), x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
-      if (x < 300 || x > WORLD - 300 || y < 340 || y > WORLD - 300) continue;
+      if (x < 300 || x > FOREST - 300 || y < 340 || y > FOREST - 300) continue;
       if (terrainBlocked(x, y, ORE_R, true)) continue;
       if (ORES.some(o => Math.hypot(o.x - x, o.y - y) < 360)) continue;
       const near = gQuery(x - ORE_R - 30, y - ORE_R - 30, x + ORE_R + 30, y + ORE_R + 30, []);
@@ -645,6 +920,7 @@ function genWorld(){
       ORES.push({ kind, x, y, r: ORE_R, ch }); placed++;
     }
   });
+  genBiomes();
 }
 
 /* ---------- 4. Sprite vẽ sẵn ---------- */
@@ -718,6 +994,7 @@ function paintPine(c, pal){
 function paintTree(c, kind, vr, part){
   const rng = mulberry32(900 + kind * 31 + vr * 7);
   const K = TREE_KINDS[kind];
+  if (kind >= 4) return paintExtra(c, kind, vr, part, rng);
   if (part === 'base') {
     c.fillStyle = 'rgba(8,18,8,.30)'; c.beginPath(); c.ellipse(20, 6, kind === 1 ? 46 : 60, 17, 0, 0, TAU); c.fill();
     const th = kind === 3 ? 116 : kind === 1 ? 62 : 94, tw = kind === 3 ? 7 : kind === 1 ? 8 : 10;
@@ -731,7 +1008,7 @@ function paintTree(c, kind, vr, part){
 
 const SPR = { tree: [], stump: null, rock: [], bush: [] };
 function buildSprites(){
-  for (let k = 0; k < 4; k++) {
+  for (let k = 0; k < TREE_KINDS.length; k++) {
     SPR.tree[k] = [];
     for (let v = 0; v < 2; v++) {
       SPR.tree[k][v] = {
@@ -1055,7 +1332,7 @@ const LOOKS = [
 ];
 const actors = [];
 const parts = [], floats = [];
-const camera = { x: WORLD / 2, y: WORLD / 2 + 60 };
+const camera = { x: FOREST / 2, y: FOREST / 2 + 60 };
 let player = null, gameTime = 0, matchLeft = MATCH_SECONDS, started = false;
 
 function makeActor(name, look, x, y, isPlayer){
@@ -1095,9 +1372,9 @@ function toast(msg, force){
 function doHit(a){
   if (a.role === 'bandit') {
     const bt = a.target;
-    if (bt && bt.type === 'def' && !bt.removed) { if (defDist(a, bt) <= REACH + 10) damageDef(bt, BANDIT_HIT_DEF, a); return; }
-    if (bt && bt.type === 'actor' && !bt.dead) { if (Math.hypot(bt.x - a.x, bt.y - a.y) <= REACH + 24) damageFarmer(bt, BANDIT_HIT_PLAYER, a); return; }
-    if (bt && bt.isFarm && !bt.removed) { if (rectDist(a, bt) <= REACH + 10) damageFarm(bt, BANDIT_HIT_FARM, a); return; }
+    if (bt && bt.type === 'def' && !bt.removed) { if (defDist(a, bt) <= REACH + 10) damageDef(bt, BANDIT_HIT_DEF * dmgMul(), a); return; }
+    if (bt && bt.type === 'actor' && !bt.dead) { if (Math.hypot(bt.x - a.x, bt.y - a.y) <= REACH + 24) damageFarmer(bt, BANDIT_HIT_PLAYER * dmgMul(), a); return; }
+    if (bt && bt.isFarm && !bt.removed) { if (rectDist(a, bt) <= REACH + 10) damageFarm(bt, BANDIT_HIT_FARM * dmgMul(), a); return; }
     if (a.isPlayer && pickTarget(a)) toast('Cướp không có rìu nên không chặt được cây.');
     return;
   }
@@ -1168,7 +1445,7 @@ function updateActor(a, dt){
     if (inp.act && a.cool <= 0) startSwing(a);
   }
   const mag = Math.hypot(inp.ix, inp.iy);
-  const sp = a.speed * (a.swing >= 0 ? .3 : 1);
+  const sp = a.speed * (a.swing >= 0 ? .3 : 1) * BIOME_SLOW[biomeAt(a.x, a.y)];
   let tvx = 0, tvy = 0;
   if (mag > .05) {
     const m = Math.min(1, mag); tvx = inp.ix / mag * sp * m; tvy = inp.iy / mag * sp * m;
@@ -1630,7 +1907,7 @@ function checkPlace(kind, tier, x, y){
   const L = layoutOf(kind, tier), R = { x0: x - L.w / 2 - 8, x1: x + L.w / 2 + 8, y0: y - L.h / 2 - 8, y1: y + L.h / 2 + 8 };
   if (R.x0 < 100 || R.x1 > WORLD - 100 || R.y0 < 140 || R.y1 > WORLD - 90) return { ok: false, reason: 'Ra sát rìa khu rừng rồi.' };
   for (let px = R.x0; px <= R.x1; px += 26) for (let py = R.y0; py <= R.y1; py += 26) {
-    if (nearestOnPoly(RIVER, px, py).d < RW / 2 + 14) return { ok: false, reason: 'Không đặt lên suối được.' };
+    if (nearestOnPoly(RIVER, px, py).d < RW / 2 + 14 || extraWater(px, py, 14)) return { ok: false, reason: 'Không đặt lên suối được.' };
     if (inMountain(px, py, 1)) return { ok: false, reason: 'Đây là núi đá.' };
   }
   const near = gQuery(R.x0 - 160, R.y0 - 160, R.x1 + 160, R.y1 + 160, []);
@@ -1768,7 +2045,7 @@ const DEF_H = { tuong: [22, 26, 30], cong: [28, 32, 36], thap: [60, 72, 84], mda
 let lastDefO = 'h';
 
 const isDefKind = k => !!DEF_DATA[k];
-const TEST_FREE = true;  /* TEST: true = mua đồ miễn phí. Chơi xong đổi thành false để trả lại giá */
+const TEST_FREE = false;  /* TEST: true = mua đồ miễn phí. Chơi xong đổi thành false để trả lại giá */
 const itemData = (kind, tier) => { const D = (FARM_DATA[kind] || DEF_DATA[kind]).tiers[tier]; return TEST_FREE ? Object.assign({}, D, { wood: 0, coin: 0 }) : D; };
 const itemName = kind => FARM_NAMES[kind] || DEF_NAMES[kind];
 
@@ -1979,7 +2256,7 @@ function checkDef(kind, tier, x, y, o){
   const sz = defSize(kind, o), R = { x0: x - sz[0] / 2, x1: x + sz[0] / 2, y0: y - sz[1] / 2, y1: y + sz[1] / 2 }, M = 3;
   if (R.x0 < 100 || R.x1 > WORLD - 100 || R.y0 < 140 || R.y1 > WORLD - 90) return { ok: false, reason: 'Ra sát rìa khu rừng rồi.' };
   for (const px of sampleRange(R.x0 - M, R.x1 + M, 12)) for (const py of sampleRange(R.y0 - M, R.y1 + M, 12)) {
-    if (nearestOnPoly(RIVER, px, py).d < RW / 2 + 8) return { ok: false, reason: 'Không đặt lên suối được.' };
+    if (nearestOnPoly(RIVER, px, py).d < RW / 2 + 8 || extraWater(px, py, 8)) return { ok: false, reason: 'Không đặt lên suối được.' };
     if (inMountain(px, py, 1)) return { ok: false, reason: 'Đây là núi đá.' };
   }
   if (isMine(kind)) {
@@ -2035,6 +2312,8 @@ function rotatePlacing(){
 /* ---------- luật: máu, phá, bắn ---------- */
 function damageActor(a, dmg){
   if (a.role !== 'bandit' || a.hp <= 0) return;
+  if (dmg <= 0) return;
+  if (a.ghost) { Net.send({ t: 'bh', i: a.gid, dmg }); a.hurt = .3; addFloat(a.x, a.y - 78, '-' + Math.round(dmg), '#ff9c8a'); sfxHit(hearVol(a)); return; }
   a.hp -= dmg; a.hurt = .3;
   addFloat(a.x, a.y - 78, '-' + Math.round(dmg), '#ff9c8a'); sfxHit(hearVol(a));
   for (let i = 0; i < 5; i++) spawn({ k: 'chip', x: a.x + rand(-4, 4), y: a.y, z: rand(12, 30), vx: rand(-50, 50), vy: rand(-20, 20), vz: rand(40, 110), rot: rand(0, 6), vr: rand(-10, 10), size: rand(1.6, 2.8), color: '#c8372d', life: .6, g: 420 });
@@ -2048,8 +2327,10 @@ function downBandit(a){
   if (a.isPlayer) { a.x = FIRE.x + Math.cos(ang) * 130; a.y = FIRE.y + Math.sin(ang) * 100; } else { const q = banditSpawnPoint(); a.x = q[0]; a.y = q[1]; if (a.ai) a.ai.bt = null; } a.vx = a.vy = 0; a.hp = a.maxHp; a.swing = -1; a.px = a.x; a.py = a.y;
   if (a.isPlayer) toast('Tháp bắn hạ bạn. Hồi sinh gần đống lửa (tạm thời, luật cướp làm ở bước sau).', true);
 }
+function netStruct(o, dmg){ if (Net.on && Net.host) Net.send({ t: 'sd', df: o.type === 'def' ? 1 : 0, x: Math.round(o.x), y: Math.round(o.type === 'def' ? o.cy : o.y), dmg }); }
 function damageDef(d, dmg, by){
   if (d.removed) return;
+  if (by && by.role === 'bandit') netStruct(d, dmg);
   d.hp -= dmg; d.hurt = 1;
   const top = isSq(d.kind) ? DEF_H[d.kind][d.tier] + 22 : DEF_H[d.kind][d.tier] + 8;
   addFloat(d.x, d.cy - top, '-' + Math.round(dmg), '#ffb3a3');
@@ -2082,6 +2363,7 @@ function pickBanditTarget(a){
 }
 function damageFarm(f, dmg, by){
   if (f.removed) return;
+  if (by && by.role === 'bandit') netStruct(f, dmg);
   f.hp -= dmg; f.hurt = 1;
   addFloat(f.x, f.y0 - 10, '-' + Math.round(dmg), '#ffb3a3');
   for (let i = 0; i < 4; i++) spawn({ k: 'chip', x: rand(f.x0, f.x1), y: f.y1, z: rand(8, 22), vx: rand(-60, 60), vy: rand(-25, 25), vz: rand(50, 120), rot: rand(0, 6), vr: rand(-12, 12), size: rand(1.8, 3.4), color: '#a27a49', life: .7, g: 420 });
@@ -2099,6 +2381,10 @@ function destroyFarm(f, by){
 }
 function damageFarmer(a, dmg, by){
   if (a.dead || a.hp <= 0) return;
+  if (a.remote && by && by.role === 'bandit') {   /* người ở máy khác: gửi cho máy đó tự trừ máu */
+    for (const f in Net.remotes) if (Net.remotes[f] === a) { Net.send({ t: 'pd', to: f, dmg }); break; }
+    a.hurt = .3; addFloat(a.x, a.y - 78, '-' + Math.round(dmg), '#ff9c8a'); sfxHit(hearVol(a)); return;
+  }
   a.hp -= dmg; a.hurt = .3;
   addFloat(a.x, a.y - 78, '-' + Math.round(dmg), '#ff9c8a'); sfxHit(hearVol(a));
   for (let i = 0; i < 5; i++) spawn({ k: 'chip', x: a.x + rand(-4, 4), y: a.y, z: rand(12, 30), vx: rand(-50, 50), vy: rand(-20, 20), vz: rand(40, 110), rot: rand(0, 6), vr: rand(-10, 10), size: rand(1.6, 2.8), color: '#c8372d', life: .6, g: 420 });
@@ -2117,51 +2403,76 @@ function downFarmer(a, by){
 const BANDIT_SPAWN_AT = 60;    /* TẠM: cướp vào rừng sau 60 giây (để dễ thử); bản thật nên 2-3 phút */
 const BANDIT_PER_FARMERS = 4.5; /* khoảng 1 cướp cho mỗi 4-5 dân */
 const BANDIT_SPEED = 125;
-let banditsSpawned = false, banditCount = 0;
+/* Càng về cuối trận cướp càng hung hăng: rage chạy 0 -> 1 từ lúc cướp vào rừng đến hết giờ */
+function banditRage(){ if (!started) return 0; return clamp((MATCH_SECONDS - matchLeft - BANDIT_SPAWN_AT) / Math.max(1, MATCH_SECONDS - BANDIT_SPAWN_AT), 0, 1); }
+function dmgMul(){ return 1 + .8 * banditRage(); }
+const RAGE_WAVES = [.4, .7, .9]; let rageWave = 0, autoBandits = false;
+let banditsSpawned = false, banditCount = 0, banditGid = 0;
 function banditSpawnPoint(){
   for (let i = 0; i < 30; i++) {
-    const ang = Math.random() * TAU, x = clamp(WORLD / 2 + Math.cos(ang) * 1150, 150, WORLD - 150), y = clamp(WORLD / 2 + Math.sin(ang) * 1150, 200, WORLD - 150);
+    const ang = Math.random() * TAU, x = clamp(FOREST / 2 + Math.cos(ang) * 1150, 150, WORLD - 150), y = clamp(FOREST / 2 + Math.sin(ang) * 1150, 200, WORLD - 150);
     if (nearestOnPoly(RIVER, x, y).d < RW / 2 + 30 || inMountain(x, y, 1)) continue;
     return [x, y];
   }
-  return [WORLD - 200, WORLD - 200];
+  return [FOREST - 200, FOREST - 200];
 }
 function spawnBanditBot(){
   const q = banditSpawnPoint(), a = makeActor('Cướp ' + (++banditCount), LOOKS[2], q[0], q[1], false);
-  a.role = 'bandit'; a.speed = BANDIT_SPEED; a.ai.bt = null; a.ai.wp = null; a.ai.wpT = 0; a.ai.stuck = 0; a.ai.hitT = 0; a.ai.side = 0; a.ai.sx = 0; a.ai.sy = 0;
+  a.role = 'bandit'; a.gid = ++banditGid; a.speed = BANDIT_SPEED; a.ai.bt = null; a.ai.wp = null; a.ai.wpT = 0; a.ai.stuck = 0; a.ai.hitT = 0; a.ai.side = 0; a.ai.sx = 0; a.ai.sy = 0;
   actors.push(a); return a;
 }
+/* v20: SỐ CƯỚP TĂNG DẦN THEO THỜI GIAN VÀ SỐ NGƯỜI CHƠI.
+   Vào lúc BANDIT_SPAWN_AT ra cướp đầu tiên (nhẹ nhàng, còn chậm và nhìn kém), rồi cứ vài phút thêm một tên, cuối trận nhiều cướp nhất.
+   1 người: 1 -> 5 cướp; 2 người: 1 -> 5; 3: 1 -> 6; 4: 2 -> 7; 5: 2 -> 8 (MỖI MÁY có băng cướp riêng, xem ghi chú phòng mạng trong HANDOFF). */
+function humanCount(){ return Net.on ? Math.max(1, Net.n || 1) : 1; }
+function banditTarget(P, r){
+  if (P === undefined) P = humanCount(); if (r === undefined) r = banditRage();
+  const start = P >= 4 ? 2 : 1, fin = Math.round(4.6 + .8 * (P - 1));
+  return start + Math.floor((fin - start) * clamp(r * 1.25, 0, 1));
+}
+const BANDIT_MSGS = ['Cướp kéo thêm đồng bọn!', 'Cướp đang nổi điên, chạy nhanh và đánh đau hơn!', 'Cướp tràn vào, chúng đã thấy rõ căn cứ của bạn!', 'Cả băng cướp đang truy lùng bạn!'];
+function bandMsg(msg){ toast(msg, true); sfxHorn(); if (Net.on && Net.host) Net.send({ t: 'bt', msg }); }
 function updateBanditSpawner(){
-  if (!started || banditsSpawned || MATCH_SECONDS - matchLeft < BANDIT_SPAWN_AT) return;
-  banditsSpawned = true;
-  let farmers = respawns.length; for (const a of actors) if (a.role !== 'bandit') farmers++;
-  const n = Math.max(1, Math.round(farmers / BANDIT_PER_FARMERS));
-  for (let i = 0; i < n; i++) spawnBanditBot();
-  toast('Cướp đã vào rừng, đang dò tìm. Giữ yên lặng và chặt căn cứ.', true); sfxHorn();
+  if (!started) return;
+  if (Net.on && !Net.host) return;   /* v21: khách không sinh cướp, chỉ nhận từ chủ phòng */
+  if (!banditsSpawned) {
+    if (MATCH_SECONDS - matchLeft < BANDIT_SPAWN_AT) return;
+    banditsSpawned = true; autoBandits = true;
+    const st = banditTarget(humanCount(), 0);
+    for (let i = 0; i < st; i++) spawnBanditBot();
+    bandMsg('Cướp đã vào rừng, đang dò tìm. Giữ yên lặng và chặt căn cứ. Càng về cuối chúng càng đông và hung hăng.');
+    return;
+  }
+  if (!autoBandits) return;
+  let have = 0; for (const a of actors) if (a.role === 'bandit' && !a.remote) have++;
+  if (have < banditTarget()) { spawnBanditBot(); bandMsg(BANDIT_MSGS[Math.min(BANDIT_MSGS.length - 1, rageWave++)]); }
 }
 /* Cướp KHÔNG biết sẵn chỗ dân: đi dò khắp rừng, thấy trong tầm nhìn mới đuổi, mất dấu thì quay lại dò */
 const BANDIT_SIGHT = 280;        /* tầm nhìn thấy dân (px) - TẠM */
 const BANDIT_SIGHT_BUILD = 200;  /* tầm thấy trang trại/công trình */
 const BANDIT_LOSE = 460;         /* xa hơn mức này thì mất dấu */
 function pickBanditWaypoint(b){
+  if (Math.random() < .4) { const w = pickBandWP(b); if (w) return w; }
   for (let i = 0; i < 12; i++) {
-    const ang = Math.random() * TAU, r = Math.sqrt(Math.random()) * 1300, x = clamp(WORLD / 2 + Math.cos(ang) * r, 200, WORLD - 200), y = clamp(WORLD / 2 + Math.sin(ang) * r, 220, WORLD - 200);
+    const ang = Math.random() * TAU, r = Math.sqrt(Math.random()) * 1300, x = clamp(FOREST / 2 + Math.cos(ang) * r, 200, WORLD - 200), y = clamp(FOREST / 2 + Math.sin(ang) * r, 220, WORLD - 200);
     if (nearestOnPoly(RIVER, x, y).d < RW / 2 + 30 || inMountain(x, y, 1)) continue;
     if (Math.hypot(x - b.x, y - b.y) < 350) continue;
     return [x, y];
   }
-  return [WORLD / 2 + rand(-500, 500), WORLD / 2 + rand(-500, 500)];
+  return [FOREST / 2 + rand(-500, 500), FOREST / 2 + rand(-500, 500)];
 }
 function scanBandit(b){
-  let best = null, bd = 1e9;
-  for (const a of actors) { if (a === b || a.role === 'bandit' || a.dead) continue; const d = Math.hypot(a.x - b.x, a.y - b.y); if (d < BANDIT_SIGHT && d < bd) { bd = d; best = a; } }
-  if (best) return best;
-  for (const f of FARMS) { if (f.removed) continue; const d = rectDist(b, f); if (d < BANDIT_SIGHT_BUILD && d < bd) { bd = d; best = f; } }
-  for (const d0 of DEFS) { if (d0.removed) continue; const d = rectDist(b, d0); if (d < BANDIT_SIGHT_BUILD && d < bd) { bd = d; best = d0; } }
+  /* v21: chọn thứ GẦN NHẤT trong tầm nhìn, bất kể của máy nào (người, trang trại, công trình) */
+  let best = null, bd = 1e9; const rg = 1 + 1.1 * banditRage();
+  for (const a of actors) { if (a === b || a.role === 'bandit' || a.dead) continue; const d = Math.hypot(a.x - b.x, a.y - b.y); if (d < BANDIT_SIGHT * rg && d < bd) { bd = d; best = a; } }
+  for (const f of FARMS) { if (f.removed) continue; const d = rectDist(b, f); if (d < BANDIT_SIGHT_BUILD * rg && d < bd) { bd = d; best = f; } }
+  for (const d0 of DEFS) { if (d0.removed) continue; const d = rectDist(b, d0); if (d < BANDIT_SIGHT_BUILD * rg && d < bd) { bd = d; best = d0; } }
   return best;
 }
+function banditDistTo(b, t){ return t.x0 !== undefined ? rectDist(b, t) : Math.hypot(t.x - b.x, t.y - b.y); }
 function banditAI(b, dt){
   const inp = b.input, ai = b.ai;
+  b.speed = BANDIT_SPEED * (1 + .35 * banditRage());
   inp.ix = inp.iy = 0; inp.act = false;
   if (ai.side > 0) { ai.side -= dt; inp.ix = ai.sx; inp.iy = ai.sy; return; }
   const posOf = t => t.x0 !== undefined ? [clamp(b.x, t.x0, t.x1), clamp(b.y, t.y0, t.y1)] : [t.x, t.y];
@@ -2169,8 +2480,9 @@ function banditAI(b, dt){
   if (ai.wait <= 0) {
     ai.wait = .4;
     const t = ai.bt;
-    if (t && !t.removed && !t.dead) { const q = posOf(t); if (Math.hypot(q[0] - b.x, q[1] - b.y) > BANDIT_LOSE) ai.bt = null; } else ai.bt = null;
+    if (t && !t.removed && !t.dead) { const q = posOf(t); if (Math.hypot(q[0] - b.x, q[1] - b.y) > BANDIT_LOSE * (1 + 1.2 * banditRage())) ai.bt = null; } else ai.bt = null;
     if (!ai.bt) { const f = scanBandit(b); if (f) { ai.bt = f; ai.wp = null; } }
+    else { const f = scanBandit(b); if (f && f !== ai.bt && banditDistTo(b, f) < banditDistTo(b, ai.bt) - 50) { ai.bt = f; ai.stuck = 0; } }
   }
   let gx, gy, chasing = false;
   if (ai.bt) { const q = posOf(ai.bt); gx = q[0]; gy = q[1]; chasing = true; }
@@ -2215,6 +2527,7 @@ function pickDefTarget(a){
   return best;
 }
 function shootFrom(d, tgt, D){
+  if (d.remote) D = Object.assign({}, D, { dmg: 0 });
   const z0 = defPlatZ(d.tier) + 6;
   PROJ.push({ x: d.x, y: d.cy, z: z0, vx: 0, vy: 1, vz: 0, tgt, dmg: D.dmg, spd: d.tier === 2 ? 330 : 400, kind: d.tier, life: 2.2 });
   d.cd = D.rate; d.recoil = 1;
@@ -2421,6 +2734,7 @@ function paintChunk(cx, cy){
     }
   }
   c.globalAlpha = 1;
+  paintBiomes(c, cx, cy);
   const cwx = cx * CH, cwy = cy * CH;
   if (cwx + CH > MOUNT.x - MOUNT.rx && cwx < MOUNT.x + MOUNT.rx && cwy + CH > MOUNT.y - MOUNT.ry && cwy < MOUNT.y + MOUNT.ry) {
     c.save(); c.translate(MOUNT.x, MOUNT.y); c.scale(1, MOUNT.ry / MOUNT.rx);
@@ -2436,11 +2750,14 @@ function paintChunk(cx, cy){
     c.globalAlpha = 1;
   }
   for (const p of PATHS) { strokePoly(c, p, 46, 'rgba(150,118,78,.30)'); strokePoly(c, p, 35, '#9c7c52'); strokePoly(c, p, 25, '#a98859'); strokePoly(c, p, 8, 'rgba(120,92,58,.35)'); }
-  strokePoly(c, RIVER, RW + 32, 'rgba(203,187,140,.5)'); strokePoly(c, RIVER, RW + 16, '#cdbb8c');
-  strokePoly(c, RIVER, RW + 4, '#34809f'); strokePoly(c, RIVER, RW - 6, '#3f97ba'); strokePoly(c, RIVER, RW * .5, '#4aa9cb'); strokePoly(c, RIVER, RW * .2, 'rgba(170,225,240,.45)');
-  {
-    c.save(); c.translate(BRIDGE.x, BRIDGE.y); c.rotate(BRIDGE.ang);
-    const bl = BRIDGE.len, bwid = BRIDGE.wid;
+  for (const [P, b1, b2] of [[RIVER, 'rgba(203,187,140,.5)', '#cdbb8c'], [RIVER2, 'rgba(225,238,244,.55)', '#e2eef4']]) {
+    if (P === RIVER2 && cwy + CH < 3100) continue;
+    strokePoly(c, P, RW + 32, b1); strokePoly(c, P, RW + 16, b2);
+    strokePoly(c, P, RW + 4, '#34809f'); strokePoly(c, P, RW - 6, '#3f97ba'); strokePoly(c, P, RW * .5, '#4aa9cb'); strokePoly(c, P, RW * .2, 'rgba(170,225,240,.45)');
+  }
+  for (const BR of BRIDGES) {
+    c.save(); c.translate(BR.x, BR.y); c.rotate(BR.ang);
+    const bl = BR.len, bwid = BR.wid;
     c.fillStyle = 'rgba(0,0,0,.28)'; c.fillRect(-bl / 2 + 4, -bwid / 2 + 7, bl, bwid);
     for (let x = -bl / 2, k = 0; x < bl / 2; x += 8, k++) { c.fillStyle = k % 2 ? '#9a6b3b' : '#a8783f'; c.fillRect(x, -bwid / 2, 8, bwid); c.strokeStyle = 'rgba(40,22,10,.6)'; c.lineWidth = .8; c.strokeRect(x, -bwid / 2, 8, bwid); }
     for (const sy of [-bwid / 2, bwid / 2]) {
@@ -2449,7 +2766,7 @@ function paintChunk(cx, cy){
     }
     c.restore();
   }
-  const fx = WORLD / 2, fy = WORLD / 2 + 10;
+  const fx = FOREST / 2, fy = FOREST / 2 + 10;
   if (Math.abs(fx - (cx * CH + CH / 2)) < CH / 2 + 220 && Math.abs(fy - (cy * CH + CH / 2)) < CH / 2 + 220) {
     let g = c.createRadialGradient(fx, fy, 20, fx, fy, 210); g.addColorStop(0, '#8d6d46'); g.addColorStop(.6, 'rgba(141,109,70,.85)'); g.addColorStop(1, 'rgba(141,109,70,0)');
     c.fillStyle = g; c.beginPath(); c.ellipse(fx, fy, 210, 170, 0, 0, TAU); c.fill();
@@ -2482,6 +2799,7 @@ function paintChunk(cx, cy){
   }
   for (let i = 0; i < 14; i++) {
     const x = cx * CH + r() * CH, y = cy * CH + r() * CH;
+    if (biomeAt(x, y)) continue;
     c.fillStyle = r() < .5 ? 'rgba(217,162,58,.75)' : 'rgba(150,84,36,.7)'; c.beginPath(); c.ellipse(x, y, 2.4, 1.3, r() * 3, 0, TAU); c.fill();
   }
   return c0;
@@ -2662,6 +2980,11 @@ const mm = $('mm'), mctx = mm.getContext('2d'); let mmT = 0;
 function drawMini(){
   const m = mctx, S = mm.width, k = S / WORLD;
   m.clearRect(0, 0, S, S); m.fillStyle = '#1b3b27'; m.fillRect(0, 0, S, S);
+  for (let id = 1; id <= 4; id++) { m.fillStyle = ['', '#b99d62', '#38553a', '#cfdde4', '#5f8a45'][id]; m.beginPath(); REGIONS[id].pts.forEach((p, i) => i ? m.lineTo(p[0] * k, p[1] * k) : m.moveTo(p[0] * k, p[1] * k)); m.closePath(); m.fill(); }
+  m.fillStyle = '#2f7fa8'; m.beginPath(); m.ellipse(LAKE.x * k, LAKE.y * k, LAKE.rx * k, LAKE.ry * k, 0, 0, TAU); m.fill();
+  m.fillStyle = '#6f9a4a'; m.beginPath(); m.ellipse(ISLE.x * k, ISLE.y * k, ISLE.rx * k, ISLE.ry * k, 0, 0, TAU); m.fill();
+  m.fillStyle = '#274a4c'; for (const p of SWAMP_POOLS) { m.beginPath(); m.ellipse(p.x * k, p.y * k, p.rx * k, p.ry * k, 0, 0, TAU); m.fill(); }
+  m.strokeStyle = '#4aa3c8'; m.lineWidth = RW * k; m.lineJoin = 'round'; m.beginPath(); RIVER2.forEach((q, i) => i ? m.lineTo(q[0] * k, q[1] * k) : m.moveTo(q[0] * k, q[1] * k)); m.stroke();
   m.lineJoin = 'round'; m.lineCap = 'round';
   m.fillStyle = '#6f757c'; m.beginPath(); m.ellipse(MOUNT.x * k, MOUNT.y * k, MOUNT.rx * k, MOUNT.ry * k, 0, 0, TAU); m.fill();
   m.strokeStyle = '#9a7a52'; m.lineWidth = 3; for (const p of PATHS) { m.beginPath(); p.forEach((q, i) => i ? m.lineTo(q[0] * k, q[1] * k) : m.moveTo(q[0] * k, q[1] * k)); m.stroke(); }
@@ -2863,7 +3186,6 @@ window.addEventListener('keydown', e => {
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'tab'].includes(k)) e.preventDefault();
   keys.add(k);
   if (!e.repeat) hotkey(k);
-  if (k === 'tab' && started && !e.repeat) toggleRole();
 });
 window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 window.addEventListener('blur', () => { keys.clear(); mouseDown = false; btnDown = false; });
@@ -2903,11 +3225,8 @@ function toggleRole(){
   player.role = player.role === 'farmer' ? 'bandit' : 'farmer';
   player.swing = -1; player.hp = player.maxHp; cancelPlacing(); closeShop(); buildHotbar();
   document.body.classList.toggle('bandit', player.role === 'bandit');
-  $('roleBtn').classList.toggle('on', player.role === 'bandit');
-  $('roleBtn').textContent = player.role === 'bandit' ? 'Phe: Cướp (xem thử)' : 'Phe: Dân làng';
   toast(player.role === 'bandit' ? 'Phe cướp: không có rìu. Đánh dân làng, trang trại, tường, cổng, tháp để phá. Tháp sẽ bắn bạn (xem thử).' : 'Về phe dân làng: có rìu, chặt cây lấy gỗ.');
 }
-$('roleBtn').addEventListener('click', () => { if (started) toggleRole(); });
 $('muteBtn').addEventListener('click', () => { muted = !muted; $('muteBtn').textContent = muted ? 'Tiếng: tắt' : 'Tiếng: bật'; });
 
 function readPlayerInput(){
@@ -2960,9 +3279,9 @@ function step(dt){
   gameTime += dt;
   if (ended) return;
   if (started) { matchLeft = Math.max(0, matchLeft - dt); }
-  readPlayerInput();
+  readPlayerInput(); updateBiomeToast();
   updateRespawns(dt);
-  if (!Net.on) updateBanditSpawner();
+  updateBanditSpawner();
   for (const a of actors) if (!a.isPlayer && !a.remote) { if (a.role === 'bandit') banditAI(a, dt); else botAI(a, dt); }
   for (const a of actors) { if (a.remote) updateRemote(a, dt); else updateActor(a, dt); }
   updateTrees(dt); updateFarms(dt); updateDefs(dt); updateProj(dt); updateParticles(dt); updateAmbient(dt); if (placing) updatePlacing();
@@ -2987,7 +3306,7 @@ function frame(ts){
 }
 
 /* ---------- 9. Multiplayer (v13): phòng chơi bằng mã. Mỗi máy tự chạy thế giới (cùng seed), gửi vị trí + nhát chặt cây ---------- */
-const Net = { built: [], keys: {}, pending: [], on: false, host: false, code: '', id: Math.random().toString(36).slice(2, 8), send: () => {}, hostStarted: false, remotes: {}, n: 1, lk: 0, rx: 0 };
+const Net = { ghosts: {}, dead: {}, hostId: '', migrating: false, lastRx: 0, lastHostRx: 0, mgDone: 0, peer: null, built: [], keys: {}, pending: [], on: false, host: false, code: '', id: Math.random().toString(36).slice(2, 8), send: () => {}, hostStarted: false, remotes: {}, n: 1, lk: 0, rx: 0 };
 function netHash(s){ let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
 function netRemote(f, m){
   let a = Net.remotes[f];
@@ -3013,6 +3332,7 @@ function netBuilt(m, mine){   /* ghi nhớ + gửi công trình đã đặt (min
 function netFlushBuilt(){ if (!started) return; while (Net.pending.length) { const m = Net.pending.shift(); try { netApply(m, 'net'); } catch (e) {} } }
 function netOnMsg(m){
   if (!m || m.f === Net.id) return;
+  Net.lastRx = performance.now();
   if (m.t === 'lr') { lobOnState(m); return; }
   if (m.t === 'p') {
     const b = { def: m.def, k: m.k, ti: m.ti, x: m.x, y: m.y, o: m.o };
@@ -3025,17 +3345,44 @@ function netOnMsg(m){
     const a = netRemote(m.f, m);
     if (isNew && Net.host && Net.built.length) Net.send({ t: 'b', list: Net.built }); a.seen = performance.now(); a.tx = m.x; a.ty = m.y; a.dir = m.d; a.role = m.r; a.name = m.n; a.pq = m.pq;
     if (m.sw && a.swing < 0) a.swing = 0;
-    if (m.h) { Net.rx++; Net.hostStarted = !!m.st; if (!Net.host && started && m.st) matchLeft = m.ml; updateLobbyGo(); }
+    if (m.h) { if (m.f) Net.hostId = m.f; Net.lastHostRx = performance.now(); Net.rx++; Net.hostStarted = !!m.st; if (!Net.host && started && m.st) matchLeft = m.ml; updateLobbyGo(); }
   } else if (m.t === 'h') {
     const a = Net.remotes[m.f], t = trees[m.i]; if (a && t && t.state === 0) hitTree(t, a);
+  } else if (m.t === 'bs') {   /* chủ phòng gửi danh sách cướp */
+    if (Net.host) return;
+    const now = performance.now(), seen = {};
+    for (const q of m.l) {
+      seen[q[0]] = 1; let g = Net.ghosts[q[0]];
+      if (!g) { g = makeActor(q[6] || 'Cướp', LOOKS[2], q[1], q[2], false); g.role = 'bandit'; g.remote = true; g.ghost = true; g.gid = q[0]; g.tx = q[1]; g.ty = q[2]; Net.ghosts[q[0]] = g; actors.push(g); }
+      g.seen = now; g.tx = q[1]; g.ty = q[2]; g.dir = q[3]; g.hp = q[4]; g.maxHp = q[5]; if (q[7] && g.swing < 0) g.swing = 0;
+      if (Math.hypot(g.tx - g.x, g.ty - g.y) > 300) { g.x = g.tx; g.y = g.ty; }
+    }
+    for (const id in Net.ghosts) if (!seen[id]) { const g = Net.ghosts[id]; const i = actors.indexOf(g); if (i >= 0) actors.splice(i, 1); delete Net.ghosts[id]; }
+  } else if (m.t === 'bt') { if (!Net.host) { toast(m.msg, true); sfxHorn(); }
+  } else if (m.t === 'sd') {   /* cướp đánh công trình: mọi máy trừ máu giống nhau */
+    if (Net.host) return;
+    const list = m.df ? DEFS : FARMS;
+    for (const o of list) { if (o.removed) continue; if (Math.abs(o.x - m.x) < 3 && Math.abs((m.df ? o.cy : o.y) - m.y) < 3) { if (m.df) damageDef(o, m.dmg); else damageFarm(o, m.dmg); break; } }
+  } else if (m.t === 'pd') {   /* cướp đánh người chơi này */
+    if (m.to === Net.id && !player.dead) damageFarmer(player, m.dmg, { role: 'bandit' });
+  } else if (m.t === 'bh') {   /* tháp của khách bắn trúng cướp */
+    if (!Net.host) return;
+    for (const a of actors) if (a.role === 'bandit' && a.gid === m.i && !a.remote) { damageActor(a, m.dmg); break; }
   }
 }
 function netTick(){
   netFlushBuilt();
   const p = player;
   Net.send({ t: 's', pq: lobbyMode && inPortal(p) ? 1 : 0, n: p.name, lk: Net.lk, x: Math.round(p.x), y: Math.round(p.y), d: p.dir, sw: p.swing >= 0, r: p.role, h: Net.host ? 1 : 0, st: started ? 1 : 0, ml: Math.round(matchLeft) });
+  if (Net.host && started) {
+    const l = []; for (const a of actors) if (a.role === 'bandit' && !a.remote) l.push([a.gid, Math.round(a.x), Math.round(a.y), a.dir, Math.round(a.hp), a.maxHp, a.name, a.swing >= 0 ? 1 : 0]);
+    Net.send({ t: 'bs', l });
+  }
   const now = performance.now(); let n = 1;
-  for (const f in Net.remotes) { const a = Net.remotes[f]; if (now - a.seen > 4000) { actors.splice(actors.indexOf(a), 1); delete Net.remotes[f]; } else n++; }
+  if (!Net.host && started && !ended && !lobbyMode && !Net.migrating && Net.lastHostRx && now - Net.lastHostRx > 4000) netMigrate();
+  const grace = Net.migrating || now - Net.mgDone < 4000;
+  for (const id in Net.ghosts) { const g = Net.ghosts[id]; if (!Net.migrating && now - g.seen > 15000) { const i = actors.indexOf(g); if (i >= 0) actors.splice(i, 1); delete Net.ghosts[id]; } }
+  for (const f in Net.remotes) { const a = Net.remotes[f]; if (grace) a.seen = now; if (now - a.seen > 4000) { actors.splice(actors.indexOf(a), 1); delete Net.remotes[f]; } else n++; }
   Net.n = n; $('roomPill').textContent = 'Phòng ' + Net.code + ' · ' + n + ' người';
 }
 function updateLobbyGo(){
@@ -3044,24 +3391,80 @@ function updateLobbyGo(){
   b.disabled = false; b.textContent = wait ? 'Vào rừng (chủ phòng chưa bắt đầu)' : 'Vào rừng';   /* không khoá nút: lỡ tin 'chủ đã bắt đầu' không tới thì vẫn vào được */
   if (Net.on && !Net.host) $('lobbyMsg').textContent = 'Đã vào phòng ' + Net.code + '. Tin nhận từ chủ phòng: ' + Net.rx + (Net.rx ? ' (đã nối ổn)' : ' (chưa nhận được gì)') + '.';
 }
+const NET_BC = new URLSearchParams(location.search).get('net') === 'bc';
+function netHostPeer(pid, done){   /* chủ phòng: giữ mã pid, nhận kết nối, chuyển tiếp tin cho những người khác */
+  const conns = [], peer = new Peer(pid); Net.peer = peer; let fin = false;
+  const end = (ok, m) => { if (!fin) { fin = true; done(ok, m); } };
+  peer.on('error', e => end(false, e.type === 'unavailable-id' ? 'Mã phòng bị trùng, bấm Tạo phòng lại.' : 'Lỗi mạng: ' + e.type));
+  peer.on('open', () => { Net.send = m => { m.f = Net.id; conns.forEach(c => c.open && c.send(m)); }; end(true); });
+  peer.on('connection', c => { conns.push(c); c.on('data', m => { netOnMsg(m); conns.forEach(o => o !== c && o.open && o.send(m)); }); c.on('close', () => { const i = conns.indexOf(c); if (i >= 0) conns.splice(i, 1); }); });
+}
+function netGuestPeer(pid, done){   /* khách: nối vào chủ phòng có mã pid */
+  const peer = new Peer(); Net.peer = peer; let fin = false;
+  const end = (ok, m) => { if (!fin) { fin = true; done(ok, m); } };
+  peer.on('error', e => end(false, e.type === 'peer-unavailable' ? 'Không thấy phòng này. Kiểm tra lại mã.' : 'Lỗi mạng: ' + e.type));
+  peer.on('open', () => {
+    const c = peer.connect(pid);
+    c.on('open', () => {
+      Net.send = m => { m.f = Net.id; c.open && c.send(m); }; c.on('data', netOnMsg);
+      c.on('close', () => {
+        if (Net.peer !== peer) return;   /* kết nối cũ đã bỏ khi chuyển chủ */
+        toast('Mất kết nối với phòng.', true); Net.onClose && Net.onClose();
+        if (started && !ended && !lobbyMode && !Net.host && !Net.migrating) netMigrate();
+      });
+      end(true);
+    });
+  });
+}
+/* ---------- v22: CHUYỂN CHỦ PHÒNG khi chủ thoát. Người kế nhiệm = mã máy nhỏ nhất (theo chữ cái) trong số người còn lại,
+   mọi máy tự tính giống nhau. Kế nhiệm giữ mã 'rh-PHÒNG-IDMÁY', những người còn lại nối vào (thử lại tới 8 lần), kế nhiệm không lên được thì chuyển sang người kế tiếp.
+   Cướp 'ma' trên máy mình biến thành cướp thật ở máy chủ mới và đi tiếp. ---------- */
+function netMigrate(){
+  if (Net.host || !Net.on || !started || ended || lobbyMode || Net.migrating) return;
+  if (Net.hostId) {
+    Net.dead[Net.hostId] = 1;
+    const ra = Net.remotes[Net.hostId]; if (ra) { const i = actors.indexOf(ra); if (i >= 0) actors.splice(i, 1); delete Net.remotes[Net.hostId]; }
+  }
+  const cand = [Net.id].concat(Object.keys(Net.remotes)).filter(x => !Net.dead[x]).sort(), succ = cand[0];
+  Net.migrating = true;
+  toast('Chủ phòng đã thoát. Đang chuyển chủ phòng…', true);
+  if (succ === Net.id) netBecomeHost(); else netReconnect(succ, 0);
+}
+const netPid = succ => 'rh-' + Net.code + '-' + succ;
+function netBecomeHost(){
+  try { Net.peer && Net.peer.destroy(); } catch (e) {}
+  const fin = ok => {
+    if (!ok) { Net.dead[Net.id] = 1; Net.migrating = false; toast('Không giữ được phòng mới.', true); return; }
+    Net.host = true; Net.migrating = false; Net.hostId = Net.id; Net.mgDone = performance.now(); Net.lastRx = Net.lastHostRx = performance.now();
+    adoptBandits(); toast('Bạn là chủ phòng mới. Cướp vẫn tiếp tục.', true);
+  };
+  if (NET_BC) return fin(true);
+  netHostPeer(netPid(Net.id), fin);
+}
+function netReconnect(succ, tries){
+  const fin = ok => {
+    if (ok) { Net.migrating = false; Net.mgDone = performance.now(); Net.lastRx = Net.lastHostRx = performance.now(); Net.hostId = succ; toast('Đã nối lại với chủ phòng mới.', true); return; }
+    if (tries < 8) setTimeout(() => netReconnect(succ, tries + 1), 1000);
+    else { Net.dead[succ] = 1; Net.migrating = false; netMigrate(); }
+  };
+  if (NET_BC) return fin(true);
+  try { Net.peer && Net.peer.destroy(); } catch (e) {}
+  netGuestPeer(netPid(succ), fin);
+}
+function adoptBandits(){
+  for (const id in Net.ghosts) {
+    const g = Net.ghosts[id]; g.remote = false; g.ghost = false; g.speed = BANDIT_SPEED; g.px = g.x; g.py = g.y; g.vx = g.vy = 0; g.swing = -1;
+    g.ai = g.ai || {}; Object.assign(g.ai, { bt: null, wp: null, wpT: 0, stuck: 0, hitT: 0, side: 0, sx: 0, sy: 0, wait: 0 });
+    banditGid = Math.max(banditGid, g.gid); banditCount = Math.max(banditCount, +((g.name || '').match(/\d+/) || [0])[0]);
+  }
+  Net.ghosts = {}; if (started) { banditsSpawned = true; autoBandits = true; }
+}
 function netOpen(host, code, done){
   Net.host = host; Net.code = code;
   if (new URLSearchParams(location.search).get('net') === 'bc') {   /* chế độ thử nghiệm: nhiều tab cùng máy */
     const bc = new BroadcastChannel('rh-' + code); bc.onmessage = e => netOnMsg(e.data); Net.send = m => { m.f = Net.id; bc.postMessage(m); }; return done(true);
   }
-  const go = () => {
-    const conns = [];
-    if (host) {
-      const peer = new Peer('rh-' + code);
-      peer.on('error', e => done(false, e.type === 'unavailable-id' ? 'Mã phòng bị trùng, bấm Tạo phòng lại.' : 'Lỗi mạng: ' + e.type));
-      peer.on('open', () => { Net.send = m => { m.f = Net.id; conns.forEach(c => c.open && c.send(m)); }; done(true); });
-      peer.on('connection', c => { conns.push(c); c.on('data', m => { netOnMsg(m); conns.forEach(o => o !== c && o.open && o.send(m)); }); c.on('close', () => conns.splice(conns.indexOf(c), 1)); });
-    } else {
-      const peer = new Peer();
-      peer.on('error', e => done(false, e.type === 'peer-unavailable' ? 'Không thấy phòng này. Kiểm tra lại mã.' : 'Lỗi mạng: ' + e.type));
-      peer.on('open', () => { const c = peer.connect('rh-' + code); c.on('open', () => { Net.send = m => { m.f = Net.id; c.open && c.send(m); }; c.on('data', netOnMsg); c.on('close', () => { toast('Mất kết nối với phòng.', true); Net.onClose && Net.onClose(); }); done(true); }); });
-    }
-  };
+  const go = () => { if (host) netHostPeer('rh-' + code, done); else netGuestPeer('rh-' + code, done); };
   if (window.Peer) return go();
   const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';
   sc.onload = go; sc.onerror = () => done(false, 'Không tải được PeerJS. Kiểm tra mạng.'); document.head.appendChild(sc);
@@ -3070,7 +3473,7 @@ function enterMulti(){
   for (let i = actors.length - 1; i >= 0; i--) if (!actors[i].isPlayer) actors.splice(i, 1);   /* bỏ bot dân (mỗi máy một kiểu sẽ lệch nhau) */
   const h = netHash(Net.id); Net.lk = h % LOOKS.length; player.look = LOOKS[Net.lk];
   player.name = $('nameIn').value.trim() || ('Người chơi ' + (h % 90 + 10));
-  const ang = (h % 628) / 100; player.x = WORLD / 2 + Math.cos(ang) * 80; player.y = WORLD / 2 + 10 + Math.sin(ang) * 80; camera.x = player.x; camera.y = player.y - 14;
+  const ang = (h % 628) / 100; player.x = FOREST / 2 + Math.cos(ang) * 80; player.y = FOREST / 2 + 10 + Math.sin(ang) * 80; camera.x = player.x; camera.y = player.y - 14;
   Net.on = true; const pill = Net.tickId ? null : document.createElement('div'); if (pill) pill.id = 'roomPill';
   if (pill) pill.style.cssText = 'background:rgba(16,38,26,.8);color:#ffe9b0;padding:2px 10px;border-radius:10px;font:700 12px system-ui;pointer-events:none;white-space:nowrap';
   if (!Net.tickId) { document.querySelector('.hud.tc').appendChild(pill); Net.tickId = setInterval(netTick, 66); } updateLobbyGo();
@@ -3102,7 +3505,7 @@ const Lob = { cd: null, n: 0, need: LOB_MIN, endAt: 0, match: null, go: false, l
 const inPortal = a => PORTAL && (((a.x - PORTAL.x) / PORTAL.r) ** 2 + ((a.y - PORTAL.y) / (PORTAL.r * .72)) ** 2) < .85;
 const rndCode = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
 /* ---------- SẢNH RIÊNG: đại sảnh gạch cũ rêu phong. Vẽ sẵn 1 lần, chỉ dùng khi lobbyMode (vào trận thì tải lại trang) ---------- */
-const LB = { x0: WORLD / 2 - 720, x1: WORLD / 2 + 720, y0: WORLD / 2 - 520, y1: WORLD / 2 + 520 }, LB_BW = 78, LB_SW = 40, LB_S = 1.5;
+const LB = { x0: FOREST / 2 - 720, x1: FOREST / 2 + 720, y0: FOREST / 2 - 520, y1: FOREST / 2 + 520 }, LB_BW = 78, LB_SW = 40, LB_S = 1.5;
 let lobFloor = null, lobWalls = null, LOB_OBJ = [], LOB_PUD = [], LOB_TORCH = [];
 function lobbyCollide(a){
   const x0 = LB.x0 + LB_SW + 9, x1 = LB.x1 - LB_SW - 9, y0 = LB.y0 + LB_BW + 14, y1 = LB.y1 - LB_SW - 9;
@@ -3131,7 +3534,7 @@ function lobCrack(g, px, py, dir, seed, len){
   }
 }
 function buildLobbyFloor(){
-  const [cv2, g] = lobCanvas(), rnd = mulberry32(9917), TS = 64, cx = WORLD / 2, W2 = LB.x1 - LB.x0, H2 = LB.y1 - LB.y0;
+  const [cv2, g] = lobCanvas(), rnd = mulberry32(9917), TS = 64, cx = FOREST / 2, W2 = LB.x1 - LB.x0, H2 = LB.y1 - LB.y0;
   g.fillStyle = '#1d1c18'; g.fillRect(LB.x0, LB.y0, W2, H2);
   const cols = Math.ceil(W2 / TS), rows = Math.ceil(H2 / TS);
   for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
@@ -3237,7 +3640,7 @@ function drawLobPile(c, o){
   c.restore();
 }
 function setupPortal(){
-  const cx = WORLD / 2;
+  const cx = FOREST / 2;
   PORTAL = { x: cx, y: LB.y0 + 250, r: 56 };
   grid.clear();
   LOB_OBJ = [
@@ -3361,18 +3764,34 @@ function lobSetup(){
   } else if (QP.get('solo')) $('goBtn').click();
 }
 
+/* v18: vào trận xuất hiện ở chỗ ngẫu nhiên bất kỳ trên cả bản đồ (không nước, núi, đá, cây, đống lửa) */
+function randomSpawn(){
+  for (let n = 0; n < 300; n++) {
+    const x = rand(260, WORLD - 260), y = rand(300, WORLD - 260);
+    if (terrainBlocked(x, y, 60, true) || biomeAt(x, y) < 0) continue;
+    let bad = false;
+    for (const e of gQuery(x - 80, y - 80, x + 80, y + 80, [])) {
+      if (e.removed || e.type === 'bush') continue;
+      if (e.type === 'tree' && (e.state === 2 || e.state === 3)) continue;
+      if (e.type === 'tree' || e.type === 'rock' || e.type === 'mount' || e.type === 'fire' || e.type === 'wall') { if (Math.hypot(e.x - x, e.y - y) < (e.r || 18) + 40) { bad = true; break; } }
+    }
+    if (!bad) return [x, y];
+  }
+  return [FOREST / 2 - 46, FOREST / 2 + 62];
+}
+
 function init(){
-  resize(); genWorld(); genTerrainProps(); buildSprites(); buildExtraSprites();
-  player = makeActor('Bạn', LOOKS[0], WORLD / 2 - 46, WORLD / 2 + 62, true);
+  resize(); genWorld(); genTerrainProps(); buildSprites(); buildBiomeSprites(); buildExtraSprites();
+  player = makeActor('Bạn', LOOKS[0], FOREST / 2 - 46, FOREST / 2 + 62, true);
   actors.push(player);
   const bots = [['Bác Tư', 1, 140, 100], ['Lan', 2, -150, 80], ['Cu Tí', 3, 60, -130]];
-  for (const b of bots) actors.push(makeActor(b[0], LOOKS[b[1]], WORLD / 2 + b[2], WORLD / 2 + b[3], false));
+  for (const b of bots) actors.push(makeActor(b[0], LOOKS[b[1]], FOREST / 2 + b[2], FOREST / 2 + b[3], false));
   camera.x = player.x; camera.y = player.y - 14;
   initEconomy();
   onWoodChange();
   $('wood').textContent = '0';
-  window.__rh = { Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
-  const menu = $('menuModal'), openMenu = () => { if (lobbyMode) { $('start').classList.remove('hide'); return; } $('menuNote').textContent = Net.on && Net.host ? 'Bạn là chủ phòng: thoát thì cả phòng mất kết nối.' : 'Thoát game sẽ rời trận và quay về màn hình đầu. Trận vẫn chạy khi bạn mở menu.'; menu.classList.add('open'); }, closeMenu = () => menu.classList.remove('open');
+  window.__rh = { banditTarget, humanCount, biomeAt, BIOME_SLOW, Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
+  const menu = $('menuModal'), openMenu = () => { if (lobbyMode) { $('start').classList.remove('hide'); return; } $('menuNote').textContent = Net.on && Net.host ? 'Bạn là chủ phòng: thoát thì người khác trong phòng sẽ tự chuyển sang chủ mới (mất vài giây).' : 'Thoát game sẽ rời trận và quay về màn hình đầu. Trận vẫn chạy khi bạn mở menu.'; menu.classList.add('open'); }, closeMenu = () => menu.classList.remove('open');
   $('menuBtn').addEventListener('click', openMenu); $('menuClose').addEventListener('click', closeMenu); $('menuResume').addEventListener('click', closeMenu);
   $('menuExit').addEventListener('click', () => { location.href = location.pathname + (location.search.includes('net=bc') ? '?net=bc' : ''); });
   const privRoom = host => { const code = host ? rndCode() : $('codeIn').value.trim().toUpperCase(); if (code.length !== 4) { $('lobbyMsg').textContent = 'Mã phòng gồm 4 ký tự.'; return; } if (lobbyMode) { const u = new URLSearchParams(location.search); u.delete('solo'); u.set('auto', code); u.set('h', host ? 1 : 0); u.set('man', 1); location.search = u.toString(); } else lobbyStart(host, host ? code : undefined); };
@@ -3381,7 +3800,8 @@ function init(){
   $('goBtn').addEventListener('click', () => {
     if (lobbyMode) { const u = new URLSearchParams(location.search); u.set('solo', '1'); location.search = u.toString(); return; }
     initAudio(); started = true; matchLeft = MATCH_SECONDS; $('start').classList.add('hide');
-    toast('Tìm cây gần đó và giữ nút chặt.');
+    { const sp = randomSpawn(); player.x = sp[0]; player.y = sp[1]; player.vx = player.vy = 0; camera.x = player.x; camera.y = player.y - 14; }
+    toast('Bạn xuất hiện ở một chỗ ngẫu nhiên. Tìm cây gần đó và giữ nút chặt.');
   });
   lobSetup();
   requestAnimationFrame(frame);
