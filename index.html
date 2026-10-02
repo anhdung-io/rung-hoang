@@ -1366,6 +1366,7 @@ function pickTarget(a){
   return best;
 }
 function startSwing(a){
+  if (a.carryG) { if (a.isPlayer && performance.now() - _lastCarryToast > 2000) { _lastCarryToast = performance.now(); toast('Đang vác xác, thả xuống rồi mới chặt được.', true); } return; }
   a.swing = 0; a.hit = false; a.target = a.role === 'bandit' ? pickBanditTarget(a) : pickTarget(a);
   const hb = a.isPlayer && a.role !== 'bandit' ? banditInReach(a) : null;
   if (hb) { const dx = hb.x - a.x, dy = hb.y - a.y; a.dir = Math.abs(dx) > Math.abs(dy) * 1.2 ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); }
@@ -2046,6 +2047,7 @@ function drawFarmLabel(f){
 const PV = {};
 function previewOf(kind, tier){
   if (kind === 'tao') return appleImg();
+  if (kind === 'cuu') return medImg();
   const key = kind + tier; if (PV[key]) return PV[key];
   if (isDefKind(kind)) return (PV[key] = defPreview(kind, tier));
   const L = layoutOf(kind, tier), S = farmSprites(kind, tier), cw = 200, ch = 150;
@@ -2478,11 +2480,11 @@ function damageFarmer(a, dmg, by){
 function downFarmer(a, by){
   sfxDown(hearVol(a));
   for (let i = 0; i < 12; i++) spawn({ k: 'dust', x: a.x + rand(-8, 8), y: a.y + rand(-6, 6), z: rand(2, 20), vx: rand(-30, 30), vy: rand(-12, 12), vz: rand(10, 40), size: rand(5, 9), life: rand(.5, .9), g: 0 });
-  a.swing = -1; a.dead = true; a.deadAt = MATCH_SECONDS - matchLeft;
+  a.swing = -1; a.dead = true; a.deadAt = MATCH_SECONDS - matchLeft; addGrave(a);
   if (by) by.kills = (by.kills || 0) + 1;
   const i = actors.indexOf(a); if (i >= 0) actors.splice(i, 1);
   if (a.isPlayer) { cancelPlacing(); closeShop(); toast('Bạn đã bị hạ. Bạn xem tiếp trận đấu.', true); }
-  else toast(a.name + ' đã bị hạ.', true);
+  else toast(a.name + ' đã gục! Xem dấu đỏ trên bản đồ.', true);
 }
 /* ---------- CƯỚP BOT: tự đi săn dân, phá trang trại và công trình ---------- */
 const BANDIT_SPAWN_AT = 60;    /* TẠM: cướp vào rừng sau 60 giây (để dễ thử); bản thật nên 2-3 phút */
@@ -3026,10 +3028,11 @@ function render(dt){
       case 'farmFront': drawFarmSprite(e.f, 'front'); break;
       case 'animal': drawAnimal(c, e, time); break;
       case 'def': drawDefAt(c, e, time); break;
-      case 'actor': c.save(); c.translate(e.x, e.y); drawPerson(c, e, time); if (e.role !== 'bandit' && e.hp < e.maxHp) drawHpBar(0, -92, 44, e.hp / e.maxHp); c.restore(); break;
+      case 'actor': c.save(); c.translate(e.x, e.y); drawPerson(c, e, time); if (e.carryG) drawCarriedBody(c, e.carryG, time); if (e.role !== 'bandit' && e.hp < e.maxHp) drawHpBar(0, -92, 44, e.hp / e.maxHp); c.restore(); break;
     }
   }
   fireGlow(FIRE);
+  for (const g of GRAVES) drawGrave(g);
   for (const p of parts) drawParticle(p);
   for (const p of PROJ) drawProj(c, p);
   drawGhost();
@@ -3083,6 +3086,7 @@ function drawMini(){
   for (const o of ORES) { m.fillStyle = ORE_COL[o.kind][0]; m.beginPath(); m.arc(o.x * k, o.y * k, 3.2, 0, TAU); m.fill(); m.strokeStyle = '#1b1208'; m.lineWidth = 1; m.stroke(); }
   m.fillStyle = '#ffb347'; m.beginPath(); m.arc(FIRE.x * k, FIRE.y * k, 4, 0, TAU); m.fill();
   for (const a of actors) { m.fillStyle = a.isPlayer ? '#ffffff' : '#7fc1ff'; m.beginPath(); m.arc(a.x * k, a.y * k, a.isPlayer ? 5 : 3.6, 0, TAU); m.fill(); if (a.isPlayer) { m.strokeStyle = '#f2b84b'; m.lineWidth = 2; m.stroke(); } }
+  for (const g of GRAVES) { const px = g.x * k, py = g.y * k, pr = 5 + 2 * Math.abs(Math.sin(gameTime * 4)); m.fillStyle = 'rgba(255,70,60,.38)'; m.beginPath(); m.arc(px, py, pr + 3, 0, TAU); m.fill(); m.fillStyle = '#e8392e'; m.beginPath(); m.arc(px, py, 5, 0, TAU); m.fill(); m.strokeStyle = '#fff'; m.lineWidth = 1.8; m.beginPath(); m.moveTo(px - 2.4, py); m.lineTo(px + 2.4, py); m.moveTo(px, py - 2.4); m.lineTo(px, py + 2.4); m.stroke(); }
   const vw = W / zoom * k, vh = H / zoom * k;
   m.strokeStyle = 'rgba(255,240,200,.7)'; m.lineWidth = 1.5; m.strokeRect(camera.x * k - vw / 2, camera.y * k - vh / 2, vw, vh);
 }
@@ -3108,7 +3112,147 @@ function refreshCoins(){
 function refreshShopIfOpen(){ if (shopOpen) renderShop(); }
 /* v34: QUẢ TÁO HỒI MÁU (vật phẩm dùng một lần). Mua trong cửa hàng mục "Hồi máu", nằm trong ô đồ; chạm ô (hoặc bấm phím số) để ăn: hồi TAO_HEAL máu, hết táo thì ô tự trống. Máu đầy thì không ăn (không tốn táo). Con số TẠM. */
 const TAO_HEAL = 60, TAO_COIN = 15;
-const ITEM_DATA = { tao: { name: 'Quả táo', wood: 0, coin: TAO_COIN, heal: TAO_HEAL } };
+/* v35: BỘ CỨU THƯƠNG (dùng một lần): chạm ô đồ khi đứng gần MỘ của đồng đội đã gục (trong REVIVE_RANGE) thì cứu sống họ, hồi REVIVE_HP máu, họ đứng dậy ngay tại mộ. Cứu được cả người chơi ở máy khác (tin 'rv'). Con số TẠM. */
+const REVIVE_WOOD = 0, REVIVE_COIN = 0, REVIVE_RANGE = 110, REVIVE_HP = .5, REVIVE_HOLD = 5, REVIVE_NEED_ITEM = true;   /* v38: TẠM MIỄN PHÍ để thử (giá thật: 10 gỗ + 80 xu). v37: giữ nút Cứu REVIVE_HOLD giây khi đứng gần xác; REVIVE_NEED_ITEM=false thì không cần bộ cứu thương */
+const ITEM_DATA = { tao: { name: 'Quả táo', wood: 0, coin: TAO_COIN, heal: TAO_HEAL }, cuu: { name: 'Bộ cứu thương', wood: REVIVE_WOOD, coin: REVIVE_COIN, revive: true } };
+const GRAVES = [];   /* mộ của đồng đội đã gục: { a: actor, x, y } */
+function addGrave(a){ if (a.role === 'bandit') return; for (const g of GRAVES) if (g.a === a) return; GRAVES.push({ a, x: a.x, y: a.y }); }
+function updateGraves(){
+  for (let i = GRAVES.length - 1; i >= 0; i--) {
+    const g = GRAVES[i], a = g.a;
+    if (!a.dead || ended) { GRAVES.splice(i, 1); continue; }
+    if (a.remote) { let ok = false; for (const f in Net.remotes) if (Net.remotes[f] === a) { ok = true; break; } if (!ok) GRAVES.splice(i, 1); }
+  }
+  /* v39: người vác xác. Xác đi theo người vác (mọi máy thấy: tin 's' có cr = mã máy của người nằm xuống) */
+  for (const g of GRAVES) g.by = null;
+  for (const a of actors) if (!a.isPlayer) a.carryG = null;   /* người chơi này giữ carryG riêng */
+  if (player.carryG && (player.dead || GRAVES.indexOf(player.carryG) < 0)) player.carryG = null;
+  if (player.carryG) { const g = player.carryG; g.by = player; player.carryG = g; g.x = player.x; g.y = player.y; }
+  for (const f in Net.remotes) {
+    const r = Net.remotes[f]; if (!r.carryF || r.dead) continue;
+    const owner = r.carryF === Net.id ? player : Net.remotes[r.carryF]; if (!owner) continue;
+    const g = GRAVES.find(x => x.a === owner); if (g && !g.by) { g.by = r; r.carryG = g; g.x = r.x; g.y = r.y; }
+  }
+}
+function drawCarriedBody(c, g, t){
+  const a = g.a, body = Object.assign({}, a, { swing: -1, walkAmp: 0, walkT: 0, dir: 'down' });
+  c.save(); c.translate(0, -44); c.rotate(-Math.PI / 2 + .12); c.scale(.8, .8); c.globalAlpha = .96; drawPerson(c, body, (3.8 - ((a.seed || 0) * 3 % 3.8)) % 3.8); c.restore();
+}
+function drawGrave(g){   /* v37: xác = chính nhân vật đó nằm xuống, có vòng đỏ nhấp nháy */
+  if (g.by) return;   /* đang được vác: vẽ cùng người vác */
+  const c = ctx, t = gameTime, a = g.a, near = !player.dead && Math.hypot(g.x - player.x, g.y - player.y) < REVIVE_RANGE;
+  c.save(); c.translate(g.x, g.y);
+  c.globalAlpha = (near ? .8 : .45) + .25 * Math.sin(t * 4); c.strokeStyle = near ? '#8dff9f' : '#ff6a5a'; c.lineWidth = 2.5; c.setLineDash([5, 5]); c.beginPath(); c.arc(0, 0, 34, 0, TAU); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
+  const body = Object.assign({}, a, { swing: -1, walkAmp: 0, walkT: 0, dir: 'down' });
+  c.save(); c.rotate(-Math.PI / 2); c.globalAlpha = .93; drawPerson(c, body, (3.8 - ((a.seed || 0) * 3 % 3.8)) % 3.8); c.restore();
+  const by = -24 + Math.sin(t * 3) * 2;
+  c.fillStyle = '#e8392e'; c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.arc(0, by, 8, 0, TAU); c.fill(); c.stroke();
+  c.strokeStyle = '#fff'; c.lineWidth = 2.4; c.lineCap = 'round'; c.beginPath(); c.moveTo(-3.6, by); c.lineTo(3.6, by); c.moveTo(0, by - 3.6); c.lineTo(0, by + 3.6); c.stroke();
+  c.font = '800 12px "Baloo 2", system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3.5; c.strokeStyle = OUT; c.lineJoin = 'round';
+  const nm = (a.name || 'Đồng đội'), y = by - 18; c.strokeText(nm, 0, y); c.fillStyle = '#ffe9a8'; c.fillText(nm, 0, y);
+  c.restore();
+}
+function haveItem(kind){ for (let i = 1; i < 8; i++) if (slots[i] && slots[i].kind === kind) return true; return false; }
+let _medImg = null;
+function medImg(){
+  if (_medImg) return _medImg;
+  const c = document.createElement('canvas'); c.width = 200; c.height = 150; const g = c.getContext('2d'); g.translate(100, 80);
+  g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(0, 46, 52, 10, 0, 0, 6.283); g.fill();
+  g.strokeStyle = '#5b3a1e'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.moveTo(-18, -40); g.quadraticCurveTo(0, -62, 18, -40); g.stroke();
+  g.fillStyle = '#f4efe3'; g.strokeStyle = '#3a2a1a'; g.lineWidth = 3.5; g.beginPath(); g.roundRect(-52, -38, 104, 80, 12); g.fill(); g.stroke();
+  g.fillStyle = '#d8332b'; g.beginPath(); g.roundRect(-9, -24, 18, 52, 3); g.fill(); g.beginPath(); g.roundRect(-26, -7, 52, 18, 3); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(-46, -32, 14, 5);
+  return (_medImg = c);
+}
+function reviveActor(g){
+  const a = g.a; a.dead = false; a.hp = Math.max(1, Math.round(a.maxHp * REVIVE_HP)); a.hurt = 0; a.swing = -1; a.vx = a.vy = 0; a.target = null;
+  a.x = g.x; a.y = g.y; a.px = a.x; a.py = a.y; a.reviveUntil = performance.now() + 2500;
+  const ri = respawns.findIndex(r => r.a === a); if (ri >= 0) respawns.splice(ri, 1);
+  if (actors.indexOf(a) < 0) actors.push(a);
+  if (a.remote) for (const f in Net.remotes) if (Net.remotes[f] === a) { Net.send({ t: 'rv', to: f, x: Math.round(g.x), y: Math.round(g.y) }); break; }
+  reviveFx(g.x, g.y);
+}
+function reviveFx(x, y){
+  sfxPick(); for (let k = 0; k < 16; k++) spawn({ k: 'leaf', x: x + rand(-14, 14), y: y + rand(-8, 8), z: rand(10, 60), vx: rand(-25, 25), vy: rand(-10, 10), vz: rand(30, 90), rot: rand(0, 6), vr: rand(-6, 6), size: rand(2.4, 3.6), color: k % 2 ? '#8dff9f' : '#ffffff', life: 1, g: 60 });
+  addFloat(x, y - 70, '+ Hồi sinh', '#8dff9f');
+}
+function useRevive(i){   /* v37: không dùng trực tiếp từ ô đồ nữa, phải đứng gần xác và giữ nút Cứu */
+  if (player.dead || ended) return;
+  toast(GRAVES.length ? 'Đến gần xác đồng đội, giữ nút Cứu ' + REVIVE_HOLD + ' giây (bộ cứu thương trong ô đồ sẽ được dùng).' : 'Chưa có đồng đội nào gục để cứu.', true);
+}
+/* ---- nút Cứu (giữ để cứu), hiện khi đứng gần xác ---- */
+let _rp = null, reviveHold = false, reviveProg = 0, reviveTarget = null;
+function nearBody(){
+  let best = null, bd = 1e9;
+  for (const g of GRAVES) { if (g.by && g.by !== player) continue; const d = Math.hypot(g.x - player.x, g.y - player.y); if (d < REVIVE_RANGE && d < bd) { bd = d; best = g; } }
+  return best;
+}
+function buildRevivePrompt(){
+  const el = document.createElement('button'); el.id = 'revivePrompt'; el.type = 'button';
+  el.style.cssText = 'position:fixed;right:150px;bottom:30%;z-index:20;display:none;align-items:center;gap:12px;padding:8px 20px 8px 8px;border-radius:16px;border:0;background:rgba(18,20,18,.36);color:#fff;font:800 18px "Baloo 2",system-ui,sans-serif;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);user-select:none;-webkit-user-select:none;touch-action:none;-webkit-touch-callout:none;cursor:pointer;text-shadow:0 1px 3px #000';
+  el.innerHTML = '<span class="rpRing" style="width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(#8dff9f 0deg,rgba(255,255,255,.2) 0deg)"><span style="width:44px;height:44px;border-radius:50%;background:rgba(40,44,40,.78);display:flex;align-items:center;justify-content:center;font-size:26px;color:#ff6a5a">\u271a</span></span><span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.15"><span class="rpName" style="font-size:13px;opacity:.85"></span><span class="rpLbl">Cứu</span></span>';
+  const down = e => { e.preventDefault(); e.stopPropagation(); reviveHold = true; try { el.setPointerCapture(e.pointerId); } catch (err) {} };
+  const up = () => { reviveHold = false; };
+  el.addEventListener('pointerdown', down); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
+  el.addEventListener('contextmenu', e => e.preventDefault());
+  document.body.appendChild(el); return (_rp = el);
+}
+function updateRevive(dt){
+  const el = _rp || buildRevivePrompt(), db = _db || buildDropBtn();
+  if (player.role !== 'bandit') player.speed = player.carryG ? 142 * .7 : 142;
+  db.style.display = (player.carryG && !player.dead && !ended) ? 'block' : 'none';
+  const g = (started && !player.dead && !ended && player.role !== 'bandit') ? nearBody() : null;
+  if (!g) { el.style.display = 'none'; reviveProg = 0; reviveHold = false; reviveTarget = null; return; }
+  const has = !REVIVE_NEED_ITEM || haveItem('cuu'), holding = (reviveHold || keys.has('e')) && has;
+  el.style.display = 'flex'; el.style.opacity = has ? '1' : '.6';
+  if (holding) { reviveProg = reviveTarget === g ? reviveProg + dt : dt; } else reviveProg = 0;
+  reviveTarget = g;
+  el.querySelector('.rpName').textContent = g.a.name || 'Đồng đội';
+  el.querySelector('.rpLbl').textContent = !has ? 'Cần bộ cứu thương' : holding ? 'Đang cứu… ' + Math.max(0, Math.ceil(REVIVE_HOLD - reviveProg)) + 's' : 'Cứu (giữ ' + REVIVE_HOLD + 's)';
+  el.querySelector('.rpRing').style.background = 'conic-gradient(#8dff9f ' + Math.min(360, reviveProg / REVIVE_HOLD * 360) + 'deg,rgba(255,255,255,.2) 0deg)';
+  if (reviveProg >= REVIVE_HOLD) finishRevive(g);
+}
+function bodyAtWorld(wx, wy){
+  let best = null, bd = 1e9;
+  for (const g of GRAVES) { if (g.by) continue; const d = Math.hypot(g.x - wx, (g.y - 16) - wy); if (d < 46 && d < bd) { bd = d; best = g; } }
+  return best;
+}
+function bodyAtScreen(cx, cy){ return bodyAtWorld(camera.x + (cx - W / 2) / zoom, camera.y + (cy - H / 2) / zoom); }
+function pickUpBody(g){
+  if (!g || g.by || player.carryG || player.dead || ended || player.role === 'bandit') return;
+  if (Math.hypot(g.x - player.x, g.y - player.y) > REVIVE_RANGE + 20) { toast('Lại gần xác hơn rồi chạm để vác.', true); return; }
+  player.carryG = g; g.by = player; player.swing = -1; sfxPick(); buildDropBtn();
+  toast('Đang vác ' + (g.a.name || 'đồng đội') + '. Bấm Thả để đặt xuống, giữ nút Cứu để cứu.', true);
+}
+function dropBody(){
+  const g = player.carryG; if (!g) return;
+  const dv = DV[player.dir]; g.x = player.x + dv[0] * 28; g.y = player.y + dv[1] * 20; g.by = null; player.carryG = null; sfxPick(); toast('Đã thả xác xuống.', true);
+}
+let _db = null, _lastCarryToast = 0;
+function buildDropBtn(){
+  if (_db) return _db;
+  const el = document.createElement('button'); el.id = 'dropBtn'; el.type = 'button'; el.textContent = 'Thả xác';
+  el.style.cssText = 'position:fixed;right:150px;bottom:calc(30% + 74px);z-index:20;display:none;padding:10px 22px;border-radius:14px;border:0;background:rgba(18,20,18,.36);color:#fff;font:800 17px "Baloo 2",system-ui,sans-serif;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);user-select:none;-webkit-user-select:none;touch-action:none;cursor:pointer;text-shadow:0 1px 3px #000';
+  el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); dropBody(); });
+  document.body.appendChild(el); return (_db = el);
+}
+window.addEventListener('keydown', e => { if (!e.repeat && e.key.toLowerCase() === 'g') dropBody(); });
+function finishRevive(g){
+  reviveProg = 0; reviveHold = false; reviveTarget = null;
+  if (!g.a.dead) return;
+  if (REVIVE_NEED_ITEM) for (let i = 1; i < 8; i++) if (slots[i] && slots[i].kind === 'cuu') { slots[i].n--; if (slots[i].n <= 0) slots[i] = null; break; }
+  const nm = g.a.name || 'Đồng đội'; reviveActor(g);
+  const k = GRAVES.indexOf(g); if (k >= 0) GRAVES.splice(k, 1);
+  buildHotbar(); toast('Đã cứu sống ' + nm + '!', true);
+}
+function onRevived(m){   /* máy của người bị gục nhận tin được cứu */
+  if (!player.dead || ended) return;
+  player.dead = false; player.hp = Math.max(1, Math.round(player.maxHp * REVIVE_HP)); player.hurt = 0; player.swing = -1; player.vx = player.vy = 0;
+  player.x = m.x; player.y = m.y; player.px = m.x; player.py = m.y;
+  if (actors.indexOf(player) < 0) actors.push(player);
+  resultShown = false; const rb = document.getElementById('resultBox'); if (rb) rb.remove();
+  reviveFx(m.x, m.y); toast('Bạn được đồng đội cứu sống!', true);
+}
 let _appleImg = null, lastEat = 0;
 function appleImg(){
   if (_appleImg) return _appleImg;
@@ -3124,6 +3268,7 @@ function appleImg(){
 }
 function useItem(i){
   const it = slots[i]; if (!it || !ITEM_DATA[it.kind]) return;
+  if (ITEM_DATA[it.kind].revive) return useRevive(i);
   if (player.dead || ended) return;
   const now = performance.now(); if (now - lastEat < 400) return; lastEat = now;
   if (player.hp >= player.maxHp - .5) { toast('Máu đã đầy, chưa cần ăn táo.', true); return; }
@@ -3273,6 +3418,7 @@ const tapDown = {};
 function worldTap(cx, cy){
   if (!started || ended || player.dead || placing || shopOpen || player.role === 'bandit') return;
   if (!$('start').classList.contains('hide') || document.querySelector('.modal.open')) return;
+  { const bg = bodyAtScreen(cx, cy); if (bg) { pickUpBody(bg); return; } }
   const f = farmAtWorld(camera.x + (cx - W / 2) / zoom, camera.y + (cy - H / 2) / zoom);
   if (f) openFarmMenu(f); else closeFarmMenu();
 }
@@ -3303,15 +3449,15 @@ function renderShop(){
   }
   tabs.style.display = shopCat === 'farm' || shopCat === 'item' ? 'none' : '';   /* trang trại: 5 loại hiện chung 1 lưới, không cần hàng tab */
   const isFarm = shopCat === 'farm', isItem = shopCat === 'item', grid = $('shopGrid'); grid.innerHTML = '';
-  grid.style.gridTemplateColumns = isFarm ? 'repeat(auto-fit,minmax(130px,1fr))' : isItem ? 'minmax(150px,230px)' : ''; grid.style.justifyContent = isItem ? 'center' : '';
-  const list = isItem ? [['tao', 0]] : isFarm ? FARM_ORDER.map(k => [k, 0]) : [0, 1, 2].map(t => [shopTab, t]);
+  grid.style.gridTemplateColumns = isFarm ? 'repeat(auto-fit,minmax(130px,1fr))' : isItem ? 'repeat(auto-fit,minmax(150px,200px))' : ''; grid.style.justifyContent = isItem ? 'center' : '';   /* v36: các món hồi máu xếp hàng ngang như tường, không xếp dọc nữa cho khỏi cao */
+  const list = isItem ? [['tao', 0], ['cuu', 0]] : isFarm ? FARM_ORDER.map(k => [k, 0]) : [0, 1, 2].map(t => [shopTab, t]);
   for (const [kind, t] of list) {
     const D = itemData(kind, t), okW = player.wood >= D.wood, okC = player.coins >= D.coin;
     const card = document.createElement('div'); card.className = 'shopcard';
     const pv = document.createElement('canvas'); pv.width = 200; pv.height = 150; pv.getContext('2d').drawImage(previewOf(kind, t), 0, 0, 200, 150); card.appendChild(pv);
     const h = document.createElement('h3'); h.textContent = itemName(kind) + (isFarm || isItem ? '' : ' \u00b7 ' + TIER_NAMES[t]); card.appendChild(h);
     const p = document.createElement('p');
-    p.textContent = isItem ? 'Hồi +' + ITEM_DATA[kind].heal + ' máu. Chạm ô đồ để ăn.' : !isFarm ? defBlurb(kind, t) : (kind === 'rau' ? 'Rau tự mọc, tự thu hoạch' : D.n + ' con ' + ANIMAL_LABEL[kind]) + ' \u00b7 +' + D.inc + ' xu/phút'; card.appendChild(p);
+    p.textContent = isItem ? (ITEM_DATA[kind].revive ? 'Cứu sống đồng đội đã gục: đến gần xác họ (chạm vào xác để vác đi chỗ an toàn), giữ nút Cứu ' + REVIVE_HOLD + ' giây. Họ dậy với ' + Math.round(REVIVE_HP * 100) + '% máu.' : 'Hồi +' + ITEM_DATA[kind].heal + ' máu. Chạm ô đồ để ăn.') : !isFarm ? defBlurb(kind, t) : (kind === 'rau' ? 'Rau tự mọc, tự thu hoạch' : D.n + ' con ' + ANIMAL_LABEL[kind]) + ' \u00b7 +' + D.inc + ' xu/phút'; card.appendChild(p);
     const cost = document.createElement('div'); cost.className = 'cost';
     cost.innerHTML = (D.wood ? '<span class="' + (okW ? '' : 'bad') + '">' + D.wood + ' gỗ</span>' : '') + '<span class="' + (okC ? '' : 'bad') + '">' + D.coin + ' xu</span>'; card.appendChild(cost);
     const btn = document.createElement('button'); btn.className = 'buy'; btn.textContent = 'Mua'; btn.disabled = !(okW && okC);
@@ -3330,7 +3476,7 @@ function buyItem(kind, tier){
   if (slots[slot]) slots[slot].n++; else slots[slot] = { kind, tier, n: 1 };
   onWoodChange(); refreshCoins(); if (!isDefKind(kind) && !ITEM_DATA[kind]) closeShop(); buildHotbar();
   const el = $('hotbar').children[slot]; if (el) el.classList.add('new');
-  toast('Đã mua ' + itemName(kind).toLowerCase() + '. Chạm vào ô đồ số ' + (slot + 1) + (ITEM_DATA[kind] ? ' để ăn' : ' để đặt') + (slots[slot].n > 1 ? ' (có ' + slots[slot].n + ').' : '.'), true);
+  toast('Đã mua ' + itemName(kind).toLowerCase() + '. Chạm vào ô đồ số ' + (slot + 1) + (ITEM_DATA[kind] ? (ITEM_DATA[kind].revive ? ' để dùng' : ' để ăn') : ' để đặt') + (slots[slot].n > 1 ? ' (có ' + slots[slot].n + ').' : '.'), true);
   sfxPick(); return true;
 }
 function hotkey(k){
@@ -3408,7 +3554,7 @@ window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 window.addEventListener('blur', () => { keys.clear(); mouseDown = false; btnDown = false; });
 document.addEventListener('pointerdown', e => {
   if (e.__ph || placing || shopOpen) return;
-  if (e.pointerType === 'mouse' && e.button === 0 && !(e.target.closest && e.target.closest('button'))) mouseDown = true;
+  if (e.pointerType === 'mouse' && e.button === 0 && !(e.target.closest && e.target.closest('button')) && !bodyAtScreen(e.clientX, e.clientY)) mouseDown = true;
 });
 window.addEventListener('pointerup', e => { if (e.pointerType === 'mouse') mouseDown = false; });
 
@@ -3486,7 +3632,11 @@ function showResult(winner){
   for (const l of r.lines) { const row = document.createElement('div'); row.style.cssText = 'display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.12)'; const a = document.createElement('span'); a.textContent = l[0]; const b = document.createElement('b'); b.textContent = '+' + l[1]; row.appendChild(a); row.appendChild(b); card.appendChild(row); }
   const tot = document.createElement('div'); tot.style.cssText = 'margin:14px 0;font-size:22px;font-weight:800'; tot.textContent = 'Thưởng của bạn: ' + r.total + ' xu'; card.appendChild(tot);
   const btn = document.createElement('button'); btn.textContent = 'Chơi lại'; btn.style.cssText = 'font:inherit;font-weight:700;font-size:18px;padding:10px 28px;border-radius:12px;border:2px solid #21140d;background:#f2b84b;color:#2b1a05'; btn.onclick = () => location.reload(); card.appendChild(btn);
-  box.appendChild(card); document.body.appendChild(box);
+  box.id = 'resultBox'; box.appendChild(card); document.body.appendChild(box);
+  if (dead && !ended && actors.some(a => a.remote && !a.ghost && a.role !== 'bandit' && !a.dead)) {
+    const stay = document.createElement('button'); stay.textContent = 'Ở lại, chờ đồng đội cứu'; stay.style.cssText = 'display:block;margin:10px auto 0;font:inherit;font-weight:700;font-size:15px;padding:8px 18px;border-radius:12px;border:2px solid #f2b84b;background:transparent;color:#f2b84b';
+    stay.onclick = () => box.remove(); card.appendChild(stay);
+  }
 }
 function endGame(winner){
   if (ended) return; ended = true; showResult(winner === 'bandit' && player.role !== 'bandit' && player.dead ? 'dead' : winner);
@@ -3503,7 +3653,7 @@ function step(dt){
   if (ended) return;
   if (started) { matchLeft = Math.max(0, matchLeft - dt); }
   readPlayerInput(); updateBiomeToast();
-  updateRespawns(dt);
+  updateRespawns(dt); updateGraves(); updateRevive(dt);
   updateBanditSpawner();
   for (const a of actors) if (!a.isPlayer && !a.remote) { if (a.role === 'bandit') banditAI(a, dt); else botAI(a, dt); }
   for (const a of actors) { if (a.remote) updateRemote(a, dt); else updateActor(a, dt); }
@@ -3593,7 +3743,8 @@ function netOnMsg(m){
     const isNew = !Net.remotes[m.f];
     const a = netRemote(m.f, m);
     if (isNew && Net.host) { if (Net.built.length) Net.send({ t: 'b', list: Net.built }); Net.send(Object.assign({ t: 'ws' }, netSnapshot())); } a.seen = performance.now();
-    if (m.dd && !a.dead) { a.dead = true; const k = actors.indexOf(a); if (k >= 0) actors.splice(k, 1); if (!isNew) { toast((m.n || 'Người chơi') + ' đã bị hạ.', true); sfxDown(hearVol(a)); } } a.tx = m.x; a.ty = m.y; a.dir = m.d; a.role = m.r; a.name = m.n; a.pq = m.pq;
+    if (!m.dd && a.dead) { a.dead = false; if (actors.indexOf(a) < 0) actors.push(a); a.x = m.x; a.y = m.y; a.px = m.x; a.py = m.y; a.tx = m.x; a.ty = m.y; if (!isNew) { toast((m.n || 'Người chơi') + ' đã được cứu sống!', true); reviveFx(m.x, m.y); } }
+    if (m.dd && !a.dead && !(a.reviveUntil > performance.now())) { a.dead = true; a.x = m.x; a.y = m.y; addGrave(a); const k = actors.indexOf(a); if (k >= 0) actors.splice(k, 1); if (!isNew) { toast((m.n || 'Người chơi') + ' đã gục! Xem dấu đỏ trên bản đồ.', true); sfxDown(hearVol(a)); } } a.tx = m.x; a.ty = m.y; a.dir = m.d; a.role = m.r; a.name = m.n; a.pq = m.pq; a.carryF = m.cr || '';
     if (m.sw && a.swing < 0) a.swing = 0;
     if (m.h) { if (m.f) Net.hostId = m.f; Net.lastHostRx = performance.now(); Net.rx++; Net.hostStarted = !!m.st; if (!Net.host && started && m.st) matchLeft = m.ml; updateLobbyGo(); }
   } else if (m.t === 'rm') {   /* chủ gỡ nông trại (xoá/nâng cấp/di chuyển) */
@@ -3620,6 +3771,8 @@ function netOnMsg(m){
     if (m.to === Net.id && !player.dead) damageFarmer(player, m.dmg, { role: 'bandit' });
   } else if (m.t === 'bd') {   /* tháp bắn trúng người chơi làm cướp là mình */
     if (m.to === Net.id && player.role === 'bandit' && !player.dead) damageActor(player, m.dmg);
+  } else if (m.t === 'rv') {   /* đồng đội cứu mình */
+    if (m.to === Net.id) onRevived(m);
   } else if (m.t === 'bh') {   /* tháp của khách bắn trúng cướp */
     if (!Net.host) return;
     for (const a of actors) if (a.role === 'bandit' && a.gid === m.i && !a.remote) { damageActor(a, m.dmg); break; }
@@ -3628,7 +3781,7 @@ function netOnMsg(m){
 function netTick(){
   netFlushBuilt(); netApplyHp();
   const p = player;
-  Net.send({ t: 's', pq: lobbyMode && inPortal(p) ? 1 : 0, n: p.name, lk: Net.lk, x: Math.round(p.x), y: Math.round(p.y), d: p.dir, sw: p.swing >= 0, r: p.role, dd: p.dead ? 1 : 0, h: Net.host ? 1 : 0, st: started ? 1 : 0, ml: Math.round(matchLeft) });
+  Net.send({ t: 's', pq: lobbyMode && inPortal(p) ? 1 : 0, n: p.name, lk: Net.lk, x: Math.round(p.x), y: Math.round(p.y), d: p.dir, sw: p.swing >= 0, r: p.role, dd: p.dead ? 1 : 0, cr: (p.carryG && p.carryG.a.remote) ? ((() => { for (const f in Net.remotes) if (Net.remotes[f] === p.carryG.a) return f; return ''; })()) : '', h: Net.host ? 1 : 0, st: started ? 1 : 0, ml: Math.round(matchLeft) });
   if (Net.host && started) {
     const l = []; for (const a of actors) if (a.role === 'bandit' && !a.remote) l.push([a.gid, Math.round(a.x), Math.round(a.y), a.dir, Math.round(a.hp), a.maxHp, a.name, a.swing >= 0 ? 1 : 0]);
     Net.send({ t: 'bs', l });
