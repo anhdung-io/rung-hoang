@@ -238,7 +238,7 @@ body.lobby .hud.tl, body.lobby #hotbar, body.lobby #chopBtn, body.lobby .timer, 
 #farmMenu .fm-i{ font-size:12px; color:var(--dim); margin-bottom:6px; line-height:1.3; }
 #farmMenu .fm-b{ display:block; width:100%; margin-top:6px; padding:6px 10px; font-family:var(--font); font-weight:800; font-size:14px; color:#2b1a05; background:linear-gradient(#ffd884,var(--amber)); border:2px solid #21140d; border-radius:10px; cursor:pointer; touch-action:manipulation; text-align:left; }
 #farmMenu .fm-b small{ display:block; font-weight:600; font-size:11px; opacity:.85; }
-#farmMenu .fm-b:disabled{ opacity:.45; cursor:default; }
+#farmMenu .fm-b:disabled{ opacity:1; cursor:default; background:rgba(58,62,58,.82); color:#c9cdc2; border-color:rgba(14,16,14,.75); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); text-shadow:0 1px 2px #000; }   /* v62: nút bị khoá xám mờ như nút Cứu, nhưng đỡ trong suốt */
 #farmMenu .fm-b.danger{ background:linear-gradient(#f0a090,#d2594a); }
 #farmMenu .fm-x{ position:absolute; top:4px; right:8px; background:none; border:0; color:#f4efd9; font-size:22px; line-height:1; cursor:pointer; touch-action:manipulation; }
 </style>
@@ -807,6 +807,10 @@ function initAudio(){
   if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
   try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; }
 }
+/* v59: ÂM LƯỢNG CHUNG x1.2 cho mọi tiếng trừ còi báo động (còi nối thẳng ra loa, không qua nút này). Chỉnh SFX_MASTER để đổi. */
+const SFX_MASTER = 1.2;
+let _mg = null;
+function outNode(){ if (!_mg || _mg.context !== AC) { _mg = AC.createGain(); _mg.gain.value = SFX_MASTER; _mg.connect(AC.destination); } return _mg; }
 function noiseBurst(dur, freq, vol, curve){
   if (!AC || muted) return;
   const t = AC.currentTime, n = Math.floor(AC.sampleRate * dur);
@@ -815,7 +819,7 @@ function noiseBurst(dur, freq, vol, curve){
   const src = AC.createBufferSource(); src.buffer = buf;
   const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = freq;
   const g = AC.createGain(); g.gain.value = vol;
-  src.connect(f); f.connect(g); g.connect(AC.destination); src.start(t);
+  src.connect(f); f.connect(g); g.connect(outNode()); src.start(t);
 }
 function tone(type, f0, f1, dur, vol, delay){
   if (!AC || muted) return;
@@ -823,7 +827,7 @@ function tone(type, f0, f1, dur, vol, delay){
   const o = AC.createOscillator(); o.type = type;
   o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
   const g = AC.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + dur + 0.02);
+  o.connect(g); g.connect(outNode()); o.start(t); o.stop(t + dur + 0.02);
 }
 const sfxChop  = v => { if (v < 0.03) return; noiseBurst(0.13, 1500, 0.55 * v, 3); tone('triangle', 170, 60, 0.13, 0.5 * v); };
 const sfxWhoosh = v => { if (v < 0.03) return; noiseBurst(0.16, 900, 0.12 * v, 1); };
@@ -841,7 +845,7 @@ const sfxBuild = () => { noiseBurst(0.09, 900, 0.4, 3); tone('triangle', 200, 90
 function sfxAlarm(kind){   /* v45: còi hụ thật (quét tần số lên xuống, giữ âm lượng) + tiếng trống trầm mỗi nhịp; 'spot' (bị nhắm) gấp và cao hơn 'build' */
   if (!AC || muted) return;
   const t = AC.currentTime, spot = kind === 'spot', cyc = spot ? .36 : .5, n = spot ? 5 : 4, dur = cyc * n, lo = spot ? 700 : 600, hi = spot ? 1250 : 1000;
-  const g = AC.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(.103, t + .04); g.gain.setValueAtTime(.103, t + dur - .12); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  const g = AC.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(.0742, t + .04); g.gain.setValueAtTime(.0742, t + dur - .12); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 3200; g.connect(f); f.connect(AC.destination);
   for (const [type, mul, vol] of [['sawtooth', 1, .7], ['square', .5, .45]]) {
     const o = AC.createOscillator(); o.type = type; const og = AC.createGain(); og.gain.value = vol;
@@ -849,7 +853,7 @@ function sfxAlarm(kind){   /* v45: còi hụ thật (quét tần số lên xuố
     for (let i = 0; i < n; i++) { o.frequency.linearRampToValueAtTime(hi * mul, t + cyc * (i + .5)); o.frequency.linearRampToValueAtTime(lo * mul, t + cyc * (i + 1)); }
     o.connect(og); og.connect(g); o.start(t); o.stop(t + dur + .05);
   }
-  for (let i = 0; i < n; i++) tone('sine', 140, 45, .22, .229, cyc * i);
+  for (let i = 0; i < n; i++) tone('sine', 140, 45, .22, .1374, cyc * i);   /* v59: .1527 x master 1.2 = .1832 thực tế (giảm 20% so với .229) */
 }
 const sfxHorn  = () => { tone('sawtooth', 130, 125, 0.7, 0.16); tone('sawtooth', 196, 190, 0.7, 0.1, 0.02); tone('sawtooth', 130, 125, 0.9, 0.16, 0.9); };
 const sfxWin   = () => { [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.28, 0.2, i * 0.16)); };
@@ -1410,6 +1414,7 @@ function toast(msg, force){
   clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2200);
 }
 function doHit(a){
+  if (a.npc === 'applicant') return appHit(a);
   if (a.role === 'bandit') {
     const bt = a.target;
     if (bt && bt.type === 'def' && !bt.removed) { if (defDist(a, bt) <= REACH + 10) damageDef(bt, BANDIT_HIT_DEF * dmgMul(), a); return; }
@@ -1420,7 +1425,7 @@ function doHit(a){
   }
   if (a.isPlayer && !a.dead) {
     const hb = banditInReach(a);
-    if (hb) { const dmg = playerHitDmg(), lethal = hb.hp <= dmg; damageActor(hb, dmg); if (lethal) { toast('Bạn đã hạ một tên cướp! Nó sẽ quay lại từ rìa rừng.', true); } return; }
+    if (hb) { const dmg = playerHitDmg(), lethal = hb.hp <= dmg; damageActor(hb, dmg); if (lethal) { toast('Bạn đã hạ một tên cướp! Nó sẽ quay lại từ rìa rừng.', true); questProgress('bandit'); } return; }
   }
   const t = a.target;
   if (!t || t.state !== 0 || t.grow < 1) return;
@@ -1439,7 +1444,7 @@ function hitTree(t, a){
   if (a.isPlayer) { addFloat(t.x, t.y - 46, '+1'); onWoodChange(); }
   if (t.hp <= 0) {
     t.state = 1; t.fallT = 0; t.fallDir = t.x >= a.x ? 1 : -1;
-    a.wood += 3; sfxFall(v);
+    a.wood += 3; sfxFall(v); if (a.isPlayer) questProgress('tree');
     if (a.isPlayer) { addFloat(t.x, t.y - 70, '+3 thưởng', '#ffd884'); onWoodChange(); sfxPick(); }
   }
 }
@@ -1482,9 +1487,9 @@ function collide(a){
 function updateActor(a, dt){
   const inp = a.input; a.px = a.x; a.py = a.y;
   if (a.swing >= 0) {
-    a.swing += dt;
+    a.swing += dt * (a.swingMul || 1);
     if (!a.hit && a.swing / SWING_T >= .55) { a.hit = true; doHit(a); }
-    if (a.swing >= SWING_T) { a.swing = -1; a.cool = .06; }
+    if (a.swing >= SWING_T) { a.swing = -1; a.cool = a.restT || .06; }
   } else {
     a.cool -= dt;
     if (inp.act && a.cool <= 0) startSwing(a);
@@ -2133,11 +2138,11 @@ function collideTerrain(a){
 /* ================= 6d. PHÒNG THỦ: TƯỜNG, CỔNG, THÁP PHÁO ================= */
 const DEFS = [], PROJ = [];
 const DEF_ORDER = ['tuong', 'cong', 'thap'];  /* đã mở bán cổng + tháp pháo */
-const DEF_NAMES = { tuong: 'Tường', cong: 'Cổng', thap: 'Tháp pháo', mda: 'Khoan đá', mdong: 'Khoan đồng', mvang: 'Khoan vàng' };
+const DEF_NAMES = { chamcong: 'Máy chấm công', tuong: 'Tường', cong: 'Cổng', thap: 'Tháp pháo', mda: 'Khoan đá', mdong: 'Khoan đồng', mvang: 'Khoan vàng' };
 const MINE_ORDER = ['mda', 'mdong', 'mvang'];
 function isMine(k){ return k === 'mda' || k === 'mdong' || k === 'mvang'; }
-function isSq(k){ return k === 'thap' || isMine(k); }  /* công trình hình vuông, không xoay */
-const DEF_MAT = { tuong: ['gỗ', 'đá', 'đá bọc sắt'], cong: ['gỗ', 'gỗ gia cố', 'sắt'], thap: ['gỗ', 'đá', 'thép'], mda: ['gỗ', 'sắt', 'thép'], mdong: ['gỗ', 'sắt', 'thép'], mvang: ['gỗ', 'sắt', 'thép'] };   /* v50: tên theo vật liệu như tường/cổng/tháp */
+function isSq(k){ return k === 'thap' || k === 'chamcong' || isMine(k); }  /* công trình hình vuông, không xoay */
+const DEF_MAT = { chamcong: ['gỗ'], tuong: ['gỗ', 'đá', 'đá bọc sắt'], cong: ['gỗ', 'gỗ gia cố', 'sắt'], thap: ['gỗ', 'đá', 'thép'], mda: ['gỗ', 'sắt', 'thép'], mdong: ['gỗ', 'sắt', 'thép'], mvang: ['gỗ', 'sắt', 'thép'] };   /* v50: tên theo vật liệu như tường/cổng/tháp */
 /* CON SỐ TẠM, chỉnh sau khi chơi thử: wood = gỗ, coin = xu, hp = máu;
    tháp: dmg = sát thương mỗi phát, range = tầm bắn (px), rate = số giây giữa hai phát */
 const DEF_DATA = {
@@ -2146,6 +2151,7 @@ const DEF_DATA = {
   thap:  { tiers: [ { wood: 20, coin: 25, hp: 160, dmg: 8, range: 190, rate: 1.1 }, { wood: 50, coin: 110, hp: 320, dmg: 14, range: 230, rate: .8 }, { wood: 110, coin: 320, hp: 560, dmg: 24, range: 270, rate: .55 } ] }
 };
 /* MÁY KHOAN (CON SỐ TẠM): inc = xu mỗi phút. Đắt hơn trang trại, dễ bị cướp phá */
+DEF_DATA.chamcong = { tiers: [ { wood: 25, coin: 30, hp: 180 } ] };   /* v54: máy chấm công, con số TẠM */
 DEF_DATA.mda   = { tiers: [ { wood: 20, coin: 30, hp: 140, inc: 14 }, { wood: 50, coin: 120, hp: 260, inc: 40 }, { wood: 100, coin: 320, hp: 420, inc: 90 } ] };
 DEF_DATA.mdong = { tiers: [ { wood: 35, coin: 80, hp: 180, inc: 24 }, { wood: 80, coin: 220, hp: 320, inc: 70 }, { wood: 150, coin: 520, hp: 500, inc: 160 } ] };
 DEF_DATA.mvang = { tiers: [ { wood: 50, coin: 160, hp: 220, inc: 40 }, { wood: 110, coin: 420, hp: 380, inc: 120 }, { wood: 200, coin: 1000, hp: 600, inc: 300 } ] };
@@ -2161,12 +2167,13 @@ function banditInReach(a){
 }      /* máu cướp (tháp bắn trúng thì trừ) */
 const BANDIT_HIT_DEF = 11;  /* sát thương mỗi nhát dao của cướp lên công trình */
 const WALL_LEN = 72, WALL_T = 14, TOWER_S = 40;
-const DEF_H = { tuong: [22, 26, 30], cong: [28, 32, 36], thap: [60, 72, 84], mda: [44, 52, 60], mdong: [46, 54, 62], mvang: [48, 56, 66] };
+const DEF_H = { chamcong: [44], tuong: [22, 26, 30], cong: [28, 32, 36], thap: [60, 72, 84], mda: [44, 52, 60], mdong: [46, 54, 62], mvang: [48, 56, 66] };
 let lastDefO = 'h';
 
 const isDefKind = k => !!DEF_DATA[k];
 const TEST_FREE = false;  /* TEST: true = mua đồ miễn phí. Chơi xong đổi thành false để trả lại giá */
-const itemData = (kind, tier) => { const D = ITEM_DATA[kind] ? ITEM_DATA[kind] : (FARM_DATA[kind] || DEF_DATA[kind]).tiers[tier]; return TEST_FREE ? Object.assign({}, D, { wood: 0, coin: 0 }) : D; };
+const PUNCH_FREE = true;  /* v57 TEST: máy chấm công MIỄN PHÍ để thử tuyển dụng. NHỚ đổi lại false khi chơi thật (giá thật 25 gỗ + 30 xu trong DEF_DATA.chamcong) */
+const itemData = (kind, tier) => { const D = ITEM_DATA[kind] ? ITEM_DATA[kind] : (FARM_DATA[kind] || DEF_DATA[kind]).tiers[tier]; return (TEST_FREE || (PUNCH_FREE && kind === 'chamcong')) ? Object.assign({}, D, { wood: 0, coin: 0 }) : D; };
 const itemName = kind => FARM_NAMES[kind] || DEF_NAMES[kind] || (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[kind] && ITEM_DATA[kind].name);
 
 function defSize(kind, o){ return isSq(kind) ? [TOWER_S, TOWER_S] : (o === 'v' ? [WALL_T, WALL_LEN] : [WALL_LEN, WALL_T]); }
@@ -2330,12 +2337,25 @@ function paintMine(c, tier, kind){
   for (let i = 0; i < 2 + tier * 2; i++) { const x = 14 + r() * 10 - 4, y = 10 - r() * 8 - (i % 2) * 3; c.fillStyle = oreC; c.strokeStyle = oreD; c.beginPath(); c.arc(x, y, 3.1 + r() * 1.2, 0, TAU); c.fill(); c.stroke(); }
   if (tier === 2) cuboid(c, -22, 6, 10, 10, 0, 10, '#b5b8bc', '#8a8d92', 1.1);
 }
+function paintPunch(c){   /* v54: máy chấm công: bệ gỗ, thân máy xám có đồng hồ + khe thẻ + đèn, cột biển TUYỂN DỤNG */
+  ell(c, 0, 17, 31, 11, 'rgba(0,0,0,.26)', 0);
+  cuboid(c, 0, 4, 38, 28, 0, 8, '#b58f5c', '#8a6a40', 1.2);
+  limb(c, 15, -22, 15, -50, 4, '#7d5a36', 1.1);
+  cuboid(c, 0, 2, 26, 16, 8, 36, '#d8dcdf', '#9aa0a6', 1.2);
+  ell(c, 0, -17, 7.4, 7.4, '#fbfaf0', 1.3);
+  c.strokeStyle = '#21140d'; c.lineWidth = 1.2; c.lineCap = 'round'; c.beginPath(); c.moveTo(0, -17); c.lineTo(0, -22); c.moveTo(0, -17); c.lineTo(4, -15); c.stroke();
+  box(c, -9, -6, 18, 3.4, 1.2, '#2b2b2b', .8); box(c, -6, -9.6, 12, 2.4, 1, '#f6f0d8', .7);
+  ell(c, 10, -9, 1.7, 1.7, '#5dd27a', .6);
+  c.beginPath(); c.roundRect(-24, -68, 58, 16, 3); shape(c, '#c8372d', 1.4);
+  c.fillStyle = '#fff6df'; c.font = '800 9px "Baloo 2",system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('TUYỂN DỤNG', 5, -59.5); c.textBaseline = 'alphabetic';
+  limb(c, -14, -52, -14, -46, 1.4, '#5b6168', .6); limb(c, 24, -52, 24, -46, 1.4, '#5b6168', .6);
+}
 function defSprite(kind, tier, o){
   const key = kind + tier + (isSq(kind) ? '' : o); if (DSPR[key]) return DSPR[key];
   let S;
   if (isSq(kind)) {
     const H = DEF_H[kind][tier], oy = H + 48;
-    S = mkSprite(110, oy + 38, 55, oy, c => isMine(kind) ? paintMine(c, tier, kind) : paintTower(c, tier));
+    S = mkSprite(110, oy + 38, 55, oy, c => kind === 'chamcong' ? paintPunch(c) : isMine(kind) ? paintMine(c, tier, kind) : paintTower(c, tier));
   } else {
     const sz = defSize(kind, o), hw = sz[0] / 2, hh = sz[1] / 2, H = kind === 'cong' ? DEF_H.cong[tier] + 22 : DEF_H.tuong[tier] + 14;
     const oy = hh + H + 8;
@@ -2847,6 +2867,7 @@ function drawDefAt(c, d, time){
   c.drawImage(S, -S.ox, -S.oy, S.lw, S.lh);
   if (d.kind === 'cong') drawGateLeaves(c, d);
   if (d.kind === 'thap') drawTowerGun(c, d);
+  if (d.kind === 'chamcong') { c.fillStyle = Math.sin(time * 4 + d.seed) > 0 ? '#9dffb0' : '#2c7a3a'; c.beginPath(); c.arc(10, -9, 1.5, 0, TAU); c.fill(); }
   if (isMine(d.kind)) { const bz = Math.sin(time * 7 + d.seed) * 2; c.fillStyle = '#2b2b2b'; c.beginPath(); c.moveTo(-3.5, -6 + bz); c.lineTo(3.5, -6 + bz); c.lineTo(0, 3 + bz); c.closePath(); c.fill(); }
   if (d.hp < d.maxHp) drawCracks(c, d);
   if (d.hurt > 0) { c.globalCompositeOperation = 'lighter'; c.globalAlpha = d.hurt * .32; c.drawImage(S, -S.ox, -S.oy, S.lw, S.lh); }
@@ -3148,6 +3169,7 @@ function render(dt){
   const vis0 = gQuery(L - 130, T - 40, R + 130, B + 280, []), vis = [];
   for (const e of vis0) { if (e.removed || e.stamp === frameStamp) continue; e.stamp = frameStamp; vis.push(e); }
   for (const a of actors) vis.push(a);
+  if (!lobbyMode) for (const a of APPLICANTS) if (a.x > L - 60 && a.x < R + 60 && a.y > T - 40 && a.y < B + 140) vis.push(a);
   for (const f of FARMS) if (f.x1 > L - 40 && f.x0 < R + 40 && f.y1 > T - 40 && f.y0 < B + 40) for (const an of f.animals) vis.push(an);
   vis.sort((p, q) => p.y - q.y);
   const time = gameTime;
@@ -3162,7 +3184,7 @@ function render(dt){
       case 'farmFront': drawFarmSprite(e.f, 'front'); break;
       case 'animal': drawAnimal(c, e, time); break;
       case 'def': drawDefAt(c, e, time); break;
-      case 'actor': c.save(); c.translate(e.x, e.y); drawPerson(c, e, time); if (e.carryG) drawCarriedBody(c, e.carryG, time); if (e.role !== 'bandit' && e.hp < e.maxHp) drawHpBar(0, -92, 44, e.hp / e.maxHp); c.restore(); break;
+      case 'actor': c.save(); c.translate(e.x, e.y); drawPerson(c, e, time); if (e.npc) drawNpcMark(c, e, time); if (e.carryG) drawCarriedBody(c, e.carryG, time); if (e.role !== 'bandit' && e.hp < e.maxHp) drawHpBar(0, -92, 44, e.hp / e.maxHp); c.restore(); break;
     }
   }
   fireGlow(FIRE);
@@ -3213,7 +3235,7 @@ function drawMini(){
     m.restore();
   }
   for (const f of FARMS) { m.fillStyle = '#e3b36a'; m.fillRect(f.x * k - 4, f.y * k - 4, 8, 8); }
-  for (const d of DEFS) { m.fillStyle = isMine(d.kind) ? '#f2c14e' : d.kind === 'thap' ? '#eef2f6' : d.kind === 'cong' ? '#e3b36a' : '#b5bcc4'; m.fillRect(d.x * k - 1.6, d.cy * k - 1.6, d.kind === 'thap' ? 4 : 3.2, d.kind === 'thap' ? 4 : 3.2); }
+  for (const d of DEFS) { m.fillStyle = d.kind === 'chamcong' ? '#8fd8ff' : isMine(d.kind) ? '#f2c14e' : d.kind === 'thap' ? '#eef2f6' : d.kind === 'cong' ? '#e3b36a' : '#b5bcc4'; m.fillRect(d.x * k - 1.6, d.cy * k - 1.6, d.kind === 'thap' ? 4 : 3.2, d.kind === 'thap' ? 4 : 3.2); }
   m.fillStyle = '#4b7a3a';
   for (const t of trees) if (t.state === 0) { m.fillRect(t.x * k - 1.5, t.y * k - 1.5, 3, 3); }
   m.fillStyle = '#8b9096'; for (const r of rocks) m.fillRect(r.x * k - 1, r.y * k - 1, 2, 2);
@@ -3366,6 +3388,291 @@ function updateStamina(dt){
   _sb.style.color = on && !exhausted ? '#2b1a05' : '#fff'; _sb.style.opacity = exhausted ? '.7' : '1';
   _sbar.style.left = Math.round(hb.left + hb.width / 2 - 100) + 'px'; _sbar.style.top = Math.round(hb.top - 26) + 'px';
   const f = _sbar.querySelector('i'), r = stamina / STAMINA_MAX; f.style.width = (r * 100) + '%'; f.style.background = exhausted || r < .25 ? '#e0402f' : '#ff7a00';
+}
+/* ---------- v54: NGƯỜI XIN VIỆC (tuyển dụng, lượt 1) ----------
+   Đứng rải rác khắp bản đồ (vị trí cố định theo seed 6060, máy nào cũng giống nhau). Chưa phải actor: KHÔNG nằm trong mảng actors (không bị cướp nhắm, không tính vào số dân).
+   Lại gần thì hiện nút 'Nói chuyện' (phím F), bấm để nghe câu chuyện. Nhiệm vụ chiêu mộ làm ở lượt sau. MAX_HIRES = số người tối đa mỗi máy chấm công. */
+const MAX_HIRES = 2;
+/* v55: CHỈ 3 NGƯỜI (APP_BASE) trong 12 người của kho APP_POOL, rải đều khắp bản đồ. APPLICANTS = những người ĐANG đứng ngoài bản đồ.
+   Tổng 'người máy' (đang xin việc + đã thuê) giữ bằng applicantTarget(): 3, mỗi máy chấm công sống thêm từ máy thứ 2 cộng APP_PER_EXTRA_CLOCK.
+   Chỉ khi có người CHẾT (removeApplicant(a)) hoặc mua thêm máy thì mới có người mới xuất hiện, ở chỗ xa người chơi và xa những người còn lại.
+   v57: người đã thuê (a.st 'hired') vẫn nằm trong APPLICANTS nên tính vào tổng, không có người thay. */
+const APP_BASE = 3, APP_PER_EXTRA_CLOCK = 2;
+/* v56: người xin việc đi chặt cây như bot dân nhưng CHẬM (CON SỐ TẠM): vung rìu chậm APP_SWING_MUL lần (1 = như bot), nghỉ APP_REST giây giữa 2 nhát (bot nghỉ .06), đi bộ APP_SPEED (bot 118), chỉ quanh chỗ đứng APP_ROAM px. Bot ~0.5 giây/nhát, người xin việc ~2.1 giây/nhát. */
+const APP_SWING_MUL = .4, APP_REST = 1, APP_SPEED = 90, APP_ROAM = 450;
+/* v58: người LÀM THUÊ chặt nhanh hơn một chút (nghỉ .3s, swingMul .7, ~1s/nhát thay vì ~2.1s; v58b sửa: trước đó người làm thuê bị CHẬM hơn vì đi về giao gỗ sau mỗi cây, nay chỉ về khi đủ HIRE_CARRY hoặc hết cây) và mang gỗ về máy chấm công: đủ HIRE_CARRY gỗ (hoặc hết cây) thì đi về giao cho chủ máy. CON SỐ TẠM. */
+const APP_REST_HIRED = 1.7, APP_SWING_HIRED = .4, HIRE_CARRY = 10;   /* v60: người làm thuê chặt CHẬM hơn người xin việc (~2.8s/nhát so với ~2.1s); muốn chậm hơn nữa thì tăng APP_REST_HIRED */
+/* v57: NHIỆM VỤ CHIÊU MỘ (lượt 2). Mỗi người xin việc có 1 loại nhiệm vụ cố định (APP_QUEST theo thứ tự APP_DATA): 'tree' = chặt NGÃ N cây, 'bandit' = tự tay hạ N tên cướp bằng rìu (tháp bắn hạ không tính).
+   Số N theo người thuê thứ mấy của máy chấm công (QUEST_DATA[số người máy đó đã thuê]): người 1 nhẹ, người 2 nặng hơn. CON SỐ TẠM. Việc khác (câu cá...) chưa có, để sau.
+   Trạng thái a.st: 'new' (chưa nhận) -> 'doing' (đang làm, a.qgot/a.qneed) -> 'done' (xong, chờ nói chuyện nhận người) -> 'hired' (làm thuê, ra máy chấm công của mình chặt cây chậm). Mỗi máy chấm công: d.hires = [người đã thuê], d.questApp = người đang làm nhiệm vụ (mỗi máy 1 nhiệm vụ một lúc). */
+const QUEST_DATA = [ { tree: 5, bandit: 2 }, { tree: 12, bandit: 5 } ];
+const APP_QUEST = ['bandit', 'bandit', 'tree', 'tree', 'tree', 'tree', 'bandit', 'tree', 'bandit', 'tree', 'bandit', 'tree'];
+const APPLICANTS = [], APP_POOL = [];
+const APP_DATA = [
+  ['Ông Sáu Râu', 'Nhà tôi ở bìa rừng này. Mùa trước cướp lấy mất cái cày với con trâu, giờ tuổi cao mà tay còn khoẻ, chẳng ai dám thuê.'],
+  ['Chị Hai Lụa', 'Tôi từng buôn lụa qua rừng, bị cướp chặn đường lấy hết hàng. Giờ chỉ mong có việc đàng hoàng để trả nợ.'],
+  ['Anh Tèo Trèo', 'Tôi mồ côi, lang thang trong rừng từ nhỏ nên trèo cây giỏi lắm. Ai cho tôi bát cơm thì việc gì tôi cũng làm.'],
+  ['Bà Năm Bánh', 'Chợ làng tôi cháy rồi, quán bánh cũng mất theo. Tôi nấu ăn khéo, cưa gỗ cũng chẳng kém ai đâu.'],
+  ['Anh Tư Lạc Đà', 'Tôi theo đoàn lạc đà qua sa mạc, đoàn tan hết, chỉ còn cái bào gỗ này. Thợ mộc như tôi ở đâu cũng sống được.'],
+  ['Cô Mười Cát', 'Gió cát chôn mất nhà tôi trong một đêm. Tôi đi tìm chỗ nào có mưa, có người, có việc để làm.'],
+  ['Chú Bảy Lầy', 'Tôi mò cua bắt ốc ở đầm này mấy chục năm. Dạo này cướp hay lảng vảng, chẳng ai dám ra đầm nữa.'],
+  ['Dì Ba Sậy', 'Tôi đan chiếu bằng sậy bán cho cả làng. Làng giờ bỏ đi hết, chiếu chẳng bán được cho ai.'],
+  ['Anh Hùng Băng', 'Tôi từng là thợ săn trên vùng tuyết này. Mùa đông năm ngoái mất hết bẫy và cung, giờ tay không.'],
+  ['Cô Tuyết Nhi', 'Tôi lạc đoàn khi qua đèo tuyết, đi bộ mấy ngày mới tới đây. Chỉ cần chỗ ấm và một công việc.'],
+  ['Chú Ngư Tám', 'Chú quen câu cá ở hồ lớn này lắm. Từ ngày cướp vào rừng, thuyền cũng bị đập, cần câu cũng gãy.'],
+  ['Chị Sen Hồ', 'Tôi lớn lên bên hồ, bơi giỏi hơn đi bộ. Nghe nói ai có bàn tuyển dụng sẽ trả công đàng hoàng, đúng không?']
+];
+const APP_BIOMES = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4];
+function genApplicants(){
+  const rg = mulberry32((Math.random() * 4294967296) >>> 0);   /* v61: mỗi trận một seed ngẫu nhiên nên vị trí người xin việc khác nhau mỗi trận */
+  APP_DATA.forEach((d, idx) => {
+    const id = APP_BIOMES[idx], b = id === 0 ? [200, 300, FOREST - 200, FOREST - 200] : REGIONS[id].bb;
+    let sp = null;
+    for (let t = 0; t < 6000 && !sp; t++) {
+      const x = clamp(b[0] + rg() * (b[2] - b[0]), 160, WORLD - 160), y = clamp(b[1] + rg() * (b[3] - b[1]), 200, WORLD - 160);
+      if (biomeAt(x, y) !== id || terrainBlocked(x, y, 60, true) || inMountain(x, y, 1.15)) continue;
+      if (id === 0 && Math.hypot(x - FOREST / 2, y - FOREST / 2) < 500) continue;
+      if (ORES.some(o => Math.hypot(o.x - x, o.y - y) < ORE_R + 60) || APP_POOL.some(a => Math.hypot(a.x - x, a.y - y) < 600)) continue;
+      if (gQuery(x - 50, y - 50, x + 50, y + 50, []).some(e => (e.type === 'tree' || e.type === 'rock' || e.type === 'mount') && Math.hypot(e.x - x, e.y - y) < 46)) continue;
+      sp = [x, y];
+    }
+    if (!sp) return;
+    const a = makeActor(d[0], LOOKS[idx % LOOKS.length], sp[0], sp[1], false);
+    a.npc = 'applicant'; a.story = d[1]; a.biome = id; a.look = Object.assign({}, a.look, { hat: ['#e0bf62', '#cfd6dc', '#b9553a', '#6e8f4e'][idx % 4] });
+    a.dir = ['down', 'left', 'right'][idx % 3]; a.lookT = rand(1, 4); a.seed = idx * 3.7;
+    a.hx = a.ox = sp[0]; a.hy = a.oy = sp[1]; a.st = 'new'; a.qkind = APP_QUEST[idx % APP_QUEST.length]; a.qneed = 0; a.qgot = 0; a.clock = null; a.swingMul = APP_SWING_MUL; a.restT = APP_REST; a.speed = APP_SPEED;
+    a.pool = 'reserve'; APP_POOL.push(a);
+  });
+  for (let i = APP_POOL.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const tmp = APP_POOL[i]; APP_POOL[i] = APP_POOL[j]; APP_POOL[j] = tmp; }   /* v61: xáo kho để ai xuất hiện đầu trận cũng ngẫu nhiên */
+  fillApplicants(true);
+}
+function clockCount(){ let n = 0; for (const d of DEFS) if (d.kind === 'chamcong' && !d.remote && d.hp > 0) n++; return n; }
+function applicantTarget(){ return Math.min(APP_POOL.length, APP_BASE + APP_PER_EXTRA_CLOCK * Math.max(0, clockCount() - 1)); }
+/* chọn người trong kho (reserve) xa những người đang đứng nhất; khi bù giữa trận thì tránh chỗ gần người chơi (<900px) để không hiện ra trước mặt */
+function pickReserve(avoidPlayer){
+  let best = null, bs = -Infinity;
+  for (const c of APP_POOL) {
+    if (c.pool !== 'reserve') continue;
+    let sc = 1e9; for (const a of APPLICANTS) sc = Math.min(sc, Math.hypot(a.x - c.x, a.y - c.y));
+    if (avoidPlayer && Math.hypot(player.x - c.x, player.y - c.y) < 900) sc -= 1e8;
+    sc += Math.random() * 500;   /* v61: nhiễu ngẫu nhiên để không luôn chọn cùng một chỗ */
+    if (sc > bs) { bs = sc; best = c; }
+  }
+  return best;
+}
+function fillApplicants(first){
+  const want = applicantTarget();   /* APPLICANTS gồm cả người đã thuê (st 'hired'), nên họ tính vào tổng */
+  while (APPLICANTS.length < want) { const c = pickReserve(!first); if (!c) break; c.pool = 'active'; APPLICANTS.push(c); }
+}
+function releaseApplicant(a){   /* nhả chỗ đang giữ ở máy chấm công */
+  const c = a.clock;
+  if (c) { if (c.questApp === a) c.questApp = null; if (c.hires) { const k = c.hires.indexOf(a); if (k >= 0) c.hires.splice(k, 1); } }
+  a.clock = null;
+}
+/* người CHẾT (hoặc bị gỡ): bù người mới cho đủ tổng. Lượt 3 sẽ gọi khi người làm thuê bị cướp hạ. */
+function removeApplicant(a){
+  const k = APPLICANTS.indexOf(a); if (k >= 0) APPLICANTS.splice(k, 1);
+  releaseApplicant(a); a.pool = 'gone'; a.st = 'new';
+  if (talkApp === a) closeTalk(); if (nearApp === a) nearApp = null;
+  fillApplicants(false);
+}
+/* máy chấm công bị phá: người đó bỏ đi, về lại chỗ cũ và là người xin việc như ban đầu */
+function resetApplicant(a){ releaseApplicant(a); a.restT = APP_REST; a.swingMul = APP_SWING_MUL; a.wood = 0; a.st = 'new'; a.qgot = 0; a.qneed = 0; a.hx = a.ox; a.hy = a.oy; a.ai.target = null; a.stuck = 0; if (talkApp === a) renderTalk(); }
+function ownClocks(){ return DEFS.filter(d => d.kind === 'chamcong' && !d.remote && !d.removed && d.hp > 0); }
+/* máy còn chỗ (chưa đủ MAX_HIRES, chưa có nhiệm vụ đang chạy), gần người chơi nhất */
+function freeClock(){
+  let best = null, bd = 1e9;
+  for (const c of ownClocks()) {
+    if (!c.hires) c.hires = [];
+    if (c.hires.length >= MAX_HIRES || c.questApp) continue;
+    const d = Math.hypot(c.x - player.x, c.cy - player.y); if (d < bd) { bd = d; best = c; }
+  }
+  return best;
+}
+const QUEST_WORD = { tree: 'chặt ngã', bandit: 'hạ' };
+function questText(kind, n){ return kind === 'tree' ? 'chặt ngã ' + n + ' cây' : 'hạ ' + n + ' tên cướp bằng rìu'; }
+function acceptQuest(a){
+  if (a.st !== 'new' || ended || player.dead) return;
+  const c = freeClock(); if (!c) return;
+  a.clock = c; c.questApp = a; a.st = 'doing'; a.qgot = 0;
+  a.qneed = QUEST_DATA[Math.min(c.hires.length, QUEST_DATA.length - 1)][a.qkind];
+  toast('Nhiệm vụ của ' + a.name + ': ' + questText(a.qkind, a.qneed) + '.', true); sfxPick();
+}
+function questProgress(kind){
+  for (const a of APPLICANTS) {
+    if (a.st !== 'doing' || a.qkind !== kind) continue;
+    a.qgot = Math.min(a.qneed, a.qgot + 1);
+    if (a.qgot >= a.qneed) { a.st = 'done'; toast(a.name + ': xong nhiệm vụ! Quay lại nói chuyện để nhận người.', true); sfxPick(); }
+    else toast('Nhiệm vụ của ' + a.name + ': ' + (kind === 'tree' ? 'cây ' : 'cướp ') + a.qgot + '/' + a.qneed, true);
+    if (talkApp === a) renderTalk();
+  }
+}
+function hireApplicant(a){
+  const c = a.clock; if (!c || a.st !== 'done' || c.removed || c.hp <= 0) return;
+  if (!c.hires) c.hires = [];
+  c.hires.push(a); c.questApp = null; a.st = 'hired'; a.restT = APP_REST_HIRED; a.swingMul = APP_SWING_HIRED; a.wood = 0;
+  a.hx = c.x; a.hy = c.y1 + 60; a.ai.target = null; a.ai.wait = 0; a.stuck = 0;
+  toast(a.name + ' đã nhận việc và đi tới máy chấm công của bạn.', true); sfxPick();
+}
+let _qp = null, _qpTxt = '';
+function updateQuestPill(){
+  const lines = [];
+  if (started && !ended && !lobbyMode) for (const a of APPLICANTS) {
+    if (a.st === 'doing') lines.push(a.name + ': ' + (a.qkind === 'tree' ? 'chặt cây ' : 'hạ cướp ') + a.qgot + '/' + a.qneed);
+    else if (a.st === 'done') lines.push(a.name + ': xong, quay lại gặp!');
+  }
+  if (!_qp) {
+    _qp = document.createElement('div'); _qp.id = 'questPill';
+    _qp.style.cssText = 'position:fixed;left:10px;top:calc(env(safe-area-inset-top,0px) + 54px);z-index:15;display:none;max-width:60vw;padding:5px 11px;border-radius:12px;background:rgba(18,20,18,.5);color:#ffe9b0;font:800 13px "Baloo 2",system-ui,sans-serif;pointer-events:none;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);text-shadow:0 1px 2px #000';
+    document.body.appendChild(_qp);
+  }
+  const txt = lines.length ? 'Nhiệm vụ · ' + lines.join(' · ') : '';
+  if (txt !== _qpTxt) { _qpTxt = txt; _qp.textContent = txt; _qp.style.display = txt ? 'block' : 'none'; }
+}
+function appHit(a){
+  const t = a.target;
+  if (!t || t.state !== 0 || t.grow < 1) return;
+  if (Math.hypot(t.x - a.x, t.y - a.y) > REACH + t.r + 14) return;
+  if (!Net.on) { hitTree(t, a); return; }   /* chơi một mình: chặt thật, cây ngã, mọc lại như thường */
+  /* chơi mạng: trạng thái cây chỉ đồng bộ theo người chơi thật, nên người xin việc chỉ chặt cho đẹp (rung cây, vụn gỗ, tiếng), không làm cây ngã */
+  if (a.st === 'hired') a.wood = (a.wood | 0) + 1;   /* v58: chơi mạng cũng tính gỗ mang theo */
+  t.shake = 1; t.shakeT = 0; const away = Math.sign(t.x - a.x) || 1;
+  for (let i = 0; i < 5; i++) spawn({ k: 'chip', x: t.x + rand(-5, 5), y: t.y + 2, z: rand(8, 20), vx: away * rand(20, 90) + rand(-40, 40), vy: rand(-30, 30), vz: rand(80, 190), rot: rand(0, 6), vr: rand(-12, 12), size: rand(2, 4), color: Math.random() < .5 ? '#c99b62' : '#8f6440', life: rand(.5, .9), g: 520 });
+  sfxChop(hearVol(a));
+}
+/* AI chặt cây của người xin việc: giống botAI nhưng chỉ chọn cây trong APP_ROAM quanh chỗ đứng (để vẫn rải khắp bản đồ), dừng lại quay mặt về người chơi khi lại gần */
+function appAI(a, dt){
+  const inp = a.input, ai = a.ai;
+  inp.ix = inp.iy = 0; inp.act = false;
+  const wm = a.wantMove; a.wantMove = false;
+  ai.chk -= dt;
+  if (ai.chk <= 0) {   /* kẹt (muốn đi mà không nhúc nhích): bỏ cây đang nhắm; người làm thuê kẹt 3 lần thì dịch tới máy chấm công */
+    ai.chk = 1.5;
+    const moved = Math.hypot(a.x - ai.lastX, a.y - ai.lastY);
+    if (wm && moved < 10) {
+      ai.target = null; ai.wait = .4; a.stuck = (a.stuck || 0) + 1;
+      if (a.st === 'hired' && a.stuck >= 3) { a.x = a.hx + rand(-50, 50); a.y = a.hy + rand(-30, 30); a.px = a.x; a.py = a.y; a.stuck = 0; }
+    } else if (moved >= 10) a.stuck = 0;
+    ai.lastX = a.x; ai.lastY = a.y;
+  }
+  const pdx = player.x - a.x, pdy = player.y - a.y, pd = Math.hypot(pdx, pdy);
+  if (!player.dead && ((pd < 110 && a.st !== 'hired') || talkApp === a)) {   /* v61: người làm thuê đang chặt cây thì KHÔNG quay lại nhìn người chơi (chỉ khi đang nói chuyện) */
+    if (a.swing < 0) a.dir = Math.abs(pdx) > Math.abs(pdy) ? (pdx < 0 ? 'left' : 'right') : (pdy < 0 ? 'up' : 'down');
+    return;
+  }
+  const valid = ai.target && ai.target.state === 0 && ai.target.grow >= 1;
+  if (a.st === 'hired' && ((a.wood | 0) >= HIRE_CARRY || (a.noTree && (a.wood | 0) > 0))) {   /* v58: mang gỗ về máy chấm công rồi giao cho chủ */
+    const hd = Math.hypot(a.hx - a.x, a.hy - a.y);
+    if (hd > 60) { inp.ix = (a.hx - a.x) / hd; inp.iy = (a.hy - a.y) / hd; a.wantMove = true; return; }
+    const n = a.wood | 0; a.wood = 0; a.noTree = false; player.wood += n; addFloat(a.x, a.y - 60, '+' + n + ' gỗ (' + a.name + ')', '#ffd884'); onWoodChange(); sfxPick(); ai.target = null; ai.wait = .5; return;
+  }
+  if (a.st === 'hired' && !valid) {   /* người làm thuê: không có cây thì quay về chỗ máy chấm công */
+    const hd = Math.hypot(a.hx - a.x, a.hy - a.y);
+    if (hd > 110) { inp.ix = (a.hx - a.x) / hd; inp.iy = (a.hy - a.y) / hd; a.wantMove = true; }
+  }
+  ai.wait -= dt; if (ai.wait > 0) return;
+  if (!valid) {
+    const near = gQuery(a.hx - APP_ROAM, a.hy - APP_ROAM, a.hx + APP_ROAM, a.hy + APP_ROAM, []);
+    let best = null, bd = 1e9;
+    for (const t of near) {
+      if (t.type !== 'tree' || t.state !== 0 || t.grow < 1) continue;
+      if (Math.hypot(t.x - a.hx, t.y - a.hy) > APP_ROAM) continue;
+      const d = Math.hypot(t.x - a.x, t.y - a.y) + Math.random() * 80; if (d < bd) { bd = d; best = t; }
+    }
+    ai.target = best; a.noTree = !best; ai.wait = best ? .6 : rand(2, 4);
+    return;
+  }
+  const t = ai.target, dx = t.x - a.x, dy = t.y - a.y, d = Math.hypot(dx, dy);
+  if (d > REACH + t.r - 6) { inp.ix = dx / d; inp.iy = dy / d; a.wantMove = true; } else inp.act = true;
+}
+let nearApp = null, _tp = null, talkApp = null, _fillT = 0;
+function updateApplicants(dt){
+  if (lobbyMode || !started) { if (_tp) _tp.style.display = 'none'; updateQuestPill(); return; }
+  _fillT -= dt; if (_fillT <= 0) { _fillT = 1; fillApplicants(false); }
+  let best = null, bd = 100;
+  for (const a of APPLICANTS.slice()) {
+    if (a.clock && a.st === 'hired' && (a.clock.removed || a.clock.hp <= 0)) {   /* v62: máy bị xoá/phá: người làm thuê sang máy khác còn chỗ, không còn thì rời đi */
+      let nc = null, nd = 1e9;
+      for (const c of ownClocks()) { if (c === a.clock) continue; if (!c.hires) c.hires = []; if (c.hires.length >= MAX_HIRES) continue; const dd = Math.hypot(c.x - a.x, c.cy - a.y); if (dd < nd) { nd = dd; nc = c; } }
+      if (nc) { releaseApplicant(a); nc.hires.push(a); a.clock = nc; a.hx = nc.x; a.hy = nc.y1 + 60; a.ai.target = null; a.ai.wait = 0; a.stuck = 0; toast(a.name + ' chuyển sang máy chấm công khác.', true); }
+      else { toast(a.name + ' rời đi vì không còn máy chấm công.', true); removeApplicant(a); continue; }
+    }
+    if (a.clock && (a.clock.removed || a.clock.hp <= 0)) { const hired = a.st === 'hired'; resetApplicant(a); toast(a.name + (hired ? ' bỏ đi vì máy chấm công đã bị phá.' : ' huỷ nhiệm vụ vì máy chấm công đã bị phá.'), true); }
+    appAI(a, dt); updateActor(a, dt);
+    if (a.swing < 0 && !a.ai.target && Math.hypot(player.x - a.x, player.y - a.y) >= 110) {   /* không có cây để chặt thì thỉnh thoảng nhìn quanh */
+      a.lookT -= dt; if (a.lookT <= 0) { a.dir = ['down', 'left', 'right'][Math.floor(Math.random() * 3)]; a.lookT = rand(2, 5); }
+    }
+    const d = Math.hypot(player.x - a.x, player.y - a.y);
+    if (d < bd && !player.dead) { bd = d; best = a; }
+  }
+  nearApp = best; updateQuestPill();
+  const el = _tp || buildTalkPrompt();
+  el.style.display = best && !ended && !talkApp && !shopOpen ? 'block' : 'none';
+  if (best) el.textContent = 'Nói chuyện với ' + best.name + (isTouch ? '' : ' (F)');
+  if (talkApp && (player.dead || Math.hypot(player.x - talkApp.x, player.y - talkApp.y) > 150)) closeTalk();
+}
+function buildTalkPrompt(){
+  const el = document.createElement('button'); el.id = 'talkPrompt'; el.type = 'button';
+  el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 150px);z-index:20;display:none;padding:9px 20px;border-radius:16px;border:2px solid #21140d;background:linear-gradient(#ffd884,#f2b84b);color:#2b1a05;font:800 17px "Baloo 2",system-ui,sans-serif;touch-action:manipulation;cursor:pointer';
+  el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
+  el.addEventListener('click', e => { e.stopPropagation(); talkNearest(); });
+  document.body.appendChild(el); return (_tp = el);
+}
+const isTouch = matchMedia('(pointer:coarse)').matches;
+function hasPunchClock(){ return DEFS.some(d => d.kind === 'chamcong' && !d.remote && d.hp > 0); }
+function talkNearest(){
+  if (!nearApp || ended || player.dead) return;
+  talkApp = nearApp; renderTalk(); $('talk').classList.add('on'); if (_tp) _tp.style.display = 'none';
+}
+function renderTalk(){
+  const a = talkApp; if (!a) return;
+  const btn = $('talkAct'); btn.style.display = 'none';
+  $('talkName').textContent = a.name;
+  $('talkTag').textContent = (a.st === 'hired' ? 'Người làm thuê của bạn' : 'Người xin việc') + ' \u00b7 ' + BIOME_NAMES[a.biome];
+  $('talkStory').textContent = a.story;
+  let ask;
+  if (a.st === 'hired') ask = 'Cảm ơn anh đã cho tôi chỗ làm. Tôi đang chặt cây quanh máy chấm công của anh. Giao việc khác sẽ có ở bản sau.';
+  else if (a.st === 'doing') ask = 'Anh đã ' + QUEST_WORD[a.qkind] + ' ' + a.qgot + '/' + a.qneed + (a.qkind === 'tree' ? ' cây' : ' tên cướp') + ' rồi. Cố lên, xong thì quay lại gặp tôi.';
+  else if (a.st === 'done') { ask = 'Anh giữ lời thật. Cho tôi theo anh làm việc nhé!'; btn.textContent = 'Nhận ' + a.name + ' làm thuê'; btn.style.display = 'block'; }
+  else if (!ownClocks().length) ask = 'Muốn tôi làm thuê thì anh phải có Máy chấm công đã. Cửa hàng có bán, ở mục Tuyển dụng.';
+  else {
+    const c = freeClock();
+    if (!c) ask = 'Máy chấm công của anh đã đủ người, hoặc đang có người khác làm nhiệm vụ. Xong việc kia rồi quay lại gặp tôi, hoặc mua thêm một máy.';
+    else {
+      const n = QUEST_DATA[Math.min(c.hires.length, QUEST_DATA.length - 1)][a.qkind];
+      ask = (a.qkind === 'tree' ? 'Anh ' + questText('tree', n) + ' trước đi, để tôi biết anh đáng tin.' : 'Anh giúp tôi ' + questText('bandit', n) + ', chúng đã hại tôi.') + ' Xong thì tôi theo anh làm thuê.';
+      btn.textContent = 'Nhận nhiệm vụ'; btn.style.display = 'block';
+    }
+  }
+  $('talkAsk').textContent = ask;
+}
+function closeTalk(){ talkApp = null; $('talk').classList.remove('on'); }
+function drawNpcMark(c, a, time){
+  const d = Math.hypot(player.x - a.x, player.y - a.y), bob = Math.sin(time * 3 + a.seed) * 2, done = a.st === 'done', hired = a.st === 'hired';
+  if (d < 260 && !hired) {
+    c.fillStyle = done ? '#7ddc7a' : '#f2b84b'; c.strokeStyle = '#21140d'; c.lineWidth = 2; c.beginPath(); c.roundRect(-9, -108 + bob, 18, 15, 5); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(-3, -93 + bob); c.lineTo(0, -88 + bob); c.lineTo(3, -93 + bob); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = '#21140d';
+    if (done) { c.save(); c.font = '800 14px "Baloo 2",system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('!', 0, -100 + bob); c.restore(); }
+    else for (const x of [-4, 0, 4]) { c.beginPath(); c.arc(x, -100.5 + bob, 1.3, 0, TAU); c.fill(); }
+  }
+  if (d < 160) {
+    const nm = hired ? a.name + ' \u00b7 làm thuê' : a.name;
+    c.font = '800 12px "Baloo 2",system-ui,sans-serif'; c.textAlign = 'center'; const w = c.measureText(nm).width + 14;
+    c.fillStyle = 'rgba(8,20,13,.7)'; c.beginPath(); c.roundRect(-w / 2, -138 + bob, w, 18, 9); c.fill(); c.fillStyle = hired ? '#bff5b0' : '#ffe9b0'; c.fillText(nm, 0, -125 + bob);
+  }
+}
+function buildTalkUI(){
+  const st = document.createElement('style');
+  st.textContent = '#talk{position:fixed;inset:0;z-index:25;display:none;align-items:flex-end;justify-content:center;padding:12px 12px calc(env(safe-area-inset-bottom,0px) + 14px);background:rgba(6,16,10,.35);box-sizing:border-box}#talk.on{display:flex}#talk .box{width:100%;max-width:460px;background:#173324;border:2px solid #21140d;border-radius:18px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.5);color:#f4efd9;font-family:"Baloo 2",system-ui,sans-serif}#talk h2{margin:0;font-size:22px;color:#f2b84b;font-weight:800}#talk .tag{font-size:12px;color:#b8c9a8;margin-bottom:6px}#talk p{margin:6px 0;font-size:16px;line-height:1.35}#talk .ask{color:#ffe9b0;font-weight:700}#talk button{margin-top:6px;width:100%;font:800 16px "Baloo 2",system-ui,sans-serif;padding:8px;border-radius:12px;border:2px solid #21140d;background:linear-gradient(#ffd884,#f2b84b);color:#2b1a05;cursor:pointer;touch-action:manipulation}';
+  document.head.appendChild(st);
+  const d = document.createElement('div'); d.id = 'talk'; d.className = 'ui';
+  d.innerHTML = '<div class="box"><h2 id="talkName"></h2><div class="tag" id="talkTag"></div><p id="talkStory"></p><p class="ask" id="talkAsk"></p><button type="button" id="talkAct" style="display:none"></button><button type="button" id="talkClose">Đóng</button></div>';
+  document.body.appendChild(d);
+  d.addEventListener('pointerdown', e => { e.stopPropagation(); if (e.target === d) closeTalk(); });
+  $('talkClose').addEventListener('click', closeTalk);
+  $('talkAct').addEventListener('click', () => { const a = talkApp; if (!a) return; if (a.st === 'new') acceptQuest(a); else if (a.st === 'done') hireApplicant(a); renderTalk(); });
+  window.addEventListener('keydown', e => { if (e.repeat || !started) return; const k = e.key.toLowerCase(); if (k === 'f') { if (talkApp) closeTalk(); else talkNearest(); } else if (k === 'escape' && talkApp) closeTalk(); });
 }
 function updateRevive(dt){
   const el = _rp || buildRevivePrompt(), db = _db || buildDropBtn();
@@ -3585,11 +3892,43 @@ function moveFarmTo(p){
   cancelPlacing(); refreshCoins(); sfxBuild(); toast('Đã dời ' + FARM_NAMES[k].toLowerCase() + '.', true);
 }
 const tapDown = {};
+/* v58: MENU GIAO VIỆC của máy chấm công (bấm vào máy). Người 1: Chặt cây (mang gỗ về). Người 2: Câu cá (khoá, chưa có chế độ câu). */
+let jobClock = null, _jm = null, jobDelArm = 0;
+function jobMenuEl(){
+  if (_jm) return _jm;
+  _jm = document.createElement('div'); _jm.id = 'jobMenu';
+  _jm.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:21;display:none;width:250px;box-sizing:border-box;padding:12px;background:rgba(12,30,20,.95);border:1px solid var(--line);border-radius:14px;color:#f4efd9;font-family:var(--font)';
+  _jm.addEventListener('pointerdown', e => e.stopPropagation()); document.body.appendChild(_jm); return _jm;
+}
+function renderJobMenu(){
+  const c = jobClock; if (!c) return; const m = jobMenuEl();
+  const hires = c.hires || [];
+  let h = '<div style="font-weight:800;font-size:16px;color:var(--amber)">Máy chấm công <span id="jmX" style="float:right;cursor:pointer;font-size:22px;line-height:1">&times;</span></div><div style="font-size:12px;color:var(--dim);margin:2px 0 6px">Giao việc cho người làm thuê (' + hires.length + '/' + MAX_HIRES + ')</div>';
+  for (let i = 0; i < MAX_HIRES; i++) {
+    const a = hires[i], job = i === 0 ? 'Chặt cây' : 'Câu cá';
+    h += '<div style="margin-top:6px;padding:7px 9px;border-radius:10px;background:rgba(255,236,190,.08)">';
+    if (!a) h += '<b>Người ' + (i + 1) + '</b>: <span style="color:var(--dim)">chưa có, hãy chiêu mộ thêm</span>';
+    else if (i === 0) h += '<b>' + a.name + '</b> · ' + job + '<div style="font-size:12px;color:var(--dim)">Mang gỗ: ' + (a.wood | 0) + '/' + HIRE_CARRY + ' · đủ thì tự về giao gỗ cho bạn</div>';
+    else h += '<b>' + a.name + '</b> · ' + job + ' <span style="color:#e0a050">(khoá)</span><div style="font-size:12px;color:var(--dim)">Chế độ câu cá chưa có nên người này tạm chặt cây.</div>';
+    h += '</div>';
+  }
+  h += '<button id="jmDel" style="display:block;width:100%;margin-top:8px;padding:6px 10px;font:800 14px var(--font);color:#2b1a05;background:linear-gradient(#f0a090,#d2594a);border:2px solid #21140d;border-radius:10px;cursor:pointer;text-align:left;touch-action:manipulation">' + (jobDelArm > performance.now() ? 'Bấm lại để xoá thật' : 'Xoá máy chấm công') + '<small style="display:block;font-weight:600;font-size:11px;opacity:.85">Công nhân sang máy khác, không có thì rời đi</small></button>';
+  m.innerHTML = h; const x = m.querySelector('#jmX'); if (x) x.onclick = closeJobMenu;
+  const dl = m.querySelector('#jmDel'); if (dl) dl.onclick = () => {
+    if (jobDelArm > performance.now()) { const c = jobClock; jobDelArm = 0; closeJobMenu(); if (c && !c.removed) { destroyDef(c, null); toast('Đã xoá máy chấm công.', true); } }
+    else { jobDelArm = performance.now() + 4000; renderJobMenu(); setTimeout(() => { if (jobClock) renderJobMenu(); }, 4100); }
+  };
+}
+function openJobMenu(c){ jobClock = c; jobDelArm = 0; renderJobMenu(); jobMenuEl().style.display = 'block'; if (!openJobMenu.t) openJobMenu.t = setInterval(() => { if (!jobClock) return; if (jobClock.removed || jobClock.hp <= 0 || player.dead || ended || Math.hypot(player.x - jobClock.x, player.y - jobClock.y) > 700) closeJobMenu(); else renderJobMenu(); }, 400); }
+function closeJobMenu(){ jobClock = null; if (_jm) _jm.style.display = 'none'; }
 function worldTap(cx, cy){
   if (!started || ended || player.dead || placing || shopOpen || player.role === 'bandit') return;
   if (!$('start').classList.contains('hide') || document.querySelector('.modal.open')) return;
   { const bg = bodyAtScreen(cx, cy); if (bg) { pickUpBody(bg); return; } }
-  const f = farmAtWorld(camera.x + (cx - W / 2) / zoom, camera.y + (cy - H / 2) / zoom);
+  const wx = camera.x + (cx - W / 2) / zoom, wy = camera.y + (cy - H / 2) / zoom;
+  { const c = DEFS.find(d => d.kind === 'chamcong' && !d.remote && !d.removed && d.hp > 0 && Math.abs(wx - d.x) < 34 && wy > d.cy - 50 && wy < d.cy + 24); if (c) { closeFarmMenu(); openJobMenu(c); return; } }
+  closeJobMenu();
+  const f = farmAtWorld(wx, wy);
   if (f) openFarmMenu(f); else closeFarmMenu();
 }
 function openShop(){
@@ -3599,13 +3938,15 @@ function openShop(){
 }
 function closeShop(){ shopOpen = false; $('shop').classList.remove('open'); }
 let shopCat = 'farm';
-function itemTitle(kind, t){   /* v50: tên chuẩn theo vật liệu: Tường gỗ / Tường đá / Tường đá bọc sắt, Cổng gỗ..., Tháp pháo gỗ..., Khoan đá gỗ... (trang trại vẫn Nhỏ/Vừa/Xịn) */
+function itemTitle(kind, t){
+  if (kind === 'chamcong') return itemName(kind);   /* v50: tên chuẩn theo vật liệu: Tường gỗ / Tường đá / Tường đá bọc sắt, Cổng gỗ..., Tháp pháo gỗ..., Khoan đá gỗ... (trang trại vẫn Nhỏ/Vừa/Xịn) */
   const m = DEF_MAT[kind] && DEF_MAT[kind][t];
   if (!m) return itemName(kind);
   return (kind === 'thap' ? 'Tháp pháo' : itemName(kind)) + ' ' + m;
 }
 function defBlurb(kind, t){
   const D = DEF_DATA[kind].tiers[t], m = DEF_MAT[kind][t];
+  if (kind === 'chamcong') return 'Chiêu mộ tối đa ' + MAX_HIRES + ' người làm thuê \u00b7 ' + D.hp + ' máu';
   if (kind === 'tuong') return D.hp + ' máu';
   if (kind === 'cong') return 'Dân qua được, cướp bị chặn \u00b7 ' + D.hp + ' máu';
   if (isMine(kind)) return '+' + D.inc + ' xu/phút \u00b7 ' + D.hp + ' máu';
@@ -3613,26 +3954,27 @@ function defBlurb(kind, t){
 }
 function renderShop(){
   const cats = $('shopCats'); cats.innerHTML = '';
-  for (const ct of [['farm', 'Trang trại'], ['def', 'Tường'], ['mine', 'Khoan'], ['item', 'Hồi máu']]) {
+  for (const ct of [['farm', 'Trang trại'], ['def', 'Tường'], ['mine', 'Khoan'], ['item', 'Hồi máu'], ['job', 'Tuyển dụng']]) {
     const b = document.createElement('button'); b.className = 'tab cat' + (ct[0] === shopCat ? ' active' : ''); b.textContent = ct[1];
-    b.addEventListener('click', () => { shopCat = ct[0]; shopTab = ct[0] === 'farm' ? FARM_ORDER[0] : ct[0] === 'mine' ? MINE_ORDER[0] : ct[0] === 'item' ? 'tao' : DEF_ORDER[0]; renderShop(); }); cats.appendChild(b);
+    b.addEventListener('click', () => { shopCat = ct[0]; shopTab = ct[0] === 'farm' ? FARM_ORDER[0] : ct[0] === 'mine' ? MINE_ORDER[0] : ct[0] === 'item' ? 'tao' : ct[0] === 'job' ? 'chamcong' : DEF_ORDER[0]; renderShop(); }); cats.appendChild(b);
   }
   const tabs = $('shopTabs'); tabs.innerHTML = '';
   for (const k of (shopCat === 'farm' ? FARM_ORDER : shopCat === 'mine' ? MINE_ORDER : DEF_ORDER)) {
     const b = document.createElement('button'); b.className = 'tab' + (k === shopTab ? ' active' : ''); b.textContent = itemName(k);
     b.addEventListener('click', () => { shopTab = k; renderShop(); }); tabs.appendChild(b);
   }
-  tabs.style.display = shopCat === 'farm' || shopCat === 'item' ? 'none' : '';   /* trang trại: 5 loại hiện chung 1 lưới, không cần hàng tab */
-  const isFarm = shopCat === 'farm', isItem = shopCat === 'item', grid = $('shopGrid'); grid.innerHTML = '';
-  grid.style.gridTemplateColumns = isFarm ? 'repeat(auto-fit,minmax(130px,1fr))' : isItem ? 'repeat(auto-fit,minmax(150px,200px))' : ''; grid.style.justifyContent = isItem ? 'center' : '';   /* v36: các món hồi máu xếp hàng ngang như tường, không xếp dọc nữa cho khỏi cao */
-  const list = isItem ? [['tao', 0], ['cuu', 0]] : isFarm ? FARM_ORDER.map(k => [k, 0]) : [0, 1, 2].map(t => [shopTab, t]);
+  tabs.style.display = shopCat === 'farm' || shopCat === 'item' || shopCat === 'job' ? 'none' : '';   /* trang trại: 5 loại hiện chung 1 lưới, không cần hàng tab */
+  const isFarm = shopCat === 'farm', isItem = shopCat === 'item', isJob = shopCat === 'job', grid = $('shopGrid'); grid.innerHTML = '';
+  grid.style.gridTemplateColumns = isFarm ? 'repeat(auto-fit,minmax(130px,1fr))' : (isItem || isJob) ? 'repeat(auto-fit,minmax(150px,200px))' : ''; grid.style.justifyContent = (isItem || isJob) ? 'center' : '';   /* v36: các món hồi máu xếp hàng ngang như tường, không xếp dọc nữa cho khỏi cao */
+  const list = isJob ? [['chamcong', 0]] : isItem ? [['tao', 0], ['cuu', 0]] : isFarm ? FARM_ORDER.map(k => [k, 0]) : [0, 1, 2].map(t => [shopTab, t]);
   for (const [kind, t] of list) {
     const D = itemData(kind, t), okW = player.wood >= D.wood, okC = player.coins >= D.coin;
     const card = document.createElement('div'); card.className = 'shopcard';
     const pv = document.createElement('canvas'); pv.width = 200; pv.height = 150; pv.getContext('2d').drawImage(previewOf(kind, t), 0, 0, 200, 150); card.appendChild(pv);
-    const h = document.createElement('h3'); h.textContent = isFarm || isItem ? itemName(kind) : isDefKind(kind) ? itemTitle(kind, t) : itemName(kind) + ' \u00b7 ' + TIER_NAMES[t]; card.appendChild(h);
+    const h = document.createElement('h3'); h.textContent = isFarm || isItem || isJob ? itemName(kind) : isDefKind(kind) ? itemTitle(kind, t) : itemName(kind) + ' \u00b7 ' + TIER_NAMES[t]; card.appendChild(h);
     const p = document.createElement('p');
     p.textContent = isItem ? (ITEM_DATA[kind].revive ? 'Cứu sống đồng đội đã gục: đến gần xác họ (chạm vào xác để vác đi chỗ an toàn), giữ nút Cứu ' + REVIVE_HOLD + ' giây. Họ dậy với ' + Math.round(REVIVE_HP * 100) + '% máu.' : 'Hồi +' + ITEM_DATA[kind].heal + ' máu. Chạm ô đồ để ăn.') : !isFarm ? defBlurb(kind, t) : (kind === 'rau' ? 'Rau tự mọc, tự thu hoạch' : D.n + ' con ' + ANIMAL_LABEL[kind]) + ' \u00b7 +' + D.inc + ' xu/phút'; card.appendChild(p);
+    if (isJob) p.textContent = 'Đặt xuống đất rồi đi tìm người xin việc ngoài bản đồ. Mỗi máy chiêu mộ tối đa ' + MAX_HIRES + ' người làm thuê.';
     const cost = document.createElement('div'); cost.className = 'cost';
     cost.innerHTML = (D.wood ? '<span class="' + (okW ? '' : 'bad') + '">' + D.wood + ' gỗ</span>' : '') + '<span class="' + (okC ? '' : 'bad') + '">' + D.coin + ' xu</span>'; card.appendChild(cost);
     const btn = document.createElement('button'); btn.className = 'buy'; btn.textContent = 'Mua'; btn.disabled = !(okW && okC);
@@ -3828,7 +4170,7 @@ function step(dt){
   if (ended) return;
   if (started) { matchLeft = Math.max(0, matchLeft - dt); }
   readPlayerInput(); updateBiomeToast();
-  updateRespawns(dt); updateGraves(); updateRevive(dt); updateStamina(dt);
+  updateRespawns(dt); updateGraves(); updateRevive(dt); updateStamina(dt); updateApplicants(dt);
   updateBanditSpawner();
   for (const a of actors) if (!a.isPlayer && !a.remote) { if (a.role === 'bandit') banditAI(a, dt); else botAI(a, dt); }
   for (const a of actors) { if (a.remote) updateRemote(a, dt); else updateActor(a, dt); }
@@ -4365,7 +4707,7 @@ function randomSpawn(){
 }
 
 function init(){
-  resize(); genWorld(); genTerrainProps(); buildSprites(); buildBiomeSprites(); buildExtraSprites();
+  resize(); genWorld(); genTerrainProps(); genApplicants(); buildTalkUI(); buildSprites(); buildBiomeSprites(); buildExtraSprites();
   player = makeActor('Bạn', LOOKS[0], FOREST / 2 - 46, FOREST / 2 + 62, true);
   actors.push(player);
   const bots = [['Bác Tư', 1, 140, 100], ['Lan', 2, -150, 80], ['Cu Tí', 3, 60, -130]];
@@ -4374,7 +4716,7 @@ function init(){
   initEconomy();
   onWoodChange();
   $('wood').textContent = '0';
-  window.__rh = { GRAVES, addGrave, slideOut, waterBlocked, BRIDGES, openFarmMenu, upgradeFarm, deleteFarm, startMoveFarm, moveFarmTo, farmAtWorld, netOnMsg, netBuilt, netSnapshot, banditTarget, humanCount, biomeAt, BIOME_SLOW, Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
+  window.__rh = { APPLICANTS, APP_POOL, QUEST_DATA, ownClocks, freeClock, acceptQuest, questProgress, hireApplicant, resetApplicant, applicantTarget, fillApplicants, removeApplicant, clockCount, talkNearest, hasPunchClock, GRAVES, addGrave, slideOut, waterBlocked, BRIDGES, openFarmMenu, upgradeFarm, deleteFarm, startMoveFarm, moveFarmTo, farmAtWorld, netOnMsg, netBuilt, netSnapshot, banditTarget, humanCount, biomeAt, BIOME_SLOW, Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
   const menu = $('menuModal'), openMenu = () => { if (lobbyMode) { $('start').classList.remove('hide'); return; } $('menuNote').textContent = Net.on && Net.host ? 'Bạn là chủ phòng: thoát thì người khác trong phòng sẽ tự chuyển sang chủ mới (mất vài giây).' : 'Thoát game sẽ rời trận và quay về màn hình đầu. Trận vẫn chạy khi bạn mở menu.'; menu.classList.add('open'); }, closeMenu = () => menu.classList.remove('open');
   $('menuBtn').addEventListener('click', openMenu); $('menuClose').addEventListener('click', closeMenu); $('menuResume').addEventListener('click', closeMenu);
   $('menuExit').addEventListener('click', () => { location.href = location.pathname + (location.search.includes('net=bc') ? '?net=bc' : ''); });
