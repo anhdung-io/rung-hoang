@@ -238,7 +238,7 @@ body.lobby .hud.tl, body.lobby #hotbar, body.lobby #chopBtn, body.lobby .timer, 
 #farmMenu .fm-i{ font-size:12px; color:var(--dim); margin-bottom:6px; line-height:1.3; }
 #farmMenu .fm-b{ display:block; width:100%; margin-top:6px; padding:6px 10px; font-family:var(--font); font-weight:800; font-size:14px; color:#2b1a05; background:linear-gradient(#ffd884,var(--amber)); border:2px solid #21140d; border-radius:10px; cursor:pointer; touch-action:manipulation; text-align:left; }
 #farmMenu .fm-b small{ display:block; font-weight:600; font-size:11px; opacity:.85; }
-#farmMenu .fm-b:disabled{ opacity:1; cursor:default; background:rgba(58,62,58,.82); color:#c9cdc2; border-color:rgba(14,16,14,.75); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); text-shadow:0 1px 2px #000; }   /* v62: nút bị khoá xám mờ như nút Cứu, nhưng đỡ trong suốt */
+#farmMenu .fm-b:disabled{ opacity:1; cursor:default; background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.2); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); text-shadow:0 1px 3px #000; }   /* v64: nút khoá nền trắng trong suốt như nút Cứu (chỉnh .15 để đậm/nhạt) */
 #farmMenu .fm-b.danger{ background:linear-gradient(#f0a090,#d2594a); }
 #farmMenu .fm-x{ position:absolute; top:4px; right:8px; background:none; border:0; color:#f4efd9; font-size:22px; line-height:1; cursor:pointer; touch-action:manipulation; }
 </style>
@@ -2151,7 +2151,7 @@ const DEF_DATA = {
   thap:  { tiers: [ { wood: 20, coin: 25, hp: 160, dmg: 8, range: 190, rate: 1.1 }, { wood: 50, coin: 110, hp: 320, dmg: 14, range: 230, rate: .8 }, { wood: 110, coin: 320, hp: 560, dmg: 24, range: 270, rate: .55 } ] }
 };
 /* MÁY KHOAN (CON SỐ TẠM): inc = xu mỗi phút. Đắt hơn trang trại, dễ bị cướp phá */
-DEF_DATA.chamcong = { tiers: [ { wood: 25, coin: 30, hp: 180 } ] };   /* v54: máy chấm công, con số TẠM */
+DEF_DATA.chamcong = { tiers: [ { wood: 120, coin: 200, hp: 180 } ] };   /* v54: máy chấm công, con số TẠM */
 DEF_DATA.mda   = { tiers: [ { wood: 20, coin: 30, hp: 140, inc: 14 }, { wood: 50, coin: 120, hp: 260, inc: 40 }, { wood: 100, coin: 320, hp: 420, inc: 90 } ] };
 DEF_DATA.mdong = { tiers: [ { wood: 35, coin: 80, hp: 180, inc: 24 }, { wood: 80, coin: 220, hp: 320, inc: 70 }, { wood: 150, coin: 520, hp: 500, inc: 160 } ] };
 DEF_DATA.mvang = { tiers: [ { wood: 50, coin: 160, hp: 220, inc: 40 }, { wood: 110, coin: 420, hp: 380, inc: 120 }, { wood: 200, coin: 1000, hp: 600, inc: 300 } ] };
@@ -2172,7 +2172,7 @@ let lastDefO = 'h';
 
 const isDefKind = k => !!DEF_DATA[k];
 const TEST_FREE = false;  /* TEST: true = mua đồ miễn phí. Chơi xong đổi thành false để trả lại giá */
-const PUNCH_FREE = true;  /* v57 TEST: máy chấm công MIỄN PHÍ để thử tuyển dụng. NHỚ đổi lại false khi chơi thật (giá thật 25 gỗ + 30 xu trong DEF_DATA.chamcong) */
+const PUNCH_FREE = false;  /* v66: ĐÃ TẮT, máy chấm công bán giá thật (120 gỗ + 200 xu). Đổi true nếu cần thử miễn phí. (v57 TEST: máy chấm công MIỄN PHÍ để thử tuyển dụng. NHỚ đổi lại false khi chơi thật (giá thật 120 gỗ + 200 xu trong DEF_DATA.chamcong) )*/
 const itemData = (kind, tier) => { const D = ITEM_DATA[kind] ? ITEM_DATA[kind] : (FARM_DATA[kind] || DEF_DATA[kind]).tiers[tier]; return (TEST_FREE || (PUNCH_FREE && kind === 'chamcong')) ? Object.assign({}, D, { wood: 0, coin: 0 }) : D; };
 const itemName = kind => FARM_NAMES[kind] || DEF_NAMES[kind] || (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[kind] && ITEM_DATA[kind].name);
 
@@ -3912,11 +3912,20 @@ function renderJobMenu(){
     else h += '<b>' + a.name + '</b> · ' + job + ' <span style="color:#e0a050">(khoá)</span><div style="font-size:12px;color:var(--dim)">Chế độ câu cá chưa có nên người này tạm chặt cây.</div>';
     h += '</div>';
   }
-  h += '<button id="jmDel" style="display:block;width:100%;margin-top:8px;padding:6px 10px;font:800 14px var(--font);color:#2b1a05;background:linear-gradient(#f0a090,#d2594a);border:2px solid #21140d;border-radius:10px;cursor:pointer;text-align:left;touch-action:manipulation">' + (jobDelArm > performance.now() ? 'Bấm lại để xoá thật' : 'Xoá máy chấm công') + '<small style="display:block;font-weight:600;font-size:11px;opacity:.85">Công nhân sang máy khác, không có thì rời đi</small></button>';
+  h += '<button id="jmDel" style="display:block;width:100%;margin-top:8px;padding:6px 10px;font:800 14px var(--font);color:#2b1a05;background:linear-gradient(#f0a090,#d2594a);border:2px solid #21140d;border-radius:10px;cursor:pointer;text-align:left;touch-action:manipulation">' + (jobDelArm > performance.now() ? 'Bạn chắc chắn xoá?' : 'Xoá máy chấm công') + '</button>';
   m.innerHTML = h; const x = m.querySelector('#jmX'); if (x) x.onclick = closeJobMenu;
-  const dl = m.querySelector('#jmDel'); if (dl) dl.onclick = () => {
-    if (jobDelArm > performance.now()) { const c = jobClock; jobDelArm = 0; closeJobMenu(); if (c && !c.removed) { destroyDef(c, null); toast('Đã xoá máy chấm công.', true); } }
-    else { jobDelArm = performance.now() + 4000; renderJobMenu(); setTimeout(() => { if (jobClock) renderJobMenu(); }, 4100); }
+  const dl = m.querySelector('#jmDel');
+  if (dl) dl.onclick = () => {
+    if (jobDelArm > performance.now()) {
+      const c = jobClock; jobDelArm = 0; closeJobMenu();
+      if (c && !c.removed) {
+        destroyDef(c, null);
+        toast('Đã xoá máy chấm công.', true);   /* v68: xoá KHÔNG hoàn gỗ/xu (Kim chốt) */
+      }
+    } else {
+      jobDelArm = performance.now() + 4000; renderJobMenu();
+      setTimeout(() => { if (jobClock) renderJobMenu(); }, 4100);
+    }
   };
 }
 function openJobMenu(c){ jobClock = c; jobDelArm = 0; renderJobMenu(); jobMenuEl().style.display = 'block'; if (!openJobMenu.t) openJobMenu.t = setInterval(() => { if (!jobClock) return; if (jobClock.removed || jobClock.hp <= 0 || player.dead || ended || Math.hypot(player.x - jobClock.x, player.y - jobClock.y) > 700) closeJobMenu(); else renderJobMenu(); }, 400); }
@@ -4716,7 +4725,7 @@ function init(){
   initEconomy();
   onWoodChange();
   $('wood').textContent = '0';
-  window.__rh = { APPLICANTS, APP_POOL, QUEST_DATA, ownClocks, freeClock, acceptQuest, questProgress, hireApplicant, resetApplicant, applicantTarget, fillApplicants, removeApplicant, clockCount, talkNearest, hasPunchClock, GRAVES, addGrave, slideOut, waterBlocked, BRIDGES, openFarmMenu, upgradeFarm, deleteFarm, startMoveFarm, moveFarmTo, farmAtWorld, netOnMsg, netBuilt, netSnapshot, banditTarget, humanCount, biomeAt, BIOME_SLOW, Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
+  window.__rh = { openJobMenu, placeDef, APPLICANTS, APP_POOL, QUEST_DATA, ownClocks, freeClock, acceptQuest, questProgress, hireApplicant, resetApplicant, applicantTarget, fillApplicants, removeApplicant, clockCount, talkNearest, hasPunchClock, GRAVES, addGrave, slideOut, waterBlocked, BRIDGES, openFarmMenu, upgradeFarm, deleteFarm, startMoveFarm, moveFarmTo, farmAtWorld, netOnMsg, netBuilt, netSnapshot, banditTarget, humanCount, biomeAt, BIOME_SLOW, Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
   const menu = $('menuModal'), openMenu = () => { if (lobbyMode) { $('start').classList.remove('hide'); return; } $('menuNote').textContent = Net.on && Net.host ? 'Bạn là chủ phòng: thoát thì người khác trong phòng sẽ tự chuyển sang chủ mới (mất vài giây).' : 'Thoát game sẽ rời trận và quay về màn hình đầu. Trận vẫn chạy khi bạn mở menu.'; menu.classList.add('open'); }, closeMenu = () => menu.classList.remove('open');
   $('menuBtn').addEventListener('click', openMenu); $('menuClose').addEventListener('click', closeMenu); $('menuResume').addEventListener('click', closeMenu);
   $('menuExit').addEventListener('click', () => { location.href = location.pathname + (location.search.includes('net=bc') ? '?net=bc' : ''); });
