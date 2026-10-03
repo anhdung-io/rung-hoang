@@ -1656,10 +1656,11 @@ function updateAmbient(dt){
   }
   birdT -= dt; if (birdT <= 0) { birdT = rand(6, 14); if (started && night() < .4) sfxBird(); }
   fireT -= dt;
-  if (fireT <= 0 && !lobbyMode && fireK() > 0) {
-    fireT = .18;
-    spawn({ k: 'smoke', x: FIRE.x + rand(-3, 3), y: FIRE.y - 20, z: 0, vx: rand(-3, 6), vy: 0, vz: rand(16, 26), size: rand(4, 7), life: rand(1.4, 2.2), g: 0 });
-    if (Math.random() < .5) spawn({ k: 'ember', x: FIRE.x + rand(-6, 6), y: FIRE.y - 12, z: 8, vx: rand(-10, 10), vy: rand(-4, 4), vz: rand(30, 60), size: rand(1, 1.8), life: rand(.7, 1.3), g: 0 });
+  if (fireT <= 0 && !lobbyMode) {
+    fireT = .18; for (const f of allFires()) { if (fireK(f) <= 0 || Math.abs(fX(f) - camera.x) > W / zoom / 2 + 80 || Math.abs(fY(f) - camera.y) > H / zoom / 2 + 80) continue; const up = (f.lv || 1) >= 4 ? 18 : 0;
+      spawn({ k: 'smoke', x: fX(f) + rand(-3, 3), y: fY(f) - 20 - up, z: 0, vx: rand(-3, 6), vy: 0, vz: rand(16, 26), size: rand(4, 7), life: rand(1.4, 2.2), g: 0 });
+      if (Math.random() < .5) spawn({ k: 'ember', x: fX(f) + rand(-6, 6), y: fY(f) - 12 - up, z: 8, vx: rand(-10, 10), vy: rand(-4, 4), vz: rand(30, 60), size: rand(1, 1.8), life: rand(.7, 1.3), g: 0 });
+    }
   }
 }
 
@@ -2237,20 +2238,22 @@ function collideTerrain(a){
 /* ================= 6d. PHÒNG THỦ: TƯỜNG, CỔNG, THÁP PHÁO ================= */
 const DEFS = [], PROJ = [];
 const DEF_ORDER = ['tuong', 'cong', 'thap'];  /* đã mở bán cổng + tháp pháo */
-const DEF_NAMES = { duoc: 'Cột đuốc', chamcong: 'Máy chấm công', tuong: 'Tường', cong: 'Cổng', thap: 'Tháp pháo', mda: 'Khoan đá', mdong: 'Khoan đồng', mvang: 'Khoan vàng' };
+const DEF_NAMES = { lua: 'Lửa trại', duoc: 'Cột đuốc', chamcong: 'Máy chấm công', tuong: 'Tường', cong: 'Cổng', thap: 'Tháp pháo', mda: 'Khoan đá', mdong: 'Khoan đồng', mvang: 'Khoan vàng' };
 const MINE_ORDER = ['mda', 'mdong', 'mvang'];
 function isMine(k){ return k === 'mda' || k === 'mdong' || k === 'mvang'; }
-function isSq(k){ return k === 'thap' || k === 'chamcong' || k === 'duoc' || isMine(k); }  /* công trình hình vuông, không xoay */
-const DEF_MAT = { duoc: ['gỗ'], chamcong: ['gỗ'], tuong: ['gỗ', 'đá', 'đá bọc sắt'], cong: ['gỗ', 'gỗ gia cố', 'sắt'], thap: ['gỗ', 'đá', 'thép'], mda: ['gỗ', 'sắt', 'thép'], mdong: ['gỗ', 'sắt', 'thép'], mvang: ['gỗ', 'sắt', 'thép'] };   /* v50: tên theo vật liệu như tường/cổng/tháp */
+function isSq(k){ return k === 'thap' || k === 'chamcong' || k === 'duoc' || k === 'lua' || isMine(k); }  /* công trình hình vuông, không xoay */
+const DEF_MAT = { lua: ['gỗ'], duoc: ['gỗ'], chamcong: ['gỗ'], tuong: ['gỗ', 'đá', 'đá bọc sắt'], cong: ['gỗ', 'gỗ gia cố', 'sắt'], thap: ['gỗ', 'đá', 'thép'], mda: ['gỗ', 'sắt', 'thép'], mdong: ['gỗ', 'sắt', 'thép'], mvang: ['gỗ', 'sắt', 'thép'] };   /* v50: tên theo vật liệu như tường/cổng/tháp */
 /* CON SỐ TẠM, chỉnh sau khi chơi thử: wood = gỗ, coin = xu, hp = máu;
    tháp: dmg = sát thương mỗi phát, range = tầm bắn (px), rate = số giây giữa hai phát */
 const DEF_DATA = {
-  tuong: { tiers: [ { wood: 6, coin: 0, hp: 120 }, { wood: 14, coin: 12, hp: 280 }, { wood: 30, coin: 40, hp: 520 } ] },
-  cong:  { tiers: [ { wood: 10, coin: 6, hp: 100 }, { wood: 24, coin: 30, hp: 240 }, { wood: 50, coin: 90, hp: 460 } ] },
+  tuong: { tiers: [ { wood: 6, coin: 0, hp: 170 }, { wood: 14, coin: 12, hp: 390 }, { wood: 30, coin: 40, hp: 730 } ] },   /* v82: cứng hơn khoảng 40% (trước 120/280/520) */
+  cong:  { tiers: [ { wood: 10, coin: 6, hp: 140 }, { wood: 24, coin: 30, hp: 340 }, { wood: 50, coin: 90, hp: 640 } ] },   /* v82: cứng hơn khoảng 40% (trước 100/240/460) */
   thap:  { tiers: [ { wood: 20, coin: 25, hp: 160, dmg: 8, range: 190, rate: 1.1 }, { wood: 50, coin: 110, hp: 320, dmg: 14, range: 230, rate: .8 }, { wood: 110, coin: 320, hp: 560, dmg: 24, range: 270, rate: .55 } ] }
 };
 /* MÁY KHOAN (CON SỐ TẠM): inc = xu mỗi phút. Đắt hơn trang trại, dễ bị cướp phá */
-DEF_DATA.duoc = { tiers: [ { wood: 6, coin: 10, hp: 60 } ] };   /* v76: cột đuốc, con số TẠM */
+DEF_DATA.duoc = { tiers: [ { wood: 6, coin: 10, hp: 60 } ] };
+/* v82: LỬA TRẠI bán trong cửa hàng (mỗi người xuất hiện một nơi nên cần chỗ trú riêng). Không cần củi. Gần nó: hồi máu mỗi giây, cướp đi chậm, sáng ban đêm. Con số TẠM. */
+DEF_DATA.lua = { tiers: [ { wood: 10, coin: 5, hp: 150, heal: 3, safe: 170, light: 230 } ] };   /* v83: lửa trại cửa hàng = đống lửa gốc, 10 gỗ + 5 xu (Kim). heal/safe/light chỉ để tương thích, thật sự lấy theo cấp (FIRE_LV, FIRE_HEAL). */
 DEF_DATA.chamcong = { tiers: [ { wood: 120, coin: 200, hp: 180 } ] };   /* v54: máy chấm công, con số TẠM */
 DEF_DATA.mda   = { tiers: [ { wood: 20, coin: 30, hp: 140, inc: 14 }, { wood: 50, coin: 120, hp: 260, inc: 40 }, { wood: 100, coin: 320, hp: 420, inc: 90 } ] };
 DEF_DATA.mdong = { tiers: [ { wood: 35, coin: 80, hp: 180, inc: 24 }, { wood: 80, coin: 220, hp: 320, inc: 70 }, { wood: 150, coin: 520, hp: 500, inc: 160 } ] };
@@ -2267,7 +2270,7 @@ function banditInReach(a){
 }      /* máu cướp (tháp bắn trúng thì trừ) */
 const BANDIT_HIT_DEF = 11;  /* sát thương mỗi nhát dao của cướp lên công trình */
 const WALL_LEN = 72, WALL_T = 14, TOWER_S = 40;
-const DEF_H = { duoc: [38], chamcong: [44], tuong: [22, 26, 30], cong: [28, 32, 36], thap: [60, 72, 84], mda: [44, 52, 60], mdong: [46, 54, 62], mvang: [48, 56, 66] };
+const DEF_H = { lua: [26], duoc: [38], chamcong: [44], tuong: [22, 26, 30], cong: [28, 32, 36], thap: [60, 72, 84], mda: [44, 52, 60], mdong: [46, 54, 62], mvang: [48, 56, 66] };
 let lastDefO = 'h';
 
 const isDefKind = k => !!DEF_DATA[k];
@@ -2276,7 +2279,7 @@ const PUNCH_FREE = false;  /* v66: ĐÃ TẮT, máy chấm công bán giá thậ
 const itemData = (kind, tier) => { const D = ITEM_DATA[kind] ? ITEM_DATA[kind] : (FARM_DATA[kind] || DEF_DATA[kind]).tiers[tier]; return (TEST_FREE || (PUNCH_FREE && kind === 'chamcong')) ? Object.assign({}, D, { wood: 0, coin: 0 }) : D; };
 const itemName = kind => FARM_NAMES[kind] || DEF_NAMES[kind] || (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[kind] && ITEM_DATA[kind].name);
 
-function defSize(kind, o){ if (kind === 'duoc') return [22, 22]; return isSq(kind) ? [TOWER_S, TOWER_S] : (o === 'v' ? [WALL_T, WALL_LEN] : [WALL_LEN, WALL_T]); }
+function defSize(kind, o){ if (kind === 'duoc') return [22, 22]; if (kind === 'lua') return [32, 32]; return isSq(kind) ? [TOWER_S, TOWER_S] : (o === 'v' ? [WALL_T, WALL_LEN] : [WALL_LEN, WALL_T]); }
 function defPlatZ(tier){ const H = DEF_H.thap[tier]; return tier === 0 ? H - 10 : H + 6; }
 
 /* ---------- vẽ: khối hộp nhìn chéo từ trên (mặt trên + mặt trước) ---------- */
@@ -2450,6 +2453,13 @@ function paintPunch(c){   /* v54: máy chấm công: bệ gỗ, thân máy xám 
   c.fillStyle = '#fff6df'; c.font = '800 9px "Baloo 2",system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('TUYỂN DỤNG', 5, -59.5); c.textBaseline = 'alphabetic';
   limb(c, -14, -52, -14, -46, 1.4, '#5b6168', .6); limb(c, 24, -52, 24, -46, 1.4, '#5b6168', .6);
 }
+function paintCampfire(c){   /* v82: lửa trại bán trong cửa hàng: vòng đá, củi chéo, than hồng (ngọn lửa vẽ riêng mỗi khung ở drawDefAt) */
+  ell(c, 0, 4, 21, 9.5, 'rgba(0,0,0,.25)', 0);
+  for (let i = 0; i < 9; i++) { const a = i / 9 * TAU; ell(c, Math.cos(a) * 13.5, 3 + Math.sin(a) * 6.6, 4.5, 3.5, i % 2 ? '#8b8f93' : '#767a7f', 1); ell(c, Math.cos(a) * 13.5 - 1, 2 + Math.sin(a) * 6.6, 1.8, 1.1, 'rgba(255,255,255,.28)', 0); }
+  ell(c, 0, 3, 9, 4.2, '#2b2420', 0); ell(c, 0, 3, 5.2, 2.5, '#d9531e', 0);
+  limb(c, -9, 5, 8, -2, 4.6, '#6b4528', 1.1); limb(c, -8, -2, 9, 5, 4.6, '#5a3a20', 1.1);
+  ell(c, 8.5, -2, 2.2, 2.2, '#d7b07a', .9); ell(c, 9, 5, 2.2, 2.2, '#d7b07a', .9);
+}
 function paintTorch(c){   /* v76: cột đuốc: chân đá, cột gỗ, chén sắt (lửa vẽ riêng mỗi khung ở drawDefAt) */
   ell(c, 0, 7, 13, 6, 'rgba(0,0,0,.25)', 0);
   for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; ell(c, Math.cos(a) * 7.5, 6 + Math.sin(a) * 3.6, 3.4, 2.6, i % 2 ? '#8b8f93' : '#767a7f', 1); }
@@ -2462,7 +2472,7 @@ function defSprite(kind, tier, o){
   let S;
   if (isSq(kind)) {
     const H = DEF_H[kind][tier], oy = H + 48;
-    S = mkSprite(110, oy + 38, 55, oy, c => kind === 'chamcong' ? paintPunch(c) : kind === 'duoc' ? paintTorch(c) : isMine(kind) ? paintMine(c, tier, kind) : paintTower(c, tier));
+    S = mkSprite(110, oy + 38, 55, oy, c => kind === 'chamcong' ? paintPunch(c) : kind === 'duoc' ? paintTorch(c) : kind === 'lua' ? paintCampfire(c) : isMine(kind) ? paintMine(c, tier, kind) : paintTower(c, tier));
   } else {
     const sz = defSize(kind, o), hw = sz[0] / 2, hh = sz[1] / 2, H = kind === 'cong' ? DEF_H.cong[tier] + 22 : DEF_H.tuong[tier] + 14;
     const oy = hh + H + 8;
@@ -2476,7 +2486,7 @@ function defLike(kind, tier, o, x, y){
   const D = DEF_DATA[kind].tiers[tier], sz = defSize(kind, o);
   return { type: 'def', kind, tier, o, x, cy: y, y: y + sz[1] / 2, hw: sz[0] / 2, hh: sz[1] / 2,
     x0: x - sz[0] / 2, x1: x + sz[0] / 2, y0: y - sz[1] / 2, y1: y + sz[1] / 2,
-    hp: D.hp, maxHp: D.hp, hurt: 0, open: 0, aim: Math.PI / 2, recoil: 0, cd: 1, acc: 3, seed: Math.random() * 1000, cracks: null };
+    hp: D.hp, maxHp: D.hp, lv: 1, fuel: 150, hurt: 0, open: 0, aim: Math.PI / 2, recoil: 0, cd: 1, acc: 3, seed: Math.random() * 1000, cracks: null };
 }
 function createDef(kind, tier, x, y, o){
   const d = defLike(kind, tier, o, x, y), H = isSq(kind) ? DEF_H[kind][tier] + 50 : DEF_H[kind][tier] + 30;
@@ -2658,7 +2668,7 @@ function destroyDef(d, by){
 const BANDIT_HIT_PLAYER = 13;   /* v72: 19 -> 13 */
 const BANDIT_HIT_PLAYER_OLD = 19;  /* sát thương mỗi nhát dao lên dân (dân có 200 máu) */
 const BANDIT_HIT_FARM = 13;    /* sát thương mỗi nhát lên trang trại */
-const FARM_HP = [220, 420, 700];  /* máu trang trại theo cấp (tạm) */
+const FARM_HP = [300, 560, 920];  /* máu trang trại theo cấp (tạm) */
 const RESPAWN_T = 12;          /* TẠM: dân bot bị hạ thì hồi sinh sau 12 giây, luật chết thật làm ở bước thắng/thua */
 const respawns = [];
 function rectDist(a, r){ return Math.hypot(a.x - clamp(a.x, r.x0, r.x1), a.y - clamp(a.y, r.y0, r.y1)); }
@@ -2796,7 +2806,8 @@ function banditDistTo(b, t){ return t.x0 !== undefined ? rectDist(b, t) : Math.h
 function banditAI(b, dt){
   const inp = b.input, ai = b.ai;
   b.speed = BANDIT_SPEED * (1 + .15 * banditRage()) * (1 + .10 * night()) * (b.boss ? .8 : 1) * (b.moon ? 1.1 : 1) * (b.wave ? .92 : 1);   /* v76: đêm nhanh hơn; v81: cướp đợt chậm hơn 8% */
-  if (!lobbyMode && fireLit() && Math.hypot(b.x - FIRE.x, b.y - FIRE.y) < fireDef().safe) b.speed *= .65;   /* v76: trong vùng ấm của lửa, cướp đi chậm */   /* v72: trước +35% */
+  if (!lobbyMode) for (const f of allFires()) if (fireLit(f) && Math.hypot(b.x - fX(f), b.y - fY(f)) < fireDef(f).safe) { b.speed *= .65; break; }   /* v83: mọi đống lửa còn củi làm cướp đi chậm, vùng theo cấp */
+
   { const m = Math.round(banditMaxHp() * (b.boss ? 5 : 1) * (b.moon ? 1.25 : 1)); if (b.maxHp !== m) { b.hp = Math.max(1, b.hp * m / b.maxHp); b.maxHp = m; } }
   inp.ix = inp.iy = 0; inp.act = false;
   if (ai.side > 0) { ai.side -= dt; inp.ix = ai.sx; inp.iy = ai.sy; return; }
@@ -2989,12 +3000,14 @@ function drawCracks(c, d){
   c.stroke();
 }
 function drawDefAt(c, d, time){
+  if (d.kind === 'lua') { const v = fireView(d); const sh = d.hurt > 0 ? Math.sin(time * 90) * 1.5 * d.hurt : 0; c.save(); c.translate(sh, 0); drawFire(v, time, c); c.restore(); return; }   /* v83: cùng hình với đống lửa gốc, theo cấp */
   const S = defSprite(d.kind, d.tier, d.o);
   c.save(); c.translate(d.x + (d.hurt > 0 ? Math.sin(time * 90) * 1.5 * d.hurt : 0), d.cy);
   c.drawImage(S, -S.ox, -S.oy, S.lw, S.lh);
   if (d.kind === 'cong') drawGateLeaves(c, d);
   if (d.kind === 'thap') drawTowerGun(c, d);
   if (d.kind === 'duoc') { const f = time * 9 + d.seed; flame(c, 0, -36, 9 + Math.sin(f) * 1.4, 16 + Math.sin(f * 1.3) * 2.4, '#e8552b', time); flame(c, .5, -36, 6, 11 + Math.sin(f * 1.7) * 2, '#f6a02c', time + 1); flame(c, 0, -36, 3, 6 + Math.sin(f * 2) * 1.2, '#ffe27a', time + 2); }
+  if (d.kind === 'lua') { const f = time * 9 + d.seed; flame(c, 0, 1, 14 + Math.sin(f) * 1.8, 25 + Math.sin(f * 1.3) * 3.2, '#e8552b', time); flame(c, .6, 1, 9.5 + Math.sin(f * 1.1) * 1.4, 18 + Math.sin(f * 1.7) * 2.6, '#f6a02c', time + 1); flame(c, 0, 1, 5, 10 + Math.sin(f * 2) * 1.8, '#ffe27a', time + 2); }
   if (d.kind === 'chamcong') { c.fillStyle = Math.sin(time * 4 + d.seed) > 0 ? '#9dffb0' : '#2c7a3a'; c.beginPath(); c.arc(10, -9, 1.5, 0, TAU); c.fill(); }
   if (isMine(d.kind)) { const bz = Math.sin(time * 7 + d.seed) * 2; c.fillStyle = '#2b2b2b'; c.beginPath(); c.moveTo(-3.5, -6 + bz); c.lineTo(3.5, -6 + bz); c.lineTo(0, 3 + bz); c.closePath(); c.fill(); }
   if (d.hp < d.maxHp) drawCracks(c, d);
@@ -3218,17 +3231,49 @@ function fireBricks(c, rx, ry, n, bw, bh, lift, back, phase){
     c.fillStyle = 'rgba(255,255,255,.22)'; c.fillRect(-bw / 2 + 1, -bh / 2 + .6, bw - 2, 1.1); c.restore();
   }
 }
-function fireTimeLeft(){
-  if (_ftl.t <= clockT && clockT - _ftl.t < 1) return _ftl.v;
-  let f = FIRE.fuel, s = 0; while (f > 0 && s < 1800) { f -= (FIRE_DAY_BURN + (FIRE_NIGHT_BURN - FIRE_DAY_BURN) * nightAt(clockT + s)) * 2; s += 2; }
-  _ftl = { t: clockT, v: f > 0 ? 1800 : s }; return _ftl.v;
+function fireTimeLeft(f){
+  const ch = f._ftl || (f._ftl = { t: -9, v: 0 });
+  if (ch.t <= clockT && clockT - ch.t < 1) return ch.v;
+  let fu = f.fuel, s = 0; while (fu > 0 && s < 1800) { fu -= (FIRE_DAY_BURN + (FIRE_NIGHT_BURN - FIRE_DAY_BURN) * nightAt(clockT + s)) * 2; s += 2; }
+  f._ftl = { t: clockT, v: fu > 0 ? 1800 : s }; return f._ftl.v;
 }
-let _ftl = { t: -9, v: 0 };
-function drawFire(e, t){
-  const c = ctx; c.save(); c.translate(e.x, e.y);
-  const lv = lobbyMode ? 1 : FIRE.lv, k = fireK(), lit = k > 0;
-  const R = [17, 24, 31][lv - 1];   /* bán kính ngang của chân lửa theo cấp */
+/* v83: CẤP 4 = đống lửa công nghiệp (thùng thép có đinh tán, ống khói phụ, khe lửa); CẤP 5 = như cấp 4 nhưng lửa XANH LỤC */
+function fireIndustrial(c, e, t, k, lit, lv, R){
+  const green = lv >= 5, Rd = green ? 30 : 27, Hd = green ? 27 : 23, y0 = -2, ry = Rd * .45;
+  const fc = green ? ['#17b455', '#4fe586', '#bdfad2', '#2fd06c'] : ['#e8552b', '#f6a02c', '#ffe27a', '#f08a2a'];
+  const vent = lit ? (green ? '#7dffa8' : '#ffb347') : '#2a2420';
+  ell(c, 0, 3, R + 4, (R + 4) * .5, '#3f4752', 1); ell(c, 0, 2, R, R * .5, '#59636f', 1);
+  for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; ell(c, Math.cos(a) * (R - 3), 2 + Math.sin(a) * (R - 3) * .5, 1.3, 1.3, '#cfd5db', .4); }
+  for (const sx of [-1, 1]) {   /* hai ống khói phụ */
+    const px = sx * (Rd + 8); c.beginPath(); c.roundRect(px - 3.6, y0 - Hd - 16, 7.2, Hd + 16 + 3, 1.6); shape(c, '#4b5560', 1.1);
+    c.fillStyle = 'rgba(255,255,255,.2)'; c.fillRect(px - 2.6, y0 - Hd - 15, 1.8, Hd + 12); ell(c, px, y0 - Hd - 16, 4.2, 2, '#2b323b', 1);
+    if (lit) { const s2 = .42 + .05 * Math.sin(t * 12 + px); c.save(); c.translate(px, y0 - Hd - 16); c.scale(s2 * k, s2 * k); flame(c, 0, 0, 14, 26 + Math.sin(t * 10 + px) * 3, fc[0], t + px); flame(c, 0, 0, 7, 14, fc[2], t + 2); c.restore(); }
+  }
+  const g = c.createLinearGradient(-Rd, 0, Rd, 0); g.addColorStop(0, '#2f3640'); g.addColorStop(.28, '#8794a3'); g.addColorStop(.55, '#5b6673'); g.addColorStop(1, '#2b323b');
+  c.beginPath(); c.moveTo(-Rd, y0); c.lineTo(-Rd, y0 - Hd); c.lineTo(Rd, y0 - Hd); c.lineTo(Rd, y0); c.ellipse(0, y0, Rd, ry, 0, 0, Math.PI); c.closePath(); c.fillStyle = g; c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.5; c.stroke();
+  c.strokeStyle = '#2a3038'; c.lineWidth = 2; for (const fy of [.34, .72]) { c.beginPath(); c.ellipse(0, y0 - Hd * fy, Rd, ry, 0, 0, Math.PI); c.stroke(); }
+  for (const fy of [.34, .72]) for (let i = 0; i < 9; i++) { const a = .25 + i / 8 * (Math.PI - .5); ell(c, Math.cos(a) * (Rd - 1.5), y0 - Hd * fy + Math.sin(a) * (ry - 1), 1, 1, '#d7dce1', 0); }
+  for (const vx of [-.55, 0, .55]) {   /* khe lửa */
+    const x = vx * Rd, y = y0 - Hd * .53 + Math.sin(Math.acos(clamp(vx, -1, 1)) * 0) * 0; c.beginPath(); c.roundRect(x - 4.5, y - 3, 9, 6, 2); c.fillStyle = vent; c.fill(); c.strokeStyle = OUT; c.lineWidth = .9; c.stroke();
+    if (lit) { c.globalAlpha = .35 + .2 * Math.sin(t * 9 + vx * 5); c.fillStyle = green ? '#d9ffe6' : '#fff1c2'; c.fillRect(x - 3, y - 1.4, 6, 2.8); c.globalAlpha = 1; }
+  }
+  c.beginPath(); c.ellipse(0, y0 - Hd, Rd, ry, 0, 0, TAU); shape(c, '#7d8996', 1.4);
+  c.beginPath(); c.ellipse(0, y0 - Hd, Rd - 4, ry - 2.2, 0, 0, TAU); c.fillStyle = '#1e1a18'; c.fill();
+  c.beginPath(); c.ellipse(0, y0 - Hd + .5, Rd - 8, ry - 4.4, 0, 0, TAU); c.fillStyle = lit ? (green ? '#1d6b3c' : '#7a2a10') : '#2a2420'; c.fill();
+  if (lit) {
+    c.save(); c.translate(0, y0 - Hd + 1); const fs = k * (green ? 1.55 : 1.4); c.scale(fs, fs); const f = t * 9;
+    flame(c, 0, -1, 18 + Math.sin(f) * 2, 32 + Math.sin(f * 1.3) * 4, fc[0], t);
+    flame(c, -9, -1, 11 + Math.sin(f * 1.4), 22 + Math.sin(f * 1.9) * 3, fc[0], t + 3); flame(c, 9, -1, 11 + Math.sin(f * 1.2), 21 + Math.sin(f * 1.6) * 3, fc[0], t + 4);
+    flame(c, -4, -1, 9, 40 + Math.sin(f * 1.5) * 5, fc[3], t + 5); flame(c, 4, -1, 9, 36 + Math.sin(f * 1.1) * 5, fc[3], t + 6);
+    flame(c, 1, -1, 12 + Math.sin(f * 1.1) * 1.5, 24 + Math.sin(f * 1.7) * 3, fc[1], t + 1); flame(c, 0, -1, 6, 13 + Math.sin(f * 2) * 2, fc[2], t + 2); c.restore();
+  } else { const gg = .35 + .25 * Math.sin(t * 2.2); ell(c, -4, y0 - Hd, 4, 1.8, 'rgba(' + (green ? '60,255,140' : '255,90,40') + ',' + gg + ')', 0); ell(c, 5, y0 - Hd + 1, 3, 1.4, 'rgba(' + (green ? '60,255,140' : '255,90,40') + ',' + (gg * .8) + ')', 0); }
+}
+function drawFire(e, t, cc){   /* v83: e = FIRE hoặc fireView(lửa trại cửa hàng); cc = canvas vẽ (xem trước cửa hàng) */
+  const c = cc || ctx; c.save(); c.translate(e.x, e.y);
+  const lv = lobbyMode && !cc ? 1 : (e.lv || 1), k = fireK(e), lit = k > 0;
+  const R = [17, 24, 31, 36, 40][lv - 1];   /* bán kính ngang của chân lửa theo cấp */
   ell(c, 0, 2, R + 8, (R + 8) * .5, 'rgba(0,0,0,.26)', 0);
+  if (lv >= 4) fireIndustrial(c, e, t, k, lit, lv, R); else {
   if (lv >= 3) { ell(c, 0, 1, R + 3, (R + 3) * .5, '#6f6a63', 1); ell(c, 0, 1, R - 2, (R - 2) * .5, '#5d5852', 0); }
   if (lv >= 2) fireBricks(c, R, R * .5, lv >= 3 ? 20 : 15, lv >= 3 ? 9 : 8, lv >= 3 ? 6 : 5, 0, true);
   if (lv >= 3) fireBricks(c, R - 1, (R - 1) * .5, 18, 8.4, 5.4, 5, true, .5);
@@ -3249,13 +3294,14 @@ function drawFire(e, t){
   if (lv >= 3) fireBricks(c, R - 1, (R - 1) * .5, 18, 8.4, 5.4, 5, false, .5);
   if (lv === 1) for (let i = 0; i < 10; i++) { const a = i / 10 * TAU, x = Math.cos(a) * 17, y = Math.sin(a) * 8.6; if (y <= 0) continue; ell(c, x, y, 4.8, 3.6, i % 2 ? '#8b8f93' : '#767a7f', 1); ell(c, x - 1, y - 1, 2, 1.2, 'rgba(255,255,255,.3)', 0); }
   if (lv >= 3) for (const [px, py] of [[-R * .74, R * .4], [R * .74, R * .4]]) pillarTorch(c, px, py, t, lit);
-  if (!lobbyMode && started) {   /* thanh thời gian lửa tắt: nhỏ, dưới chân lửa */
-    const ty = R * .5 + 17, w = 38, left = fireTimeLeft(), fr = clamp(FIRE.fuel / fireDef().max, 0, 1), low = FIRE.fuel < 40;
+  }
+  if (!lobbyMode && started && !cc) {   /* thanh thời gian lửa tắt: nhỏ, dưới chân lửa */
+    const ty = R * .5 + 17, w = 38, left = fireTimeLeft(e), fr = clamp(e.fuel / fireDef(e).max, 0, 1), low = e.fuel < 40;
     c.fillStyle = 'rgba(8,20,13,.62)'; c.beginPath(); c.roundRect(-w / 2 - 1, ty - 1, w + 2, 5.5, 2.7); c.fill();
     if (fr > 0) { c.fillStyle = low ? (Math.sin(t * 8) > 0 ? '#ff6a4a' : '#e8452b') : '#f2a63a'; c.beginPath(); c.roundRect(-w / 2, ty, Math.max(2, w * fr), 3.5, 1.75); c.fill(); }
     c.font = '700 8.5px "Baloo 2", system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'top'; c.lineWidth = 2.4; c.strokeStyle = 'rgba(8,20,13,.85)';
-    const txt = FIRE.fuel <= 0 ? 'Đã tắt' : 'Tắt sau ' + (left >= 1800 ? '30:00+' : Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0'));
-    c.strokeText(txt, 0, ty + 6.5); c.fillStyle = low || FIRE.fuel <= 0 ? '#ffb7a6' : '#ffe9b0'; c.fillText(txt, 0, ty + 6.5);
+    const txt = e.fuel <= 0 ? 'Đã tắt' : 'Tắt sau ' + (left >= 1800 ? '30:00+' : Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0'));
+    c.strokeText(txt, 0, ty + 6.5); c.fillStyle = low || e.fuel <= 0 ? '#ffb7a6' : '#ffe9b0'; c.fillText(txt, 0, ty + 6.5);
   }
   c.restore();
 }
@@ -3266,15 +3312,16 @@ function pillarTorch(c, x, y, t, lit){
   if (lit) { const s = .5 + .06 * Math.sin(t * 12 + x); c.save(); c.translate(0, -13.5); c.scale(s, s); flame(c, 0, 0, 12, 22 + Math.sin(t * 10 + x) * 3, '#f08a2a', t + x); flame(c, 0, 0, 6, 12, '#ffe27a', t + 2); c.restore(); }
   c.restore();
 }
-function fireGlow(e){   /* v78: ánh lửa nét hơn: nền elip mềm không còn vệt mờ; ban ngày rất nhạt, đêm sáng rõ có lõi nóng */
-  const k = fireK(); if (k <= 0) return;
-  const c = ctx, n = lobbyMode ? .6 : night(), fl = 1 + Math.sin(gameTime * 11) * .05 + Math.sin(gameTime * 17.3) * .03;
-  const R = (lobbyMode ? 120 : fireDef().light * .55 * (.75 + .25 * k)) * fl, a = .3 * (.2 + .8 * n) * (.5 + .5 * k);
-  c.save(); c.globalCompositeOperation = 'lighter'; c.translate(e.x, e.y - 6); c.scale(1, .78);
+function fireGlow(e){   /* v78: ánh lửa nét hơn. v83: theo cấp, cấp 5 ánh XANH LỤC */
+  const k = fireK(e); if (k <= 0) return;
+  const c = ctx, n = lobbyMode ? .6 : night(), fl = 1 + Math.sin(gameTime * 11) * .05 + Math.sin(gameTime * 17.3) * .03, lv = lobbyMode ? 1 : (e.lv || 1);
+  const R = (lobbyMode ? 120 : fireDef(e).light * .55 * (.75 + .25 * k)) * fl, a = .3 * (.2 + .8 * n) * (.5 + .5 * k);
+  const col = lv >= 5 ? ['120,255,170', '70,235,130', '40,210,100', '30,200,90', '25,190,85', '190,255,215', '120,255,170'] : ['255,200,100', '255,176,72', '255,142,52', '255,112,36', '255,100,30', '255,238,175', '255,200,100'];
+  c.save(); c.globalCompositeOperation = 'lighter'; c.translate(e.x, e.y - 6 - (lv >= 4 ? 14 : 0)); c.scale(1, .78);
   const g = c.createRadialGradient(0, 0, 0, 0, 0, R);
-  g.addColorStop(0, 'rgba(255,200,100,' + (a * .6) + ')'); g.addColorStop(.14, 'rgba(255,176,72,' + (a * .46) + ')'); g.addColorStop(.38, 'rgba(255,142,52,' + (a * .22) + ')'); g.addColorStop(.68, 'rgba(255,112,36,' + (a * .07) + ')'); g.addColorStop(1, 'rgba(255,100,30,0)');
+  g.addColorStop(0, 'rgba(' + col[0] + ',' + (a * .6) + ')'); g.addColorStop(.14, 'rgba(' + col[1] + ',' + (a * .46) + ')'); g.addColorStop(.38, 'rgba(' + col[2] + ',' + (a * .22) + ')'); g.addColorStop(.68, 'rgba(' + col[3] + ',' + (a * .07) + ')'); g.addColorStop(1, 'rgba(' + col[4] + ',0)');
   c.fillStyle = g; c.beginPath(); c.arc(0, 0, R, 0, TAU); c.fill();
-  const g2 = c.createRadialGradient(0, 0, 0, 0, 0, R * .2); g2.addColorStop(0, 'rgba(255,238,175,' + (a * .85) + ')'); g2.addColorStop(1, 'rgba(255,200,100,0)');
+  const g2 = c.createRadialGradient(0, 0, 0, 0, 0, R * .2); g2.addColorStop(0, 'rgba(' + col[5] + ',' + (a * .85) + ')'); g2.addColorStop(1, 'rgba(' + col[6] + ',0)');
   c.fillStyle = g2; c.beginPath(); c.arc(0, 0, R * .2, 0, TAU); c.fill(); c.restore();
 }
 function drawNameTag(a){
@@ -3364,7 +3411,7 @@ function render(dt){
       case 'actor': c.save(); c.translate(e.x, e.y); if (e.boss) { c.fillStyle = 'rgba(255,50,40,.3)'; c.beginPath(); c.ellipse(0, 2, 32, 13, 0, 0, TAU); c.fill(); c.scale(1.4, 1.4); } drawPerson(c, e, time); if (e.npc) drawNpcMark(c, e, time); if (e.carryG) drawCarriedBody(c, e.carryG, time); if (e.role !== 'bandit' && e.hp < e.maxHp) drawHpBar(0, -92, 44, e.hp / e.maxHp); c.restore(); break;
     }
   }
-  fireGlow(FIRE); torchGlows();
+  for (const f of allFires()) fireGlow(fireView(f)); torchGlows();
   for (const g of GRAVES) drawGrave(g);
   for (const p of parts) drawParticle(p);
   for (const p of PROJ) drawProj(c, p);
@@ -3413,7 +3460,7 @@ function drawMini(){
     m.restore();
   }
   for (const f of FARMS) { m.fillStyle = '#e3b36a'; m.fillRect(f.x * k - 4, f.y * k - 4, 8, 8); }
-  for (const d of DEFS) { m.fillStyle = d.kind === 'duoc' ? '#ffb347' : d.kind === 'chamcong' ? '#8fd8ff' : isMine(d.kind) ? '#f2c14e' : d.kind === 'thap' ? '#eef2f6' : d.kind === 'cong' ? '#e3b36a' : '#b5bcc4'; m.fillRect(d.x * k - 1.6, d.cy * k - 1.6, d.kind === 'thap' ? 4 : 3.2, d.kind === 'thap' ? 4 : 3.2); }
+  for (const d of DEFS) { m.fillStyle = d.kind === 'duoc' || d.kind === 'lua' ? '#ffb347' : d.kind === 'chamcong' ? '#8fd8ff' : isMine(d.kind) ? '#f2c14e' : d.kind === 'thap' ? '#eef2f6' : d.kind === 'cong' ? '#e3b36a' : '#b5bcc4'; m.fillRect(d.x * k - 1.6, d.cy * k - 1.6, d.kind === 'thap' ? 4 : 3.2, d.kind === 'thap' ? 4 : 3.2); }
   m.fillStyle = '#4b7a3a';
   for (const t of trees) if (t.state === 0) { m.fillRect(t.x * k - 1.5, t.y * k - 1.5, 3, 3); }
   m.fillStyle = '#8b9096'; for (const r of rocks) m.fillRect(r.x * k - 1, r.y * k - 1, 2, 2);
@@ -4139,9 +4186,9 @@ function renderFarmMenu(){
   const up = $('fmUp'), mv = $('fmMove'), dl = $('fmDel');
   if (f.tier >= 2) { up.disabled = true; up.innerHTML = 'Đã cấp cao nhất'; }
   else {
-    const D = itemData(f.kind, f.tier + 1), okRes = player.wood >= D.wood && player.coins >= D.coin, r = checkPlace(f.kind, f.tier + 1, f.x, f.y, f);
+    const D = halfCost(itemData(f.kind, f.tier + 1)), okRes = player.wood >= D.wood && player.coins >= D.coin, r = checkPlace(f.kind, f.tier + 1, f.x, f.y, f);
     up.disabled = !okRes || !r.ok;
-    up.innerHTML = 'Nâng cấp lên ' + TIER_NAMES[f.tier + 1] + '<small>' + (r.ok ? D.wood + ' gỗ \u00b7 ' + D.coin + ' xu' + (okRes ? '' : ' (chưa đủ)') : 'Không đủ chỗ: ' + r.reason) + '</small>';
+    up.innerHTML = 'Nâng cấp lên ' + TIER_NAMES[f.tier + 1] + '<small>' + (r.ok ? D.wood + ' gỗ \u00b7 ' + D.coin + ' xu' + UP_TAG() + (okRes ? '' : ' (chưa đủ)') : 'Không đủ chỗ: ' + r.reason) + '</small>';
   }
   const mc = moveCost(f); mv.disabled = player.wood < mc; mv.innerHTML = 'Di chuyển<small>' + mc + ' gỗ' + (player.wood < mc ? ' (chưa đủ)' : '') + '</small>';
   dl.innerHTML = fmDelArm > performance.now() ? 'Bấm lại để xoá thật' : 'Xoá bỏ';
@@ -4173,9 +4220,14 @@ function dismantleFarm(f){   /* chủ tự gỡ (xoá / nâng cấp / di chuyể
   netForget(f); if (Net.on) Net.send({ t: 'rm', k: f.kind, x: Math.round(f.x), y: Math.round(f.y) });
   removeFarmQuiet(f);
 }
+/* v85 TẠM ĐỂ THỬ: NÂNG CẤP CHỈ TỐN 50% (Kim: 'cho nâng cấp nửa free để test'). Áp cho nâng cấp trang trại và nâng đống lửa. Muốn trả lại giá đầy đủ: đổi UPGRADE_COST_MUL = 1. */
+const UPGRADE_COST_MUL = 1;   /* v86: trả lại giá đầy đủ cho nâng cấp trang trại (v85 từng giảm .5). Chỉ nâng ĐỐNG LỬA đang miễn phí, xem FIRE_UP_FREE */
+const FIRE_UP_FREE = true;    /* v86 TẠM ĐỂ THỬ (Kim): nâng cấp đống lửa/lửa trại KHÔNG mất gỗ, không mất xu, cả 4 lần nâng (cấp 1 lên 5). Đổi false để trả giá FIRE_UP */
+const halfCost = c => ({ wood: Math.ceil(c.wood * UPGRADE_COST_MUL), coin: Math.ceil(c.coin * UPGRADE_COST_MUL) });
+const UP_TAG = () => UPGRADE_COST_MUL < 1 ? ' (giảm ' + Math.round((1 - UPGRADE_COST_MUL) * 100) + '% để thử)' : '';
 function upgradeFarm(f){
   if (!f || f.removed || f.tier >= 2) return;
-  const nt = f.tier + 1, D = itemData(f.kind, nt);
+  const nt = f.tier + 1, D = halfCost(itemData(f.kind, nt));
   if (player.wood < D.wood || player.coins < D.coin) { toast('Chưa đủ gỗ hoặc xu để nâng cấp.', true); return; }
   const r = checkPlace(f.kind, nt, f.x, f.y, f);
   if (!r.ok) { toast('Không đủ chỗ để nâng cấp: ' + r.reason, true); return; }
@@ -4245,7 +4297,7 @@ function worldTap(cx, cy){
   if (!$('start').classList.contains('hide') || document.querySelector('.modal.open')) return;
   { const bg = bodyAtScreen(cx, cy); if (bg) { pickUpBody(bg); return; } }
   const wx = camera.x + (cx - W / 2) / zoom, wy = camera.y + (cy - H / 2) / zoom;
-  if (Math.hypot(wx - FIRE.x, wy - (FIRE.y - 10)) < 46) { closeFarmMenu(); closeJobMenu(); openFireMenu(); return; }   /* v76: chạm vào đống lửa */
+  { let ff = null; for (const f of allFires()) if (Math.hypot(wx - fX(f), wy - (fY(f) - 10 - ((f.lv || 1) >= 4 ? 14 : 0))) < 46) { ff = f; break; } if (ff) { closeFarmMenu(); closeJobMenu(); openFireMenu(ff); return; } }   /* v76: chạm vào đống lửa (v83: kể cả lửa trại mua ở cửa hàng) */
   { const c = DEFS.find(d => d.kind === 'chamcong' && !d.remote && !d.removed && d.hp > 0 && Math.abs(wx - d.x) < 34 && wy > d.cy - 50 && wy < d.cy + 24); if (c) { closeFarmMenu(); openJobMenu(c); return; } }
   closeJobMenu(); closeFireMenu();
   const f = farmAtWorld(wx, wy);
@@ -4259,13 +4311,14 @@ function openShop(){
 function closeShop(){ shopOpen = false; $('shop').classList.remove('open'); }
 let shopCat = 'farm';
 function itemTitle(kind, t){
-  if (kind === 'chamcong' || kind === 'duoc') return itemName(kind);   /* v50: tên chuẩn theo vật liệu: Tường gỗ / Tường đá / Tường đá bọc sắt, Cổng gỗ..., Tháp pháo gỗ..., Khoan đá gỗ... (trang trại vẫn Nhỏ/Vừa/Xịn) */
+  if (kind === 'chamcong' || kind === 'duoc' || kind === 'lua') return itemName(kind);   /* v50: tên chuẩn theo vật liệu: Tường gỗ / Tường đá / Tường đá bọc sắt, Cổng gỗ..., Tháp pháo gỗ..., Khoan đá gỗ... (trang trại vẫn Nhỏ/Vừa/Xịn) */
   const m = DEF_MAT[kind] && DEF_MAT[kind][t];
   if (!m) return itemName(kind);
   return (kind === 'thap' ? 'Tháp pháo' : itemName(kind)) + ' ' + m;
 }
 function defBlurb(kind, t){
   const D = DEF_DATA[kind].tiers[t], m = DEF_MAT[kind][t];
+  if (kind === 'lua') return 'Giống đống lửa gốc: cần thêm củi, chạm vào để nâng tới cấp 5 (đống lửa công nghiệp xanh). Gần lửa hồi máu, cướp đi chậm, sáng ban đêm \u00b7 ' + D.hp + ' máu'; if (false) return 'Chỗ trú ở bất cứ đâu: gần lửa hồi ' + D.heal + ' máu/giây, cướp đi chậm, sáng ban đêm, không cần củi \u00b7 ' + D.hp + ' máu';
   if (kind === 'duoc') return 'Thắp sáng ban đêm quanh nó, không cần củi \u00b7 ' + D.hp + ' máu';
   if (kind === 'chamcong') return 'Chiêu mộ tối đa ' + MAX_HIRES + ' người làm thuê \u00b7 ' + D.hp + ' máu';
   if (kind === 'tuong') return D.hp + ' máu';
@@ -4277,7 +4330,7 @@ function renderShop(){
   const cats = $('shopCats'); cats.innerHTML = '';
   for (const ct of [['farm', 'Trang trại'], ['def', 'Tường'], ['mine', 'Khoan'], ['light', 'Đèn'], ['item', 'Hồi máu'], ['job', 'Tuyển dụng']]) {
     const b = document.createElement('button'); b.className = 'tab cat' + (ct[0] === shopCat ? ' active' : ''); b.textContent = ct[1];
-    b.addEventListener('click', () => { shopCat = ct[0]; shopTab = ct[0] === 'farm' ? FARM_ORDER[0] : ct[0] === 'mine' ? MINE_ORDER[0] : ct[0] === 'item' ? 'tao' : ct[0] === 'light' ? 'duoc' : ct[0] === 'job' ? 'chamcong' : DEF_ORDER[0]; renderShop(); }); cats.appendChild(b);
+    b.addEventListener('click', () => { shopCat = ct[0]; shopTab = ct[0] === 'farm' ? FARM_ORDER[0] : ct[0] === 'mine' ? MINE_ORDER[0] : ct[0] === 'item' ? 'tao' : ct[0] === 'light' ? 'lua' : ct[0] === 'job' ? 'chamcong' : DEF_ORDER[0]; renderShop(); }); cats.appendChild(b);
   }
   const tabs = $('shopTabs'); tabs.innerHTML = '';
   for (const k of (shopCat === 'farm' ? FARM_ORDER : shopCat === 'mine' ? MINE_ORDER : DEF_ORDER)) {
@@ -4287,7 +4340,7 @@ function renderShop(){
   tabs.style.display = shopCat === 'farm' || shopCat === 'item' || shopCat === 'job' || shopCat === 'light' ? 'none' : '';   /* trang trại: 5 loại hiện chung 1 lưới, không cần hàng tab */
   const isFarm = shopCat === 'farm', isItem = shopCat === 'item', isJob = shopCat === 'job', isLight = shopCat === 'light', grid = $('shopGrid'); grid.innerHTML = '';
   grid.style.gridTemplateColumns = isFarm ? 'repeat(auto-fit,minmax(130px,1fr))' : (isItem || isJob || isLight) ? 'repeat(auto-fit,minmax(150px,200px))' : ''; grid.style.justifyContent = (isItem || isJob || isLight) ? 'center' : '';   /* v36: các món hồi máu xếp hàng ngang như tường, không xếp dọc nữa cho khỏi cao */
-  const list = isJob ? [['chamcong', 0]] : isLight ? [['duoc', 0]] : isItem ? [['tao', 0], ['cuu', 0]] : isFarm ? FARM_ORDER.map(k => [k, 0]) : [0, 1, 2].map(t => [shopTab, t]);
+  const list = isJob ? [['chamcong', 0]] : isLight ? [['lua', 0], ['duoc', 0]] : isItem ? [['tao', 0], ['cuu', 0]] : isFarm ? FARM_ORDER.map(k => [k, 0]) : [0, 1, 2].map(t => [shopTab, t]);
   for (const [kind, t] of list) {
     const D = itemData(kind, t), okW = player.wood >= D.wood, okC = player.coins >= D.coin;
     const card = document.createElement('div'); card.className = 'shopcard';
@@ -4495,7 +4548,7 @@ function checkEnd(){
    Đêm: phủ lớp tối xanh (render thấp độ phân giải, đục lỗ sáng quanh lửa/đuốc/dân), cướp nhanh + đau + nhìn xa hơn và có thêm
    cướp ĐÊM (nightOnly, sáng thì rút). Đống lửa có củi (FIRE.fuel giây), tắt thì tối om; có 3 cấp. Gần lửa đang cháy: hồi máu, cướp đi chậm.
    Chạm vào đống lửa mở menu thêm củi / nâng cấp. Tin mạng: 'fu' (thêm củi), 'fv' (lên cấp), ck/fl/fv trong tin 's' của chủ phòng. Con số TẠM. */
-const DAY_LEN = 270;
+const DAY_LEN = 400;   /* v82: ngày dài hơn (trước 270 giây). Đợt cướp WAVE_AT .63 -> WAVE_DAWN .88 = 100 giây = WAVE_MAX nên khớp */
 let clockT = 0, lastPhase = '', fireWarn = 0, nightBandT = -99, dayHudT = 0;
 const smooth01 = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
 function dayP(t){ return (((t % DAY_LEN) + DAY_LEN) % DAY_LEN) / DAY_LEN; }
@@ -4503,20 +4556,29 @@ function nightAt(t){ const p = dayP(t); return p < .43 ? 0 : p < .62 ? smooth01(
 function night(){ return started && !lobbyMode ? nightAt(clockT) : 0; }
 function dayNo(){ return Math.floor(clockT / DAY_LEN) + 1; }
 function phaseName(){ const p = dayP(clockT); return p < .43 ? 'Sáng' : p < .62 ? 'Chiều' : p < .86 ? 'Đêm' : 'Rạng sáng'; }
-const FIRE_LV = [ { name: 'Lửa trại', light: 230, safe: 170, max: 200 }, { name: 'Lửa lớn', light: 320, safe: 240, max: 320 }, { name: 'Đài lửa', light: 420, safe: 320, max: 480 } ];   /* v78: to hơn, vùng an toàn rộng hơn (trước 140/185/240) */
-const FIRE_UP = [null, { wood: 25, coin: 40 }, { wood: 60, coin: 150 }];   /* chi phí lên cấp 2 và cấp 3 */
-const FIRE_START = 150, FIRE_WOOD_SEC = 30, FIRE_DAY_BURN = .35, FIRE_NIGHT_BURN = 1, FIRE_REACH = 240, FIRE_HEAL = [3, 4, 5];
+const FIRE_LV = [ { name: 'Lửa trại', light: 230, safe: 170, max: 200 }, { name: 'Lửa lớn', light: 320, safe: 240, max: 320 }, { name: 'Đài lửa', light: 420, safe: 320, max: 480 },
+  { name: 'Đống lửa công nghiệp', light: 520, safe: 400, max: 700 }, { name: 'Đống lửa công nghiệp xanh', light: 640, safe: 480, max: 1000 } ];   /* v83: thêm cấp 4 (công nghiệp) và cấp 5 (công nghiệp xanh, lửa xanh lục) */
+const FIRE_UP = [null, { wood: 25, coin: 40 }, { wood: 60, coin: 150 }, { wood: 150, coin: 400 }, { wood: 320, coin: 900 }];   /* FIRE_UP[lv] = chi phí lên cấp lv+1; con số cấp 4, 5 TẠM */
+const FIRE_START = 150, FIRE_WOOD_SEC = 30, FIRE_DAY_BURN = .35, FIRE_NIGHT_BURN = 1, FIRE_REACH = 240, FIRE_HEAL = [3, 4, 5, 7, 10], FIRE_MAXLV = 5;
 FIRE.fuel = FIRE_START; FIRE.lv = 1;
-const fireDef = () => FIRE_LV[clamp(FIRE.lv, 1, 3) - 1];
-const fireLit = () => lobbyMode || FIRE.fuel > 0;
-function fireK(){ return lobbyMode ? 1 : FIRE.fuel <= 0 ? 0 : clamp(.4 + .6 * Math.min(1, FIRE.fuel / 45), .4, 1); }
+/* v83: MỌI đống lửa (lửa làng gốc FIRE + lửa trại bán trong cửa hàng, DEFS kind 'lua') dùng CHUNG một hệ: củi (fuel), cấp (lv 1-5), menu thêm củi/nâng cấp, hồi máu, làm cướp đi chậm, ánh sáng đêm. */
+function allFires(){ const l = [FIRE]; for (const d of DEFS) if (d.kind === 'lua' && !d.removed && d.hp > 0) l.push(d); return l; }
+function fX(f){ return f.x; }
+function fY(f){ return f === FIRE ? f.y : (f.cy !== undefined ? f.cy : f.y); }
+function fireView(d){ if (d === FIRE) return FIRE; const v = d._fv || (d._fv = {}); v.x = d.x; v.y = d.cy; v.lv = d.lv || 1; v.fuel = d.fuel == null ? 150 : d.fuel; v.src = d; return v; }
+function fireDef(f){ f = f || FIRE; return FIRE_LV[clamp(f.lv || 1, 1, FIRE_MAXLV) - 1]; }
+function fireLit(f){ f = f || FIRE; return lobbyMode || f.fuel > 0; }
+function fireK(f){ f = f || FIRE; return lobbyMode ? 1 : f.fuel <= 0 ? 0 : clamp(.4 + .6 * Math.min(1, f.fuel / 45), .4, 1); }
+function fireByMsg(m){ if (m.fx === undefined) return FIRE; for (const d of DEFS) if (d.kind === 'lua' && !d.removed && Math.abs(d.x - m.fx) < 4 && Math.abs(d.cy - m.fy) < 4) return d; return null; }
+function fireNearPlayer(f){ return Math.hypot(player.x - fX(f), player.y - fY(f)); }
 function updateFire(dt){
   if (!started || lobbyMode) return;
-  if (FIRE.fuel > 0) FIRE.fuel = Math.max(0, FIRE.fuel - dt * (FIRE_DAY_BURN + (FIRE_NIGHT_BURN - FIRE_DAY_BURN) * night()));
+  { const burn = dt * (FIRE_DAY_BURN + (FIRE_NIGHT_BURN - FIRE_DAY_BURN) * night()); for (const f of allFires()) if (f.fuel > 0) f.fuel = Math.max(0, f.fuel - burn); }
   if (FIRE.fuel > 0 && FIRE.fuel < 40 && !fireWarn) { fireWarn = 1; toast('Lửa sắp tàn! Chạm vào đống lửa để thêm củi.', true); }
   if (FIRE.fuel <= 0 && fireWarn < 2) { fireWarn = 2; toast('Đống lửa đã tắt! Làng tối om, cướp dễ lẻn vào.', true); }
   if (FIRE.fuel > 60) fireWarn = 0;
-  if (FIRE.fuel > 0 && !player.dead && player.role !== 'bandit' && player.hp < player.maxHp && Math.hypot(player.x - FIRE.x, player.y - FIRE.y) < fireDef().safe) player.hp = Math.min(player.maxHp, player.hp + FIRE_HEAL[FIRE.lv - 1] * dt);
+  if (!player.dead && player.role !== 'bandit' && player.hp < player.maxHp) for (const f of allFires()) if (f.fuel > 0 && fireNearPlayer(f) < fireDef(f).safe) { player.hp = Math.min(player.maxHp, player.hp + FIRE_HEAL[(f.lv || 1) - 1] * dt); break; }   /* v83: hồi máu theo cấp của mọi đống lửa còn củi */
+
   const ph = phaseName();
   if (ph !== lastPhase) {
     if (lastPhase) toast(ph === 'Chiều' ? 'Chiều tà. Trời sắp tối, chuẩn bị củi cho đống lửa.' : ph === 'Đêm' ? 'Đêm xuống! Giữ lửa cháy, cướp mạnh hơn trong bóng tối.' : ph === 'Rạng sáng' ? 'Trời sắp sáng, cướp đêm đang rút lui.' : 'Ngày ' + dayNo() + ' bắt đầu.', true);
@@ -4552,8 +4614,9 @@ function drawNight(){
       const gr = g.createRadialGradient(0, 0, 0, 0, 0, sr); gr.addColorStop(0, 'rgba(0,0,0,' + st + ')'); gr.addColorStop(.35, 'rgba(0,0,0,' + st * .92 + ')'); gr.addColorStop(.62, 'rgba(0,0,0,' + st * .6 + ')'); gr.addColorStop(.82, 'rgba(0,0,0,' + st * .26 + ')'); gr.addColorStop(1, 'rgba(0,0,0,0)');
       g.save(); g.translate(sx, sy); g.scale(1, .84); g.fillStyle = gr; g.fillRect(-sr, -sr, sr * 2, sr * 2); g.restore();   /* v78: elip + dải chuyển mượt (trước: tròn, có vành rõ) */
     };
-    if (fireK() > 0) light(FIRE.x, FIRE.y - 8, fireDef().light * (.6 + .4 * fireK()) * (1 + Math.sin(gameTime * 11) * .03), .97);
+    for (const f of allFires()) if (fireK(f) > 0) light(fX(f), fY(f) - 8, fireDef(f).light * (.6 + .4 * fireK(f)) * (1 + Math.sin(gameTime * 11 + (f.seed || 0)) * .03), .97);
     for (const d of DEFS) if (d.kind === 'duoc' && !d.removed && d.hp > 0) light(d.x, d.cy - 36, 170, .93);
+
     for (const a of actors) if (a.role !== 'bandit' && !a.dead) light(a.x, a.y - 20, 78, .55);
   }
   const c = ctx; c.setTransform(DPR, 0, 0, DPR, 0, 0); c.imageSmoothingEnabled = true; c.drawImage(NC, 0, 0, W, H);
@@ -4653,52 +4716,58 @@ function updateWaveHud(){
   el.style.display = ''; el.className = 'pill ' + cls; if (el.textContent !== txt) el.textContent = txt;
 }
 /* ----- menu đống lửa (chạm vào đống lửa) ----- */
-let fireMenuOn = false;
-function fireNeed(){ return Math.max(0, Math.ceil((fireDef().max - FIRE.fuel) / FIRE_WOOD_SEC - .0001)); }
+let fireMenuOn = false, fireMenuF = FIRE;
+function fireNeed(f){ f = f || fireMenuF; return Math.max(0, Math.ceil((fireDef(f).max - f.fuel) / FIRE_WOOD_SEC - .0001)); }
+function fireOf(){ if (fireMenuF !== FIRE && (fireMenuF.removed || fireMenuF.hp <= 0)) fireMenuF = FIRE; return fireMenuF; }
 function renderFireMenu(){
-  const d = fireDef(), w = player.wood | 0, need = fireNeed(), up = FIRE_UP[FIRE.lv], upCost = up ? (TEST_FREE ? { wood: 0, coin: 0 } : up) : null;
-  $('fireT').textContent = d.name + ' \u00b7 cấp ' + FIRE.lv;
-  $('fireI').textContent = 'Củi: ' + Math.ceil(FIRE.fuel) + '/' + d.max + ' giây. Ở gần lửa: hồi ' + FIRE_HEAL[FIRE.lv - 1] + ' máu/giây, cướp đi chậm.';
-  $('fireBarI').style.width = clamp(FIRE.fuel / d.max * 100, 0, 100) + '%';
+  const F = fireOf(), lv = F.lv || 1, d = fireDef(F), w = player.wood | 0, need = fireNeed(F), up = FIRE_UP[lv], upCost = up ? ((TEST_FREE || FIRE_UP_FREE) ? { wood: 0, coin: 0 } : halfCost(up)) : null;
+  $('fireT').textContent = d.name + ' \u00b7 cấp ' + lv + '/' + FIRE_MAXLV;
+  $('fireI').textContent = 'Củi: ' + Math.ceil(F.fuel) + '/' + d.max + ' giây. Ở gần lửa: hồi ' + FIRE_HEAL[lv - 1] + ' máu/giây, cướp đi chậm.';
+  $('fireBarI').style.width = clamp(F.fuel / d.max * 100, 0, 100) + '%';
   const b1 = $('fireAdd1'), bn = $('fireAddN'), bu = $('fireUp');
   b1.innerHTML = 'Thêm 1 gỗ<small>+' + FIRE_WOOD_SEC + ' giây củi</small>'; b1.disabled = w < 1 || need < 1;
   const k = Math.min(w, need); bn.innerHTML = 'Thêm cho đầy<small>' + (need < 1 ? 'Lửa đã đầy' : 'tốn ' + (k || need) + ' gỗ') + '</small>'; bn.disabled = k < 1;
   if (!up) { bu.innerHTML = 'Đã cấp tối đa'; bu.disabled = true; }
-  else { const nx = FIRE_LV[FIRE.lv]; bu.innerHTML = 'Nâng lên ' + nx.name + '<small>' + upCost.wood + ' gỗ + ' + upCost.coin + ' xu \u00b7 sáng ' + nx.light + ', chứa ' + nx.max + 's</small>'; bu.disabled = player.wood < upCost.wood || player.coins < upCost.coin; }
+  else { const nx = FIRE_LV[lv]; bu.innerHTML = 'Nâng lên ' + nx.name + '<small>' + (FIRE_UP_FREE ? 'MIỄN PHÍ (thử)' : upCost.wood + ' gỗ + ' + upCost.coin + ' xu' + UP_TAG()) + ' \u00b7 sáng ' + nx.light + ', chứa ' + nx.max + 's</small>'; bu.disabled = player.wood < upCost.wood || player.coins < upCost.coin; }
 }
 function placeFireMenu(){
-  const m = $('fireMenu'), w = m.offsetWidth || 216, h = m.offsetHeight || 200, sx = W / 2 + (FIRE.x - camera.x) * zoom, sy = H / 2 + (FIRE.y - 70 - camera.y) * zoom;
+  const F = fireOf(), m = $('fireMenu'), w = m.offsetWidth || 216, h = m.offsetHeight || 200, sx = W / 2 + (fX(F) - camera.x) * zoom, sy = H / 2 + (fY(F) - 70 - (F.lv >= 4 ? 20 : 0) - camera.y) * zoom;
   m.style.left = clamp(sx - w / 2, 8, Math.max(8, W - w - 8)) + 'px'; m.style.top = clamp(sy - h, 8, Math.max(8, H - h - 8)) + 'px';
 }
 let fireMenuTick = 0;
 function fireMenuLoop(){
   if (!fireMenuOn) return;
-  if (player.dead || ended || placing || Math.hypot(player.x - FIRE.x, player.y - FIRE.y) > 700) { closeFireMenu(); return; }
+  const F = fireOf();
+  if (player.dead || ended || placing || Math.hypot(player.x - fX(F), player.y - fY(F)) > 700) { closeFireMenu(); return; }
   if ((fireMenuTick++ % 15) === 0) renderFireMenu();
   placeFireMenu(); requestAnimationFrame(fireMenuLoop);
 }
-function openFireMenu(){
+function openFireMenu(f){
   if (!started || player.role === 'bandit') return;
+  fireMenuF = f || FIRE;
   const was = fireMenuOn; fireMenuOn = true; renderFireMenu(); $('fireMenu').classList.add('open'); placeFireMenu(); if (!was) requestAnimationFrame(fireMenuLoop);
 }
 function closeFireMenu(){ fireMenuOn = false; $('fireMenu').classList.remove('open'); }
-function fireNear(){ if (Math.hypot(player.x - FIRE.x, player.y - FIRE.y) > FIRE_REACH) { toast('Lại gần đống lửa hơn.', true); return false; } return true; }
+function fireNear(){ const F = fireOf(); if (Math.hypot(player.x - fX(F), player.y - fY(F)) > FIRE_REACH) { toast('Lại gần đống lửa hơn.', true); return false; } return true; }
+function fireMsg(F, extra){ const m = Object.assign({}, extra); if (F !== FIRE) { m.fx = Math.round(F.x); m.fy = Math.round(F.cy); } return m; }
 function fireAddWood(n){
   if (!started || ended || player.dead || !fireNear()) return;
-  const take = Math.min(n, player.wood | 0, fireNeed());
-  if (take < 1) { toast(fireNeed() < 1 ? 'Lửa đã đầy củi.' : 'Bạn không có gỗ.', true); return; }
-  FIRE.fuel = Math.min(fireDef().max, FIRE.fuel + take * FIRE_WOOD_SEC); player.wood -= take; onWoodChange();
-  addFloat(FIRE.x, FIRE.y - 56, '+' + take * FIRE_WOOD_SEC + ' giây', '#ffd884'); sfxPick();
-  for (let k = 0; k < 6; k++) spawn({ k: 'ember', x: FIRE.x + rand(-8, 8), y: FIRE.y - 12, z: 8, vx: rand(-14, 14), vy: rand(-6, 6), vz: rand(40, 80), size: rand(1.2, 2), life: rand(.7, 1.3), g: 0 });
-  if (Net.on) Net.send({ t: 'fu', add: take * FIRE_WOOD_SEC }); renderFireMenu();
+  const F = fireOf(), take = Math.min(n, player.wood | 0, fireNeed(F));
+  if (take < 1) { toast(fireNeed(F) < 1 ? 'Lửa đã đầy củi.' : 'Bạn không có gỗ.', true); return; }
+  F.fuel = Math.min(fireDef(F).max, F.fuel + take * FIRE_WOOD_SEC); player.wood -= take; onWoodChange();
+  addFloat(fX(F), fY(F) - 56, '+' + take * FIRE_WOOD_SEC + ' giây', '#ffd884'); sfxPick();
+  for (let k = 0; k < 6; k++) spawn({ k: 'ember', x: fX(F) + rand(-8, 8), y: fY(F) - 12, z: 8, vx: rand(-14, 14), vy: rand(-6, 6), vz: rand(40, 80), size: rand(1.2, 2), life: rand(.7, 1.3), g: 0 });
+  if (Net.on) Net.send(fireMsg(F, { t: 'fu', add: take * FIRE_WOOD_SEC })); renderFireMenu();
 }
+function fireLevelUp(F){ F.lv = (F.lv || 1) + 1; if (F !== FIRE && F.maxHp) { F.maxHp += 50; F.hp += 50; } }   /* lửa trại cửa hàng: +50 máu mỗi cấp */
 function fireUpgrade(){
-  if (!started || ended || player.dead || FIRE.lv >= 3 || !fireNear()) return;
-  const U = TEST_FREE ? { wood: 0, coin: 0 } : FIRE_UP[FIRE.lv];
+  const F = fireOf();
+  if (!started || ended || player.dead || (F.lv || 1) >= FIRE_MAXLV || !fireNear()) return;
+  const U = (TEST_FREE || FIRE_UP_FREE) ? { wood: 0, coin: 0 } : halfCost(FIRE_UP[F.lv || 1]);
   if (player.wood < U.wood || player.coins < U.coin) { toast('Chưa đủ gỗ hoặc xu để nâng đống lửa.', true); return; }
   player.wood -= U.wood; player.coins -= U.coin; onWoodChange(); refreshCoins();
-  FIRE.lv++; if (Net.on) Net.send({ t: 'fv', lv: FIRE.lv });
-  sfxBuild(); toast('Đống lửa lên ' + fireDef().name.toLowerCase() + '. Sáng hơn, ấm hơn, chứa được nhiều củi hơn.', true); renderFireMenu();
+  fireLevelUp(F); if (Net.on) Net.send(fireMsg(F, { t: 'fv', lv: F.lv }));
+  sfxBuild(); toast('Đống lửa lên ' + fireDef(F).name.toLowerCase() + '. Sáng hơn, ấm hơn, chứa được nhiều củi hơn.', true); renderFireMenu();
 }
 $('fireX').addEventListener('click', closeFireMenu);
 $('fireAdd1').addEventListener('click', () => fireAddWood(1));
@@ -4803,7 +4872,7 @@ function netOnMsg(m){
     if (!m.dd && a.dead) { a.dead = false; if (actors.indexOf(a) < 0) actors.push(a); a.x = m.x; a.y = m.y; a.px = m.x; a.py = m.y; a.tx = m.x; a.ty = m.y; if (!isNew) { toast((m.n || 'Người chơi') + ' đã được cứu sống!', true); reviveFx(m.x, m.y); } }
     if (m.dd && !a.dead && !(a.reviveUntil > performance.now())) { a.dead = true; a.x = m.x; a.y = m.y; addGrave(a); const k = actors.indexOf(a); if (k >= 0) actors.splice(k, 1); if (!isNew) { toast((m.n || 'Người chơi') + ' đã gục! Xem dấu đỏ trên bản đồ.', true); sfxDown(hearVol(a)); } } a.tx = m.x; a.ty = m.y; a.dir = m.d; a.role = m.r; a.name = m.n; a.pq = m.pq; a.carryF = m.cr || '';
     if (m.sw && a.swing < 0) a.swing = 0;
-    if (m.h) { if (m.f) Net.hostId = m.f; Net.lastHostRx = performance.now(); Net.rx++; Net.hostStarted = !!m.st; if (!Net.host && started && m.st) { matchLeft = m.ml; if (m.ck != null && Math.abs(clockT - m.ck) > 1.5) clockT = m.ck; if (m.fl != null && Math.abs(FIRE.fuel - m.fl) > 3) FIRE.fuel = m.fl; if (m.fv > FIRE.lv && m.fv <= 3) FIRE.lv = m.fv; } if (!Net.host && m.st && RoleSel.open && !RoleSel.decided && performance.now() - RoleSel.openedAt > 1500) rsFinish([]); updateLobbyGo(); }
+    if (m.h) { if (m.f) Net.hostId = m.f; Net.lastHostRx = performance.now(); Net.rx++; Net.hostStarted = !!m.st; if (!Net.host && started && m.st) { matchLeft = m.ml; if (m.ck != null && Math.abs(clockT - m.ck) > 1.5) clockT = m.ck; if (m.fl != null && Math.abs(FIRE.fuel - m.fl) > 3) FIRE.fuel = m.fl; if (m.fv > FIRE.lv && m.fv <= FIRE_MAXLV) FIRE.lv = m.fv; } if (!Net.host && m.st && RoleSel.open && !RoleSel.decided && performance.now() - RoleSel.openedAt > 1500) rsFinish([]); updateLobbyGo(); }
   } else if (m.t === 'rm') {   /* chủ gỡ nông trại (xoá/nâng cấp/di chuyển) */
     for (const f of FARMS) if (!f.removed && f.kind === m.k && Math.abs(f.x - m.x) < 3 && Math.abs(f.y - m.y) < 3) { netForget(f); removeFarmQuiet(f); break; }
   } else if (m.t === 'rl') {   /* v75: người khác chọn vai */
@@ -4840,9 +4909,9 @@ function netOnMsg(m){
   } else if (m.t === 'bd') {   /* tháp bắn trúng người chơi làm cướp là mình */
     if (m.to === Net.id && player.role === 'bandit' && !player.dead) damageActor(player, m.dmg);
   } else if (m.t === 'fu') {   /* v76: ai đó bỏ củi vào đống lửa */
-    FIRE.fuel = Math.min(FIRE_LV[FIRE.lv - 1].max, FIRE.fuel + (+m.add || 0));
+    const F = fireByMsg(m); if (F) F.fuel = Math.min(fireDef(F).max, F.fuel + (+m.add || 0));
   } else if (m.t === 'fv') {   /* v76: đống lửa lên cấp */
-    if (m.lv > FIRE.lv && m.lv <= 3) FIRE.lv = m.lv;
+    const F = fireByMsg(m); while (F && (F.lv || 1) < m.lv && (F.lv || 1) < FIRE_MAXLV) fireLevelUp(F);
   } else if (m.t === 'rv') {   /* đồng đội cứu mình */
     if (m.to === Net.id) onRevived(m);
   } else if (m.t === 'bh') {   /* tháp của khách bắn trúng cướp */
@@ -4863,7 +4932,7 @@ function netTick(){
   const grace = Net.migrating || now - Net.mgDone < 4000;
   for (const id in Net.ghosts) { const g = Net.ghosts[id]; if (!Net.migrating && now - g.seen > 15000) { const i = actors.indexOf(g); if (i >= 0) actors.splice(i, 1); delete Net.ghosts[id]; } }
   for (const f in Net.remotes) { const a = Net.remotes[f]; if (grace) a.seen = now; if (now - a.seen > 4000) { const k = actors.indexOf(a); if (k >= 0) actors.splice(k, 1); delete Net.remotes[f]; } else if (!a.dead) n++; }
-  Net.n = n; $('roomPill').textContent = 'Phòng ' + Net.code + ' · ' + n + ' người';
+  Net.n = n; $('roomPill').textContent = 'Phòng ' + Net.code + ' · ' + n + ' người' + (Net.host && Net.peer && Net.peer.disconnected ? ' · đang nối lại mạng…' : '');
 }
 function updateLobbyGo(){
   const b = $('goBtn'); if (started || lobbyMode) return;
@@ -4872,17 +4941,36 @@ function updateLobbyGo(){
   if (Net.on && !Net.host) $('lobbyMsg').textContent = 'Đã vào phòng ' + Net.code + '. Tin nhận từ chủ phòng: ' + Net.rx + (Net.rx ? ' (đã nối ổn)' : ' (chưa nhận được gì)') + '.';
 }
 const NET_BC = new URLSearchParams(location.search).get('net') === 'bc';
-function netHostPeer(pid, done){   /* chủ phòng: giữ mã pid, nhận kết nối, chuyển tiếp tin cho những người khác */
+/* v84 SỬA LỖI 'KHÔNG THẤY PHÒNG' KHI THÊM NGƯỜI GIỮA TRẬN: máy chủ phòng bị mất kết nối tới máy chủ trung gian PeerJS (nhàn rỗi lâu, điện thoại tắt màn hình, mạng chập chờn)
+   thì mã phòng bị XOÁ khỏi danh sách dù người đang chơi vẫn nối với nhau bình thường; người mới nhập mã sẽ báo 'không thấy phòng'. Sửa: giữ đăng ký (hold): nghe 'disconnected' và gọi peer.reconnect(),
+   kiểm tra lại mỗi 5 giây và khi mở lại tab. Ngoài ra khi đổi chủ phòng, chủ mới giữ THÊM mã gốc 'rh-MÃ' (alias) để người mới vẫn nhập đúng mã cũ. */
+function holdPeer(pr){
+  const re = () => { if (pr.destroyed || !pr.disconnected) return; try { pr.reconnect(); } catch (e) {} };
+  pr.on('disconnected', () => setTimeout(re, 600));
+  const t = setInterval(() => { if (pr.destroyed) clearInterval(t); else re(); }, 5000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) re(); });
+}
+function netHostPeer(pid, done, alias){   /* chủ phòng: giữ mã pid, nhận kết nối, chuyển tiếp tin cho những người khác */
   const conns = [], peer = new Peer(pid); Net.peer = peer; let fin = false;
   const end = (ok, m) => { if (!fin) { fin = true; done(ok, m); } };
+  const onConn = c => { conns.push(c); c.on('data', m => { netOnMsg(m); conns.forEach(o => o !== c && o.open && o.send(m)); }); c.on('close', () => { const i = conns.indexOf(c); if (i >= 0) conns.splice(i, 1); }); };
   peer.on('error', e => end(false, e.type === 'unavailable-id' ? 'Mã phòng bị trùng, bấm Tạo phòng lại.' : 'Lỗi mạng: ' + e.type));
   peer.on('open', () => { Net.send = m => { m.f = Net.id; conns.forEach(c => c.open && c.send(m)); }; end(true); });
-  peer.on('connection', c => { conns.push(c); c.on('data', m => { netOnMsg(m); conns.forEach(o => o !== c && o.open && o.send(m)); }); c.on('close', () => { const i = conns.indexOf(c); if (i >= 0) conns.splice(i, 1); }); });
+  peer.on('connection', onConn);
+  holdPeer(peer);
+  if (alias) { let n = 0; const tryAlias = () => {   /* mã gốc có thể còn bị chủ cũ giữ vài giây: thử lại */
+    if (!Net.on || Net.peer !== peer || (Net.peer2 && !Net.peer2.destroyed && !Net.peer2.disconnected)) return;
+    const p2 = new Peer(alias); Net.peer2 = p2; p2.on('connection', onConn); holdPeer(p2);
+    p2.on('error', e => { if (e.type === 'unavailable-id' && n++ < 40) { try { p2.destroy(); } catch (x) {} setTimeout(tryAlias, 3000); } });
+  }; peer.on('open', tryAlias); }
 }
-function netGuestPeer(pid, done){   /* khách: nối vào chủ phòng có mã pid */
-  const peer = new Peer(); Net.peer = peer; let fin = false;
+function netGuestPeer(pid, done, tryN){   /* khách: nối vào chủ phòng có mã pid */
+  tryN = tryN || 0; const peer = new Peer(); Net.peer = peer; let fin = false;
   const end = (ok, m) => { if (!fin) { fin = true; done(ok, m); } };
-  peer.on('error', e => end(false, e.type === 'peer-unavailable' ? 'Không thấy phòng này. Kiểm tra lại mã.' : 'Lỗi mạng: ' + e.type));
+  peer.on('error', e => {
+    if (e.type === 'peer-unavailable' && !fin && tryN < 3) { try { peer.destroy(); } catch (x) {} setTimeout(() => netGuestPeer(pid, done, tryN + 1), 1500); return; }   /* v84: chủ phòng đang nối lại mạng thì thử lại */
+    end(false, e.type === 'peer-unavailable' ? 'Không thấy phòng này. Kiểm tra lại mã, hoặc thử lại sau vài giây (chủ phòng có thể đang nối lại mạng).' : 'Lỗi mạng: ' + e.type);
+  });
   peer.on('open', () => {
     const c = peer.connect(pid);
     c.on('open', () => {
@@ -4919,7 +5007,8 @@ function netBecomeHost(){
     adoptBandits(); toast('Bạn là chủ phòng mới. Cướp vẫn tiếp tục.', true);
   };
   if (NET_BC) return fin(true);
-  netHostPeer(netPid(Net.id), fin);
+  try { Net.peer2 && Net.peer2.destroy(); } catch (e) {}
+  netHostPeer(netPid(Net.id), fin, 'rh-' + Net.code);   /* v84: giữ thêm mã gốc để người mới vẫn vào được bằng mã cũ */
 }
 function netReconnect(succ, tries){
   const fin = ok => {
@@ -4929,7 +5018,7 @@ function netReconnect(succ, tries){
   };
   if (NET_BC) return fin(true);
   try { Net.peer && Net.peer.destroy(); } catch (e) {}
-  netGuestPeer(netPid(succ), fin);
+  netGuestPeer(netPid(succ), fin, 3);
 }
 function adoptBandits(){
   for (const id in Net.ghosts) {
@@ -5344,7 +5433,7 @@ function init(){
   initEconomy();
   onWoodChange();
   $('wood').textContent = '0';
-  window.__rh = { FIRE, get clockT() { return clockT; }, set clockT(v) { clockT = v; }, Wave, startWave, endWave, waveStartT, setClock: v => { clockT = v; }, getClock: () => clockT, bloodMoon, FIRE, night, nightAt, fireAddWood, fireUpgrade, openFireMenu, setClock: v => { clockT = v; }, setElapsed: v => { matchLeft = MATCH_SECONDS - v; }, get clock() { return clockT; }, get started() { return started; }, RoleSel, rsPick, rsSplit, humanBandits, banditHold, openRoleSel, get perf() { return { DPR, DPRCAP, ema: perfEma, up: perfUpTried }; }, openJobMenu, placeDef, APPLICANTS, APP_POOL, QUEST_DATA, ownClocks, freeClock, acceptQuest, questProgress, hireApplicant, resetApplicant, applicantTarget, fillApplicants, removeApplicant, clockCount, talkNearest, hasPunchClock, GRAVES, addGrave, slideOut, waterBlocked, BRIDGES, openFarmMenu, upgradeFarm, deleteFarm, startMoveFarm, moveFarmTo, farmAtWorld, netOnMsg, netBuilt, netSnapshot, banditTarget, humanCount, biomeAt, BIOME_SLOW, Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
+  window.__rh = { netHostPeer, netGuestPeer, FIRE, get clockT() { return clockT; }, set clockT(v) { clockT = v; }, Wave, startWave, endWave, waveStartT, setClock: v => { clockT = v; }, getClock: () => clockT, bloodMoon, FIRE, night, nightAt, fireAddWood, fireUpgrade, openFireMenu, setClock: v => { clockT = v; }, setElapsed: v => { matchLeft = MATCH_SECONDS - v; }, get clock() { return clockT; }, get started() { return started; }, RoleSel, rsPick, rsSplit, humanBandits, banditHold, openRoleSel, get perf() { return { DPR, DPRCAP, ema: perfEma, up: perfUpTried }; }, openJobMenu, placeDef, APPLICANTS, APP_POOL, QUEST_DATA, ownClocks, freeClock, acceptQuest, questProgress, hireApplicant, resetApplicant, applicantTarget, fillApplicants, removeApplicant, clockCount, talkNearest, hasPunchClock, GRAVES, addGrave, slideOut, waterBlocked, BRIDGES, openFarmMenu, upgradeFarm, deleteFarm, startMoveFarm, moveFarmTo, farmAtWorld, netOnMsg, netBuilt, netSnapshot, banditTarget, humanCount, biomeAt, BIOME_SLOW, Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
   const menu = $('menuModal'), openMenu = () => { if (lobbyMode) { $('start').classList.remove('hide'); return; } $('menuNote').textContent = Net.on && Net.host ? 'Bạn là chủ phòng: thoát thì người khác trong phòng sẽ tự chuyển sang chủ mới (mất vài giây).' : 'Thoát game sẽ rời trận và quay về màn hình đầu. Trận vẫn chạy khi bạn mở menu.'; menu.classList.add('open'); }, closeMenu = () => menu.classList.remove('open');
   $('menuBtn').addEventListener('click', openMenu); $('menuClose').addEventListener('click', closeMenu); $('menuResume').addEventListener('click', closeMenu);
   $('menuExit').addEventListener('click', () => { location.href = location.pathname + (location.search.includes('net=bc') ? '?net=bc' : ''); });
