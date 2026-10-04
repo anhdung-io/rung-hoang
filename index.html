@@ -304,6 +304,65 @@ body.lobby .hud.tl, body.lobby #hotbar, body.lobby #chopBtn, body.lobby .timer, 
 #roleSel .rs-btn:disabled{ opacity:.5; cursor:default; }
 #roleSel .rs-foot{ flex:0 0 auto; margin-top:6px; min-height:1.2em; font-size:clamp(11px,2.8vh,15px); opacity:.8; text-align:center; }
 #wdGrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+/* ===== v117: Máy chấm công (jm-*) ===== */
+#jobMenu .jm-head{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+#jobMenu .jm-title{ font-weight:800; font-size:17px; color:var(--amber); }
+#jobMenu .jm-hint{ font-size:11.5px; color:var(--dim); margin-top:1px; }
+#jobMenu button{ font-family:var(--font); cursor:pointer; touch-action:manipulation; }
+#jobMenu .jm-x{ margin-left:auto; width:32px; height:32px; border-radius:50%; border:0; background:rgba(255,255,255,.08); color:#f4efd9; font-size:22px; line-height:1; }
+#jobMenu .jm-back{ border:0; background:rgba(255,255,255,.08); color:#f4efd9; font-weight:700; font-size:13px; padding:6px 10px; border-radius:10px; }
+#jobMenu .jm-row{ box-sizing:border-box; display:flex; align-items:center; gap:10px; width:100%; margin:0 0 6px; padding:6px 10px 6px 6px; border-radius:12px; border:1px solid rgba(255,236,190,.14); background:rgba(255,236,190,.06); color:inherit; text-align:left; }
+#jobMenu button.jm-row:active{ background:rgba(255,236,190,.14); }
+#jobMenu .jm-row.empty{ border-style:dashed; background:transparent; opacity:.65; }
+#jobMenu .jm-av{ flex:none; width:46px; height:66px; border-radius:10px; background:rgba(0,0,0,.28); object-fit:contain; }
+#jobMenu .jm-av.ph{ display:flex; align-items:center; justify-content:center; font-size:26px; color:var(--dim); height:44px; }
+#jobMenu .jm-info{ flex:1; min-width:0; }
+#jobMenu .jm-name{ font-weight:800; font-size:14.5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+#jobMenu .jm-sub{ font-size:11.5px; color:var(--dim); margin-top:1px; }
+#jobMenu .jm-go{ font-size:26px; color:var(--amber); line-height:1; }
+#jobMenu .jm-chip{ font-size:11px; font-weight:700; padding:1px 7px; border-radius:9px; background:rgba(127,211,106,.18); color:#a6e892; }
+#jobMenu .jm-chip.j-guard{ background:rgba(141,196,255,.18); color:#a8d2ff; }
+#jobMenu .jm-chip.j-fish{ background:rgba(111,230,255,.16); color:#8ff0ff; }
+#jobMenu .jm-bars{ display:flex; align-items:center; gap:4px; margin-top:4px; }
+#jobMenu .jm-bars.big{ flex-wrap:wrap; gap:5px 6px; }
+#jobMenu .jm-bl{ font-size:10.5px; color:var(--dim); }
+#jobMenu .jm-bar{ display:block; flex:1; min-width:26px; height:6px; border-radius:3px; background:rgba(0,0,0,.42); }
+#jobMenu .jm-bar i{ display:block; height:6px; border-radius:3px; }
+#jobMenu .jm-del{ display:block; margin:6px auto 0; padding:6px 12px; border:0; background:transparent; color:#e8907f; font-size:12.5px; font-weight:700; text-decoration:underline; }
+#jobMenu .jm-top{ display:flex; gap:10px; align-items:center; padding:8px; border-radius:12px; background:rgba(255,236,190,.06); }
+#jobMenu .jm-avl{ flex:none; width:78px; height:108px; border-radius:12px; background:rgba(0,0,0,.28); object-fit:contain; }
+#jobMenu .jm-stats{ flex:1; min-width:0; }
+#jobMenu .jm-rank{ margin-top:6px; font-weight:800; font-size:13px; color:#ffd884; display:flex; align-items:center; flex-wrap:wrap; }
+#jobMenu .jm-rank span{ font-weight:600; font-size:11px; color:var(--dim); margin-left:6px; }
+#jobMenu .jm-tabs{ display:flex; gap:6px; margin:9px 0 7px; }
+#jobMenu .jm-tab{ flex:1; padding:7px 4px; border:1px solid rgba(255,236,190,.2); border-radius:10px; background:rgba(255,255,255,.05); color:#f4efd9; font-weight:700; font-size:13px; }
+#jobMenu .jm-tab.on{ background:linear-gradient(#ffd884,#f0a840); color:#2b1a05; border-color:#21140d; }
+#jobMenu .jm-seg{ display:flex; gap:6px; flex-wrap:wrap; }
+#jobMenu .jm-sb{ flex:1 1 0; min-width:92px; padding:8px 6px; border:2px solid #21140d; border-radius:11px; font-weight:800; font-size:13px; color:#2b1a05; background:linear-gradient(#e9dcc0,#c9b88f); display:flex; flex-direction:column; align-items:center; gap:1px; }
+#jobMenu .jm-sb.on{ background:linear-gradient(#ffd884,#f0a840); }
+#jobMenu .jm-sb span{ font-size:20px; line-height:1.1; }
+#jobMenu .jm-sb em{ font-style:normal; font-size:10.5px; font-weight:700; opacity:.75; }
+#jobMenu .jm-sb.sm{ padding:7px 6px; font-size:12.5px; }
+#jobMenu .jm-lab{ font-size:12px; font-weight:800; color:var(--amber); margin:9px 0 5px; }
+#jobMenu .jm-note{ font-size:11.5px; color:var(--dim); margin-top:8px; line-height:1.35; }
+#jobMenu .jm-gear{ display:flex; gap:8px; }
+#jobMenu .jm-gc{ flex:1; padding:8px; border-radius:12px; background:rgba(255,236,190,.07); border:1px solid rgba(255,236,190,.14); display:flex; flex-direction:column; gap:4px; }
+#jobMenu .jm-gt{ font-weight:800; font-size:13.5px; }
+#jobMenu .jm-gcur{ font-size:12px; color:#f4efd9; }
+#jobMenu .jm-gnx{ font-size:11.5px; color:var(--dim); }
+#jobMenu .jm-cost{ display:flex; gap:5px; flex-wrap:wrap; }
+#jobMenu .jm-cost b{ font-size:12px; padding:1px 7px; border-radius:8px; background:rgba(0,0,0,.35); }
+#jobMenu .jm-cost b.bad{ color:#ff9c8a; }
+#jobMenu .jm-buy{ margin-top:2px; padding:7px; border:2px solid #21140d; border-radius:10px; font-weight:800; font-size:13px; color:#2b1a05; background:linear-gradient(#ffd884,#f0a840); }
+#jobMenu .jm-buy.no{ opacity:.55; }
+#jobMenu .jm-max{ margin-top:auto; padding:7px; text-align:center; font-weight:800; font-size:12.5px; color:#8ff0ff; background:rgba(111,230,255,.1); border-radius:10px; }
+@media (max-height:560px){
+  #jobMenu{ padding:8px 10px !important; max-height:97vh !important; }
+  #jobMenu .jm-row{ margin-bottom:4px; padding:4px 8px 4px 4px; } #jobMenu .jm-av{ width:38px; height:54px; } #jobMenu .jm-av.ph{ height:36px; }
+  #jobMenu .jm-hint{ display:none; } #jobMenu .jm-name{ font-size:13.5px; } #jobMenu .jm-sub{ font-size:11px; }
+  #jobMenu .jm-avl{ width:60px; height:84px; } #jobMenu .jm-tabs{ margin:6px 0 5px; } #jobMenu .jm-tab{ padding:5px 4px; }
+  #jobMenu .jm-sb{ padding:5px 6px; } #jobMenu .jm-sb span{ font-size:17px; }
+}
 </style>
 </head>
 <body>
@@ -376,7 +435,7 @@ body.lobby .hud.tl, body.lobby #hotbar, body.lobby #chopBtn, body.lobby .timer, 
   <button class="fm-b" id="fireAdd1"></button><button class="fm-b" id="fireAddN"></button><button class="fm-b" id="fireUp"></button></div>
 <div id="placeBar"><span id="placeMsg"></span><button class="btn" id="placeRot" style="display:none">Xoay (R)</button><button class="go2" id="placeOk">Đặt</button><button class="btn" id="placeCancel">Huỷ</button></div>
 <div class="modal" id="shop"><div class="sheet">
-  <header><h2>Cửa hàng</h2><button class="btn" id="shopClose">Đóng</button></header>
+  <header><h2>Cửa hàng <span id="shopFreeTag" style="display:none;font-size:12px;font-weight:800;color:#2b1a05;background:#9be08a;border-radius:8px;padding:2px 8px;vertical-align:middle">TEST · MUA MIỄN PHÍ</span></h2><button class="btn" id="shopClose">Đóng</button></header>
   <nav id="shopCats"></nav><nav id="shopTabs"></nav><div id="shopGrid"></div>
   <footer>Mua xong, đồ nằm ở hàng ô đồ phía dưới. Chọn ô đó rồi đặt ở bất kỳ đâu có chỗ trống. Tường và cổng: bấm Xoay (phím R) để đổi hướng, đặt sát nhau sẽ tự nối.</footer>
 </div></div>
@@ -386,7 +445,7 @@ body.lobby .hud.tl, body.lobby #hotbar, body.lobby #chopBtn, body.lobby .timer, 
   <header><h2>Tủ đồ</h2><button class="btn" id="wdClose">Đóng</button></header>
   <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
     <canvas id="wdCv" width="440" height="480" title="Chạm để xoay nhân vật" style="width:168px;height:183px;border-radius:12px;flex:none;cursor:pointer"></canvas>
-    <div style="flex:1;min-width:150px"><div style="font-size:15px;color:#cfd8c0">Xu thưởng có thể tiêu</div><div style="font-size:30px;font-weight:800;color:#ffe08a;line-height:1.1"><span id="wdPts">0</span> xu</div><div id="wdStat" style="font-size:12px;color:#b9c7a8;margin-top:6px"></div><div style="font-size:12px;color:#b9c7a8;margin-top:6px">Chạm một món để thử mặc trước. Danh hiệu mở theo mốc chơi.</div></div>
+    <div style="flex:1;min-width:150px"><div style="font-size:15px;color:#cfd8c0">Kim cương có thể tiêu</div><div style="font-size:30px;font-weight:800;color:#8fe3ff;line-height:1.1;text-shadow:0 0 12px rgba(120,220,255,.45)">💎 <span id="wdPts">0</span></div><div id="wdStat" style="font-size:12px;color:#b9c7a8;margin-top:6px"></div><div style="font-size:12px;color:#b9c7a8;margin-top:6px">Chạm một món để thử mặc trước. Danh hiệu mở theo mốc chơi.</div></div>
   </div>
   <nav id="wdTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0"></nav><div id="wdGrid"></div>
 </div></div>
@@ -1264,8 +1323,21 @@ function idlePose(view, s){
   return { hx: p.hx + (view === 'side' ? s * 2.5 : 0), hy: p.hy - Math.abs(s) * .8, th: p.th + s * (view === 'side' ? 7 : 3) };
 }
 
-function drawWeapon(c, role, hx, hy, th){
+function drawBowInHand(c, lv){   /* v119 (C3.3): cung + mũi tên đã lắp dây; màu gỗ theo cấp vũ khí */
+  const wood = ['#8a5a30', '#a06a34', '#5a3b1c', '#d9b24a'][lv | 0];
+  c.save(); c.translate(-13, 0); c.lineCap = 'round';
+  c.strokeStyle = OUT; c.lineWidth = 4.4; c.beginPath(); c.moveTo(6, -17); c.quadraticCurveTo(24, 0, 6, 17); c.stroke();
+  c.strokeStyle = wood; c.lineWidth = 2.6; c.beginPath(); c.moveTo(6, -17); c.quadraticCurveTo(24, 0, 6, 17); c.stroke();
+  c.strokeStyle = '#efe6cc'; c.lineWidth = 1; c.beginPath(); c.moveTo(6, -17); c.lineTo(6, 17); c.stroke();
+  c.strokeStyle = OUT; c.lineWidth = 2.8; c.beginPath(); c.moveTo(6, 0); c.lineTo(32, 0); c.stroke();
+  c.strokeStyle = '#e8d9b0'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(6, 0); c.lineTo(32, 0); c.stroke();
+  c.beginPath(); c.moveTo(31, -2.6); c.lineTo(37, 0); c.lineTo(31, 2.6); c.closePath(); c.fillStyle = '#cfd5db'; c.fill(); c.strokeStyle = OUT; c.lineWidth = .7; c.stroke();
+  c.strokeStyle = '#d65a46'; c.lineWidth = 1; c.beginPath(); c.moveTo(6, 0); c.lineTo(3.6, -2.2); c.moveTo(6, 0); c.lineTo(3.6, 2.2); c.stroke();
+  c.restore();
+}
+function drawWeapon(c, role, hx, hy, th, bow){
   c.save(); c.translate(hx, hy); c.rotate(th * Math.PI / 180);
+  if (role === 'farmer' && bow >= 0 && bow !== undefined) { drawBowInHand(c, bow); c.restore(); return; }
   if (role === 'farmer') {
     box(c, -5, -1.6, 32, 3.2, 1.4, '#8a5a30', 1);
     c.strokeStyle = 'rgba(50,25,10,.5)'; c.lineWidth = .6; c.beginPath(); c.moveTo(-3, .3); c.lineTo(24, .3); c.stroke();
@@ -1477,7 +1549,7 @@ function drawPerson(c, a, time){
     torsoFront(c, a);
     if (dead) { c.save(); c.translate(0, -28); c.rotate(.2); c.translate(0, 28); headFront(c, a, true); c.restore(); } else headFront(c, a, blink);
     drawArm(c, 9.5, -30, P.hx, P.hy, sleeve, skin);
-    if (!dead) { drawWeapon(c, a.role, P.hx, P.hy, P.th); if (sw >= 0) drawTrail(c, P.hx, P.hy, P.th, sw); }
+    if (!dead) { drawWeapon(c, a.role, P.hx, P.hy, P.th, a.wType === 'bow' ? (a.wLv | 0) : undefined); if (sw >= 0) drawTrail(c, P.hx, P.hy, P.th, sw); }
     drawHand(c, P.hx, P.hy, skin);
     c.restore();
   } else if (dir === 'up') {
@@ -1485,7 +1557,7 @@ function drawPerson(c, a, time){
     const o1 = s * 3.2, o2 = -s * 3.2;
     if (o1 < o2) { legFront(c, -4, o1, a); legFront(c, 4, o2, a); } else { legFront(c, 4, o2, a); legFront(c, -4, o1, a); }
     c.save(); c.translate(0, -bob);
-    if (!dead) drawWeapon(c, a.role, P.hx, P.hy, P.th);
+    if (!dead) drawWeapon(c, a.role, P.hx, P.hy, P.th, a.wType === 'bow' ? (a.wLv | 0) : undefined);
     drawArm(c, 9.5, -30, P.hx, P.hy, sleeve, skin); drawHand(c, P.hx, P.hy, skin);
     const fhy = -19 - s * 3.4;
     drawArm(c, -9.5, -30, -11.6, fhy, shade(sleeve, .85), skin); drawHand(c, -11.6, fhy, skin);
@@ -1504,7 +1576,7 @@ function drawPerson(c, a, time){
     torsoSide(c, a);
     headSide(c, a, blink);
     drawArm(c, .5, -30, P.hx, P.hy, sleeve, skin);
-    if (!dead) { drawWeapon(c, a.role, P.hx, P.hy, P.th); if (sw >= 0) drawTrail(c, P.hx, P.hy, P.th, sw); }
+    if (!dead) { drawWeapon(c, a.role, P.hx, P.hy, P.th, a.wType === 'bow' ? (a.wLv | 0) : undefined); if (sw >= 0) drawTrail(c, P.hx, P.hy, P.th, sw); }
     drawHand(c, P.hx, P.hy, skin);
     c.restore();
   }
@@ -1572,7 +1644,7 @@ function doHit(a){
   }
   if (a.isPlayer && !a.dead) {
     const hb = banditInReach(a);
-    if (hb) { const dmg = playerHitDmg(), lethal = hb.hp <= dmg; damageActor(hb, dmg); if (lethal) { toast('Bạn đã hạ một tên cướp! Nó sẽ quay lại từ rìa rừng.', true); questProgress('bandit'); } return; }
+    if (hb) { const dmg = playerHitDmg(), lethal = hb.hp <= dmg; damageActor(hb, dmg); if (lethal) { toast(hb.camp ? 'Bạn đã hạ một tên cướp! Chừng ' + CAMP_RESPAWN + ' giây nữa có tên khác xuất hiện ở chỗ khác.' : 'Bạn đã hạ một tên cướp! Nó sẽ quay lại từ rìa rừng.', true); questProgress('bandit'); } return; }
   }
   const t = a.target;
   if (!t || t.state !== 0 || t.grow < 1) return;
@@ -2310,7 +2382,7 @@ DEF_DATA.mvang = { tiers: [ { wood: 50, coin: 160, hp: 220, inc: 40 }, { wood: 1
 const BANDIT_HP = 200;
 /* v27: NGƯỜI CHƠI ĐÁNH ĐƯỢC CƯỚP BẰNG RÌU. Đầu trận (rage 0) cướp yếu: máu 100, rìu đánh 50 => 2 nhát. Cuối trận (rage 1) cướp trâu: máu 450, đánh dân 1.8x, còn rìu chỉ 30 => 15 nhát. Con số TẠM. */
 const PLAYER_HIT_BANDIT = 35;
-function banditMaxHp(){ return Math.round(BANDIT_HP * (.6 + .9 * banditRage())); }   /* v72: dễ hơn. Trước .5 + 1.75r (100 -> 450 máu), nay 120 -> 300 */
+function banditMaxHp(){ return Math.round(BANDIT_HP * (.6 + .9 * banditPow())); }   /* v112: dùng banditPow nên tăng tiếp sau ngày 10 */   /* v72: dễ hơn. Trước .5 + 1.75r (100 -> 450 máu), nay 120 -> 300 */
 function playerHitDmg(){ return Math.round(PLAYER_HIT_BANDIT - 6 * banditRage()); }   /* v72: trước trừ 13r (cuối trận 22), nay trừ 6r (29) */
 function banditInReach(a){
   let best = null, bd = REACH + 30;
@@ -2323,7 +2395,8 @@ const DEF_H = { lua: [26], duoc: [38], chamcong: [44], tuong: [22, 26, 30], cong
 let lastDefO = 'h';
 
 const isDefKind = k => !!DEF_DATA[k];
-const TEST_FREE = false;  /* TEST: true = mua đồ miễn phí. Chơi xong đổi thành false để trả lại giá */
+/* v120 BẢN THỬ (Kim yêu cầu): MẶC ĐỊNH MUA MIỄN PHÍ (đồ, nâng cấp, di chuyển, giáp, vũ khí, vật liệu, nâng lửa, thưởng người làm). Thêm ?free=0 vào link để TẮT (giá thật). Trước khi phát hành thật: đổi lại thành  QP-free mặc định tắt (so sánh !== '1') hoặc false. Không dùng QP ở đây vì QP khai báo muộn hơn (TDZ). */
+const TEST_FREE = new URLSearchParams(location.search).get('free') !== '0';
 const PUNCH_FREE = false;  /* v66: ĐÃ TẮT, máy chấm công bán giá thật (120 gỗ + 200 xu). Đổi true nếu cần thử miễn phí. (v57 TEST: máy chấm công MIỄN PHÍ để thử tuyển dụng. NHỚ đổi lại false khi chơi thật (giá thật 120 gỗ + 200 xu trong DEF_DATA.chamcong) )*/
 const itemData = (kind, tier) => { let D = ITEM_DATA[kind] ? ITEM_DATA[kind] : (FARM_DATA[kind] || DEF_DATA[kind]).tiers[tier]; if (typeof MAT_REQ !== 'undefined' && MAT_REQ[kind + ':' + tier]) D = Object.assign({}, D, { mat: MAT_REQ[kind + ':' + tier] });   /* v105: cấp Xịn cần vật liệu vùng xa */
   return (TEST_FREE || (PUNCH_FREE && kind === 'chamcong')) ? Object.assign({}, D, { wood: 0, coin: 0 }) : D; };
@@ -2625,7 +2698,13 @@ function damageActor(a, dmg){
     a.hurt = .3; addFloat(a.x, a.y - 78, '-' + Math.round(dmg), '#ff9c8a'); sfxHit(hearVol(a)); return;
   }
   if (a.ghost) { Net.send({ t: 'bh', i: a.gid, dmg }); a.hurt = .3; addFloat(a.x, a.y - 78, '-' + Math.round(dmg), '#ff9c8a'); sfxHit(hearVol(a)); return; }
-  a.hp -= dmg; a.hurt = .3;
+  a.hp -= dmg; a.hurt = .3; if (a.camp) a.aggro = CAMP_AGGRO;   /* v110: bị đánh thì cướp rình đánh lại */
+  if (bpHas(a, 'thu') && a.hp > 0) {   /* v113: báo thù nhớ kẻ đánh mình (người gần nhất trong tầm cận chiến) */
+    let best = null, bd = REACH + 50;
+    for (const o of actors) { if (o === a || o.role === 'bandit' || o.dead) continue; const d = Math.hypot(o.x - a.x, o.y - a.y); if (d < bd) { bd = d; best = o; } }
+    for (const w of APPLICANTS) { if (w.st !== 'hired' || w.away || w.dead) continue; const d = Math.hypot(w.x - a.x, w.y - a.y); if (d < bd) { bd = d; best = w; } }
+    if (best) { a.avenge = best; a.avT = 12; bandSay(a, PERS.thu.say); }
+  }
   addFloat(a.x, a.y - 78, '-' + Math.round(dmg), '#ff9c8a'); sfxHit(hearVol(a));
   for (let i = 0; i < 5; i++) spawn({ k: 'chip', x: a.x + rand(-4, 4), y: a.y, z: rand(12, 30), vx: rand(-50, 50), vy: rand(-20, 20), vz: rand(40, 110), rot: rand(0, 6), vr: rand(-10, 10), size: rand(1.6, 2.8), color: '#c8372d', life: .6, g: 420 });
   if (a.hp <= 0) downBandit(a);
@@ -2636,8 +2715,13 @@ function downBandit(a){
   const ang = Math.random() * TAU;
   for (let i = 0; i < 12; i++) spawn({ k: 'dust', x: a.x + rand(-8, 8), y: a.y + rand(-6, 6), z: rand(2, 20), vx: rand(-30, 30), vy: rand(-12, 12), vz: rand(10, 40), size: rand(5, 9), life: rand(.5, .9), g: 0 });
   if (a.kind === 'thief' && a.loot) giveBackLoot(a);   /* v100 */
+  if (!a.isPlayer && !a.remote) for (const o of actors) {   /* v113: đồng bọn chết: nhát dè chừng, tay sai mất đại ca thì rút hoặc hoảng */
+    if (o === a || o.role !== 'bandit' || o.gone || o.dead || o.ghost) continue;
+    if (bpHas(o, 'nhat') && Math.hypot(o.x - a.x, o.y - a.y) < 600) o.scaredT = 8;
+    if (a.boss && bpHas(o, 'tay')) { if (Math.random() < .5) { bandSay(o, 'Đại ca chết rồi!'); retreatBandit(o); } else { bandSay(o, 'Chạy thôi!'); o.fleeT = 7; o.ai.bt = null; } }
+  }
   if (!a.isPlayer) {   /* v72: cướp bot chết hẳn, biến khỏi rừng, bù thêm sau BANDIT_REPLACE_DELAY giây */
-    a.hp = 0; a.dead = true; a.gone = true; if (!a.nightOnly && !a.wave) banditReplaceAt = (MATCH_SECONDS - matchLeft) + BANDIT_REPLACE_DELAY;
+    a.hp = 0; a.dead = true; a.gone = true; if (a.camp) campQueue.push({ t: CAMP_RESPAWN, at: [a.x, a.y] }); else if (!a.nightOnly && !a.wave) banditReplaceAt = (MATCH_SECONDS - matchLeft) + BANDIT_REPLACE_DELAY;
     if (!a.remote) toast('Đã hạ một tên cướp!', true);
     return;
   }
@@ -2784,8 +2868,22 @@ const BANDIT_SPEED_OLD = 137;   /* v43: 125 -> 137 (+~10%). Cuối trận nhân 
 /* Càng về cuối trận cướp càng hung hăng: rage chạy 0 -> 1 từ lúc cướp vào rừng đến hết giờ */
 const RAID_FROM = 3, RAGE_SPAN = 1140;   /* v81: cướp CHỈ bắt đầu ra từ ĐÊM THỨ RAID_FROM (đêm 1 và 2 yên); độ hung hăng (rage) tính từ lúc đó, tăng tới tối đa sau RAGE_SPAN giây */
 const raidT0 = () => (RAID_FROM - 1) * DAY_LEN + P_DEM * DAY_LEN;
-function banditRage(){ if (!started || lobbyMode) return 0; return clamp((clockT - raidT0()) / RAGE_SPAN, 0, 1); }
-function dmgMul(a){ return (1 + .25 * banditRage() + .12 * night()) * (a && a.boss ? 1.4 : 1) * (a && a.wave ? .9 : 1) * .88; }   /* v81: cướp đợt đánh yếu hơn 10% */   /* v78: bớt đau (Kim: cướp hơi mạnh) */   /* v76: đêm cướp đánh đau hơn */   /* v72: trước 1 + .6r */
+/* v112 (C1): ĐƯỜNG CONG SỨC MẠNH CƯỚP THEO NGÀY, 3 NÚM CHỈNH.
+   s = số ngày từ đêm RAID_FROM (đợt n ở s ≈ n-1; ngày 10 = đợt 8 = s 7).
+   banditPow(): s <= BAND_FULL_DAYS (ngày 3 -> 10): (s / 7) ^ BAND_CURVE_EARLY, tăng ĐỀU 0 -> 1.
+                s >  BAND_FULL_DAYS (từ ngày 10): 1 + BAND_CURVE_LATE x (s - 7), vẫn tăng CHẬM, KHÔNG có trần.
+   banditRage() = min(1, banditPow()) dùng cho thứ KHÔNG được tăng thêm (tốc độ, rìu người chơi, số cướp lang thang).
+   Máu, sát thương và tầm hiếu chiến dùng banditPow() nên tiếp tục tăng sau ngày 10. */
+const BAND_FULL_DAYS = 7;       /* núm 0: bao nhiêu ngày thì r chạm 1 (ngày 3 -> ngày 10) */
+const BAND_CURVE_EARLY = 1;     /* núm 1: hình dạng đoạn đầu; 1 = tuyến tính, >1 = đầu dễ cuối dốc, <1 = đầu dốc */
+const BAND_CURVE_LATE = .05;    /* núm 2: r tăng thêm mỗi ngày sau ngày 10 (.05 = máu +~7 và dame +1,4% mỗi đợt) */
+const BAND_COUNT_CAP = 14;      /* núm 3: trần số cướp một đợt (điện thoại), quá trần thì tăng sức bằng loại cướp mạnh */
+const BAND_AGGRO_MAX = 1.6;     /* trần độ hiếu chiến (tầm nhìn/đuổi) để cướp không nhìn xuyên map */
+function bandDays(){ return Math.max(0, (clockT - raidT0()) / DAY_LEN); }
+function banditPow(){ if (!started || lobbyMode) return 0; const s = bandDays(); return s <= BAND_FULL_DAYS ? Math.pow(s / BAND_FULL_DAYS, BAND_CURVE_EARLY) : 1 + BAND_CURVE_LATE * (s - BAND_FULL_DAYS); }
+function banditRage(){ return Math.min(1, banditPow()); }
+function banditAggro(){ return Math.min(BAND_AGGRO_MAX, banditPow()); }
+function dmgMul(a){ return (1 + .25 * banditPow() + .12 * night()) * (a && a.boss ? 1.4 : 1) * (a && a.wave ? .9 : 1) * (bpHas(a, 'hung') ? 1.12 : 1) * .88; }   /* v81: cướp đợt đánh yếu hơn 10% */   /* v78: bớt đau (Kim: cướp hơi mạnh) */   /* v76: đêm cướp đánh đau hơn */   /* v72: trước 1 + .6r */
 const RAGE_WAVES = [.4, .7, .9]; let rageWave = 0, autoBandits = false;
 let banditsSpawned = false, banditCount = 0, banditGid = 0;
 const BANDIT_REPLACE_DELAY = 180;   /* v78: 100 -> 180 giây để có lúc thở */   /* v72: cướp bot bị hạ là CHẾT HẲN; phải 100 giây sau mới có tên khác vào thay (trước đây hồi sinh ngay đầy máu) */
@@ -2799,10 +2897,61 @@ function banditSpawnPoint(){
   }
   return [FOREST - 200, FOREST - 200];
 }
-function spawnBanditBot(){
-  const q = banditSpawnPoint(), a = makeActor('Cướp ' + (++banditCount), LOOKS[2], q[0], q[1], false);
+function spawnBanditBot(pos){
+  const q = pos || banditSpawnPoint(), a = makeActor('Cướp ' + (++banditCount), LOOKS[2], q[0], q[1], false);
   a.role = 'bandit'; a.gid = ++banditGid; a.speed = BANDIT_SPEED; a.ai.bt = null; a.ai.wp = null; a.ai.wpT = 0; a.ai.stuck = 0; a.ai.hitT = 0; a.ai.side = 0; a.ai.sx = 0; a.ai.sy = 0;
-  actors.push(a); return a;
+  assignBandPers(a); actors.push(a); return a;
+}
+/* ---------- v113 (C2): MỖI CƯỚP THƯỜNG CÓ 1-2 TÍNH CÁCH + TÊN THEO TÍNH CÁCH ----------
+   b.bpers = ['tham', ...]; tên hiển thị = tên tính cách đầu (+ nhãn tính cách thứ hai). Chỉ cướp THƯỜNG (không đầu lĩnh, không kẻ trộm/phá thành/cung thủ).
+   tham: ưu tiên trang trại/máy khoan, bỏ qua tường/cổng. nhat: máu thấp thì bỏ chạy hồi máu rồi quay lại, thấy đồng bọn chết thì dễ chạy hơn.
+   hung: chỉ nhắm NGƯỜI (bỏ công trình), nhìn xa +25%, đánh +12%, máu -15%. xao: chọn chỗ yếu (tường máu thấp, cổng, không gần tháp) và vòng bên hông trước khi vào.
+   thu: nhớ kẻ vừa đánh mình (cận chiến), đuổi dai 12s kể cả bỏ mục tiêu khác. tay: (chỉ trong đợt) đi theo đầu lĩnh; đầu lĩnh chết thì 50% rút lui, 50% hoảng chạy.
+   lua: ban đêm né mọi thứ nằm trong vùng sáng của đống lửa còn cháy. Chỉ chủ phòng chạy AI; khách thấy tên (qua tin 'bs') và bong bóng chữ (q[8]). */
+const PERS = {
+  tham: { name: 'Tên Tham', tag: 'Tham', say: 'Xu! Tao muốn xu!' },
+  nhat: { name: 'Thằng Nhát', tag: 'Nhát', say: 'Đau quá, rút!' },
+  hung: { name: 'Kẻ Hung', tag: 'Hung', say: 'Giết hết!' },
+  xao:  { name: 'Lão Xảo', tag: 'Xảo', say: 'Đi đường vòng...' },
+  thu:  { name: 'Kẻ Báo Thù', tag: 'Thù', say: 'Nhớ mặt mày rồi!' },
+  tay:  { name: 'Tay Sai', tag: 'Sai', say: 'Theo đại ca!' },
+  lua:  { name: 'Kẻ Sợ Lửa', tag: 'Sợ lửa', say: 'Lửa... tránh ra!' }
+};
+function bpHas(a, k){ return !!(a && a.bpers && a.bpers.indexOf(k) >= 0); }
+function persName(l){ return PERS[l[0]].name + (l[1] ? ' +' + PERS[l[1]].tag : ''); }
+function persFromName(name){ const l = []; for (const k in PERS) if ((name || '').indexOf(PERS[k].name) === 0) { l.push(k); break; } if (l.length) { const m = (name || '').match(/\+(.+)$/); if (m) for (const k in PERS) if (PERS[k].tag === m[1]) l.push(k); } return l.length ? l : null; }
+function assignBandPers(b){
+  if (b.boss || b.kind) { b.bpers = null; return; }
+  const pw = Math.min(1, banditPow());
+  const w = { tham: 3, nhat: 2, hung: 3, lua: 2, xao: .6 + 2.4 * pw, thu: .6 + 2.4 * pw, tay: (b.wave && !b.boss) ? 2 : 0 };
+  const bad = (x, y) => (x === 'hung' && (y === 'nhat' || y === 'tham')) || (x === 'nhat' && y === 'hung') || (x === 'tham' && y === 'hung');
+  const pick = ex => { let t = 0; for (const k in w) if (k !== ex) t += w[k]; let r = Math.random() * t; for (const k in w) { if (k === ex) continue; r -= w[k]; if (r <= 0) return k; } return 'hung'; };
+  const first = pick(null), l = [first];
+  if (Math.random() < clamp(.12 + .5 * pw, 0, .6)) { const s2 = pick(first); if (s2 !== first && !bad(first, s2)) l.push(s2); }
+  b.bpers = l; b.name = persName(l);
+}
+function bandSay(b, text){ if (!(b.sayCd > 0)) { b.sayCd = 7; b.say = text; b.sayT = 2.5; addFloat(b.x, b.y - 96, text, '#ffcf8a'); } }
+function findBandBoss(){ for (const a of actors) if (a.boss && a.role === 'bandit' && !a.gone && !a.dead) return a; return null; }
+function litSpot(x, y, extra){ for (const f of allFires()) if (fireLit(f) && Math.hypot(x - fX(f), y - fY(f)) < fireDef(f).safe + (extra || 0)) return true; return false; }
+/* chạy mỗi nhịp AI của cướp thường; trả về true nếu đã tự lo chuyển động (đang bỏ chạy) */
+function persAI(b, dt){
+  if (!b.bpers) return false;
+  b.sayCd = (b.sayCd || 0) - dt; b.sayT = (b.sayT || 0) - dt;
+  const inp = b.input;
+  b.nhatCd = (b.nhatCd || 0) - dt; const th = (b.scaredT || 0) > 0 ? .65 : .4; b.scaredT = Math.max(0, (b.scaredT || 0) - dt);
+  if (!(b.fleeT > 0) && bpHas(b, 'nhat') && b.hp < b.maxHp * th && !(b.nhatCd > 0)) { b.fleeT = 9; b.ai.bt = null; bandSay(b, PERS.nhat.say); }
+  if (b.fleeT > 0) {
+    b.fleeT -= dt; const nh = bpHas(b, 'nhat');
+    if (nh) b.hp = Math.min(b.maxHp, b.hp + b.maxHp * .06 * dt);
+    if (b.fleeT <= 0 || (nh && b.hp >= b.maxHp * .8)) { b.fleeT = 0; b.nhatCd = 15; if (nh) bandSay(b, 'Hồi sức rồi, quay lại!'); b.ai.bt = null; return false; }
+    let thr = null, td = 520;
+    for (const a of actors) { if (a === b || a.role === 'bandit' || a.dead) continue; const d = Math.hypot(a.x - b.x, a.y - b.y); if (d < td) { td = d; thr = a; } }
+    for (const d0 of DEFS) { if (d0.removed || d0.kind !== 'thap') continue; const d = Math.hypot(d0.x - b.x, d0.cy - b.y); if (d < td) { td = d; thr = { x: d0.x, y: d0.cy }; } }
+    const ox = thr ? thr.x : FIRE.x, oy = thr ? thr.y : FIRE.y, dx = b.x - ox, dy = b.y - oy, l = Math.hypot(dx, dy) || 1;
+    inp.ix = dx / l; inp.iy = dy / l; inp.act = false; return true;
+  }
+  if (b.avT > 0) { b.avT -= dt; if (!b.avenge || b.avenge.dead || b.avenge.removed) b.avT = 0; }
+  return false;
 }
 /* v20: SỐ CƯỚP TĂNG DẦN THEO THỜI GIAN VÀ SỐ NGƯỜI CHƠI.
    Vào lúc BANDIT_SPAWN_AT ra cướp đầu tiên (nhẹ nhàng, còn chậm và nhìn kém), rồi cứ vài phút thêm một tên, cuối trận nhiều cướp nhất.
@@ -2821,7 +2970,7 @@ function updateBanditSpawner(){
   if (!started) return;
   if (Net.on && !Net.host) return;   /* v21: khách không sinh cướp, chỉ nhận từ chủ phòng */
   if (daySafe()) {   /* v78: SÁNG và RẠNG SÁNG AN TOÀN: cướp bot (không phải đợt, không phải người chơi) rút hết, không sinh mới tới chiều */
-    for (const a of actors) if (a.role === 'bandit' && !a.isPlayer && !a.remote && !a.ghost && !a.gone) retreatBandit(a);
+    for (const a of actors) if (a.role === 'bandit' && !a.isPlayer && !a.remote && !a.ghost && !a.gone && !a.camp) retreatBandit(a);   /* v110: trừ cướp rình */
     return;
   }
   if (!banditsSpawned) {
@@ -2901,8 +3050,17 @@ function pickBanditWaypoint(b){
 }
 function scanBandit(b){
   /* v101: trong tầm nhìn chọn mục tiêu HẠNG CAO NHẤT (người > lửa trại > trang trại/công trình ra xu > tường/cổng), cùng hạng thì gần nhất. v21 cũ chọn thứ gần nhất nên cướp cứ phá hết hàng tường rồi mới tìm tới người chơi. */
-  let best = null, bs = 1e9; const rg = (1 + 1.1 * banditRage()) * (1 + .3 * night());   /* v76: đêm cướp nhìn xa hơn */
-  const cand = (o, d) => { const sc = bTier(o) * BT_W + d; if (sc < bs) { bs = sc; best = o; } };
+  let best = null, bs = 1e9; const rg = (1 + 1.1 * banditAggro()) * (1 + .3 * night()) * (bpHas(b, 'hung') ? 1.25 : 1);   /* v76: đêm cướp nhìn xa hơn */
+  const cand = (o, d) => {
+    let t = bTier(o), extra = 0;
+    if (b.bpers) {   /* v113: tính cách quyết định chọn mục tiêu nào */
+      if (bpHas(b, 'hung') && t !== 0) return;
+      if (bpHas(b, 'tham')) { if (t === 2) t = -1; else if (t === 3) return; }
+      if (bpHas(b, 'xao') && t === 3 && o.hp !== undefined) { t = 2; extra += o.hp; if (o.kind === 'cong') extra -= 150; for (const d1 of DEFS) if (!d1.removed && d1.kind === 'thap' && Math.hypot(d1.x - o.x, d1.cy - (o.cy !== undefined ? o.cy : o.y)) < 280) { extra += 600; break; } }
+      if (bpHas(b, 'lua') && night() > .4 && litSpot(o.x, o.cy !== undefined ? o.cy : o.y, 60)) { bandSay(b, PERS.lua.say); return; }
+    }
+    const sc = t * BT_W + d + extra; if (sc < bs) { bs = sc; best = o; }
+  };
   if (b.kind !== 'ram') for (const a of actors) { if (a === b || a.role === 'bandit' || a.dead) continue; const d = Math.hypot(a.x - b.x, a.y - b.y); if (d < BANDIT_SIGHT * rg * (a.st === 'hired' && a.job !== 'guard' ? HIRED_STEALTH : 1) * litMul(a.x, a.y)) cand(a, d); }
   if (b.kind !== 'ram') for (const w of APPLICANTS) { if (w.st !== 'hired' || w.away || w.dead) continue; const d = Math.hypot(w.x - b.x, w.y - b.y); if (d < BANDIT_SIGHT * rg * (jobOf(w) !== 'guard' ? HIRED_STEALTH : 1) * litMul(w.x, w.y)) cand(w, d); }   /* v106: người làm thuê bị cướp thấy */
   for (const f of FARMS) { if (f.removed) continue; const d = rectDist(b, f); if (d < BANDIT_SIGHT_BUILD * rg * litMul(f.x, f.y)) cand(f, d); }
@@ -2920,7 +3078,7 @@ const KIND_NAME = { thief: 'Kẻ trộm', ram: 'Phá thành', archer: 'Cung th�
 const KIND_COL = { thief: '#a56bdc', ram: '#ee9440', archer: '#5fc46c' };
 /* v104 (Kim): tính theo ĐÊM CỦA NGÀY (số trên thanh ngày 'Ngày N · Đêm'), KHÔNG theo số đợt. Đợt đầu tiên ra ở đêm RAID_FROM (đêm 3), nên đợt n rơi vào đêm d = n + RAID_FROM - 1.
    Kẻ trộm từ đêm của NGÀY 8 (đợt 6), Phá thành từ NGÀY 10 (đợt 8), Cung thủ từ NGÀY 12 (đợt 10). Bậc tăng (theo ngày): Kẻ trộm 8 -> 1, 13 -> 2, 18 -> 3; Phá thành 10 -> 1, 16 -> 2; Cung thủ 12 -> 1, 17 -> 2. SỬA CÁC MỐC NGÀY TẠI ĐÂY. */
-function specialPlan(n){ const d = n + RAID_FROM - 1; return { thief: d >= 18 ? 3 : d >= 13 ? 2 : d >= 8 ? 1 : 0, ram: d >= 16 ? 2 : d >= 10 ? 1 : 0, archer: d >= 17 ? 2 : d >= 12 ? 1 : 0 }; }
+function specialPlan(n){ const d = n + RAID_FROM - 1; return { thief: d >= 22 ? 4 : d >= 18 ? 3 : d >= 13 ? 2 : d >= 8 ? 1 : 0, ram: d >= 21 ? 3 : d >= 16 ? 2 : d >= 10 ? 1 : 0, archer: d >= 22 ? 3 : d >= 17 ? 2 : d >= 12 ? 1 : 0 }; }
 const ARROWS = [];
 function itemLoot(b){ return b.loot ? (b.loot.c || 0) + ' xu, ' + (b.loot.w || 0) + ' gỗ' : ''; }
 function stealFrom(b, v){
@@ -2993,14 +3151,76 @@ function drawKindAura(c, e){
   c.strokeText(KIND_NAME[e.kind], 0, ty); c.fillStyle = col; c.fillText(KIND_NAME[e.kind], 0, ty);
   if (e.kind === 'thief') { c.fillStyle = '#7a5a34'; c.strokeStyle = OUT; c.lineWidth = 2; c.beginPath(); c.arc(-14, -34, 7, 0, TAU); c.fill(); c.stroke(); if (e.loot && (e.loot.c || e.loot.w)) { c.fillStyle = '#ffd86b'; c.beginPath(); c.arc(-14, -34, 3, 0, TAU); c.fill(); } }
 }
+/* ---------- v110: CƯỚP RÌNH BAN NGÀY CHO NHIỆM VỤ "HẠ CƯỚP" CỦA NGƯỜI XIN VIỆC (Kim chốt) ----------
+   Có sẵn CAMP_N (7) tên cướp rải khắp bản đồ (cách nhau CAMP_SPACING, xa lửa làng, tránh nước/núi). BAN NGÀY (daySafe) chúng chỉ đi quanh chỗ của mình (bán kính CAMP_ROAM) và KHÔNG đánh ai,
+   chỉ khi bị đánh (bất kỳ nguồn nào, rìu hay tháp) mới đánh lại trong CAMP_AGGRO giây (mỗi nhát đánh làm mới thời gian), hết thì lại quay về đi quanh. Hạ một tên thì sau CAMP_RESPAWN (30) giây ra tên khác
+   ở một chỗ KHÁC (xa chỗ vừa chết CAMP_FAR, xa các tên còn lại và các chỗ vừa dùng). TỐI (hết daySafe): cướp rình thành cướp đi cướp như thường; để không quá khó chỉ giữ lại đủ số cướp theo banditTarget(), các tên dư biến mất
+   (retreatBandit). Sáng ra cướp thường rút hết (daySafe) và 7 tên rình mới được bù dần, mỗi tên một chỗ mới. Chỉ máy chủ phòng sinh và điều khiển (như mọi cướp bot). */
+const CAMP_N = 7, CAMP_ROAM = 170, CAMP_AGGRO = 25, CAMP_RESPAWN = 30, CAMP_FAR = 600, CAMP_SPACING = 650, CAMP_FIRE_FAR = 700, CAMP_WALK = .5;
+const campQueue = [], campRecent = []; let campFillT = 0;
+function campSpot(avoid){
+  const fires = allFires(), ok = (x, y, relax) => {
+    if (terrainBlocked(x, y, 50, false) || inMountain(x, y, 1) || waterBlocked(x, y) || waterBlocked(x + 40, y) || waterBlocked(x - 40, y) || waterBlocked(x, y + 40)) return false;
+    if (Math.hypot(x - FIRE.x, y - FIRE.y) < CAMP_FIRE_FAR) return false;
+    for (const f of fires) if (Math.hypot(x - fX(f), y - fY(f)) < 450) return false;
+    for (const a of actors) if (a.camp && !a.gone && Math.hypot(a.home[0] - x, a.home[1] - y) < CAMP_SPACING * (relax ? .5 : 1)) return false;
+    for (const q of campRecent) if (Math.hypot(q[0] - x, q[1] - y) < 500 * (relax ? .5 : 1)) return false;
+    if (avoid && Math.hypot(avoid[0] - x, avoid[1] - y) < CAMP_FAR * (relax ? .6 : 1)) return false;
+    return true;
+  };
+  for (const relax of [false, true]) for (let i = 0; i < 400; i++) {
+    const x = 250 + Math.random() * (WORLD - 500), y = 320 + Math.random() * (WORLD - 560);
+    if (ok(x, y, relax)) return [x, y];
+  }
+  return banditSpawnPoint();
+}
+function spawnCampBandit(avoid){
+  const q = campSpot(avoid), b = spawnBanditBot(q);
+  b.camp = true; b.home = q.slice(); b.aggro = 0; b.cwp = null; b.cwT = 0; b.cwWait = Math.random() * 3;
+  campRecent.push(q); if (campRecent.length > 8) campRecent.shift();
+  return b;
+}
+function campIdle(b, dt){
+  const inp = b.input, ai = b.ai; inp.ix = inp.iy = 0; inp.act = false; ai.bt = null; b.speed = BANDIT_SPEED * CAMP_WALK;
+  if (b.cwWait > 0) { b.cwWait -= dt; return; }
+  b.cwT -= dt;
+  if (!b.cwp || b.cwT <= 0 || Math.hypot(b.cwp[0] - b.x, b.cwp[1] - b.y) < 24) {
+    b.cwp = goalNear(b.home[0], b.home[1], CAMP_ROAM) || b.home; b.cwT = 5 + Math.random() * 4;
+    if (Math.random() < .55) { b.cwWait = 1.2 + Math.random() * 2.6; b.cwp = null; return; }
+  }
+  const dx = b.cwp[0] - b.x, dy = b.cwp[1] - b.y, d = Math.hypot(dx, dy) || 1;
+  inp.ix = dx / d; inp.iy = dy / d; b.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+  ai.chk = (ai.chk === undefined ? .7 : ai.chk) - dt;
+  if (ai.chk <= 0) { ai.chk = .7; if (Math.hypot(b.x - (ai.lastX || 0), b.y - (ai.lastY || 0)) < 6) { b.cwp = null; b.cwWait = .6; } ai.lastX = b.x; ai.lastY = b.y; }
+}
+function updateCampBandits(dt){
+  if (!started || lobbyMode || ended) return;
+  if (Net.on && !Net.host) return;
+  if (!daySafe()) {   /* tối: cướp rình thành cướp đi cướp, giữ vừa đủ số theo banditTarget() */
+    const camps = actors.filter(a => a.camp && !a.gone);
+    if (camps.length) {
+      let have = 0; for (const a of actors) if (a.role === 'bandit' && !a.ghost && !a.gone && !a.camp && !a.nightOnly && !a.wave) have++;
+      const keep = Math.max(1, banditTarget() - have); camps.sort(() => Math.random() - .5);
+      camps.forEach((a, i) => { a.camp = false; a.aggro = 0; a.ai.bt = null; a.ai.wp = null; a.ai.wpT = 0; if (i >= keep) retreatBandit(a); });
+    }
+    campQueue.length = 0; return;
+  }
+  for (let i = campQueue.length - 1; i >= 0; i--) { campQueue[i].t -= dt; if (campQueue[i].t <= 0) { const q = campQueue.splice(i, 1)[0]; spawnCampBandit(q.at); } }
+  let n = 0; for (const a of actors) if (a.camp && !a.gone) n++;
+  campFillT -= dt;
+  if (n + campQueue.length < CAMP_N && campFillT <= 0) { campFillT = 1.5; spawnCampBandit(null); }
+}
 function banditAI(b, dt){
   const inp = b.input, ai = b.ai;
   b.speed = BANDIT_SPEED * (1 + .15 * banditRage()) * (1 + .10 * night()) * (b.boss ? .8 : 1) * (b.moon ? 1.1 : 1) * (b.wave ? .92 : 1) * (b.kind === 'thief' ? 1.3 : b.kind === 'ram' ? .75 : b.kind === 'archer' ? .95 : 1);   /* v100: theo loại. v76: đêm nhanh hơn; v81: cướp đợt chậm hơn 8% */
   if (!lobbyMode) for (const f of allFires()) if (fireLit(f) && Math.hypot(b.x - fX(f), b.y - fY(f)) < fireDef(f).safe) { b.speed *= .65; break; }   /* v83: mọi đống lửa còn củi làm cướp đi chậm, vùng theo cấp */
 
-  { const m = Math.round(banditMaxHp() * (b.boss ? 5 : 1) * (b.moon ? 1.25 : 1) * (b.kind === 'thief' ? .6 : b.kind === 'ram' ? 2.5 : b.kind === 'archer' ? .8 : 1)); if (b.maxHp !== m) { b.hp = Math.max(1, b.hp * m / b.maxHp); b.maxHp = m; } }
+  { const m = Math.round(banditMaxHp() * (b.boss ? 5 : 1) * (b.moon ? 1.25 : 1) * (bpHas(b, 'hung') ? .85 : 1) * (b.kind === 'thief' ? .6 : b.kind === 'ram' ? 2.5 : b.kind === 'archer' ? .8 : 1)); if (b.maxHp !== m) { b.hp = Math.max(1, b.hp * m / b.maxHp); b.maxHp = m; } }
+  if (b.aggro > 0) b.aggro -= dt;   /* v110 */
+  if (b.camp && !(b.aggro > 0)) return campIdle(b, dt);
   if (b.kind === 'thief') return thiefAI(b, dt);   /* v100 */
   if (b.kind === 'archer') return archerAI(b, dt);
+  if (persAI(b, dt)) return;   /* v113: đang bỏ chạy (nhát / tay sai hoảng) */
   inp.ix = inp.iy = 0; inp.act = false;
   if (ai.side > 0) { ai.side -= dt; inp.ix = ai.sx; inp.iy = ai.sy; return; }
   const posOf = t => t.x0 !== undefined ? [clamp(b.x, t.x0, t.x1), clamp(b.y, t.y0, t.y1)] : [t.x, t.y];
@@ -3008,12 +3228,22 @@ function banditAI(b, dt){
   if (ai.wait <= 0) {
     ai.wait = .4;
     const t = ai.bt;
-    if (t && !t.removed && !t.dead) { const q = posOf(t); if (Math.hypot(q[0] - b.x, q[1] - b.y) > BANDIT_LOSE * (1 + 1.2 * banditRage())) ai.bt = null; } else ai.bt = null;
-    if (!ai.bt) { const f = scanBandit(b); if (f) { ai.bt = f; ai.wp = null; spotAlarm(b, f); } }
+    if (t && !t.removed && !t.dead) { const q = posOf(t); if (Math.hypot(q[0] - b.x, q[1] - b.y) > BANDIT_LOSE * (1 + 1.2 * banditAggro()) * (b.avT > 0 ? 2.2 : 1)) ai.bt = null; } else ai.bt = null;
+    if (!ai.bt) { const f = scanBandit(b); if (f) { ai.bt = f; ai.wp = null; ai.xaoDone = false; spotAlarm(b, f); } }
     else { const f = scanBandit(b); if (f && f !== ai.bt) { const tf = bTier(f), tb = bTier(ai.bt); if (tf < tb || (tf === tb && banditDistTo(b, f) < banditDistTo(b, ai.bt) - 50)) { ai.bt = f; ai.stuck = 0; spotAlarm(b, f); } } }   /* v101: thấy thứ ưu tiên hơn thì bỏ cái đang đập */
   }
+  if (b.avT > 0 && b.avenge && !b.avenge.dead && !b.avenge.removed) ai.bt = b.avenge;   /* v113: báo thù bám đúng kẻ đã đánh mình */
+  const bossF = (!ai.bt && bpHas(b, 'tay')) ? findBandBoss() : null;
   let gx, gy, chasing = false;
-  if (ai.bt) { const q = posOf(ai.bt); gx = q[0]; gy = q[1]; chasing = true; }
+  if (ai.bt) {
+    const q = posOf(ai.bt); gx = q[0]; gy = q[1]; chasing = true;
+    if (bpHas(b, 'xao') && !ai.xaoDone) {   /* v113: lão xảo vòng bên hông rồi mới vào */
+      const dd = Math.hypot(gx - b.x, gy - b.y);
+      if (dd > 380) { if (!ai.xaoSide) { ai.xaoSide = Math.random() < .5 ? 1 : -1; bandSay(b, PERS.xao.say); } const ux = (gx - b.x) / dd, uy = (gy - b.y) / dd; gx += -uy * ai.xaoSide * 200; gy += ux * ai.xaoSide * 200; }
+      else ai.xaoDone = true;
+    }
+  }
+  else if (bossF) { gx = bossF.x + Math.cos(b.seed) * 90; gy = bossF.y + Math.sin(b.seed) * 90; }
   else {
     if (!ai.wp || ai.wpT <= 0 || Math.hypot(ai.wp[0] - b.x, ai.wp[1] - b.y) < 70) { ai.wp = pickBanditWaypoint(b); ai.wpT = 14; }
     ai.wpT -= dt; gx = ai.wp[0]; gy = ai.wp[1];
@@ -3109,7 +3339,9 @@ function updateProj(dt){
     if (p.life <= 0 || !t || t.role !== 'bandit' || t.hp <= 0) { PROJ.splice(i, 1); continue; }
     const dx = t.x - p.x, dy = t.y - p.y, dz = 20 - p.z, dist = Math.hypot(dx, dy, dz), st = p.spd * dt;
     if (dist <= st + 5) {
+      const lethal = p.by && t.hp > 0 && t.hp <= p.dmg;   /* v119: tên của người bảo vệ cầm cung */
       damageActor(t, p.dmg); PROJ.splice(i, 1);
+      if (lethal && p.by && !p.by.dead) { toast(p.by.name + ' đã hạ một tên cướp bằng cung!', true); giveXp(p.by, t.boss ? 6 : t.kind ? 2 : 1); }
       for (let k = 0; k < 3; k++) spawn({ k: 'dust', x: t.x + rand(-4, 4), y: t.y, z: rand(10, 24), vx: rand(-20, 20), vy: rand(-8, 8), vz: rand(10, 30), size: rand(3, 5), life: .4, g: 0 });
       continue;
     }
@@ -3518,10 +3750,10 @@ function fireGlow(e){   /* v78: ánh lửa nét hơn. v83: theo cấp, cấp 5 �
 }
 function drawNameTag(a){
   const c = ctx; c.font = '700 11px "Baloo 2", system-ui, sans-serif';
-  const w = c.measureText(a.name).width + 14, x = a.x, y = a.y - 68;
+  const nm = a.name + (a.rank ? ' ' + '★'.repeat(a.rank) : ''), w = c.measureText(nm).width + 14, x = a.x, y = a.y - 68;
   c.fillStyle = 'rgba(8,20,13,.66)'; c.beginPath(); c.roundRect(x - w / 2, y - 10, w, 15, 7.5); c.fill();
   c.fillStyle = a.role === 'bandit' ? '#ff9c8a' : (a.isPlayer ? '#f2b84b' : '#f4efd9');
-  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(a.name, x, y - 2);
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(nm, x, y - 2);
   if (a.ttl && a.role !== 'bandit') { c.font = '600 9px "Baloo 2", system-ui, sans-serif'; const tw = c.measureText(a.ttl).width + 10; c.fillStyle = 'rgba(8,20,13,.55)'; c.beginPath(); c.roundRect(x - tw / 2, y - 23, tw, 12, 6); c.fill(); c.fillStyle = '#c8e8a0'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(a.ttl, x, y - 16.5); }   /* v108: danh hiệu */
   if (a.role === 'bandit' && a.hp < a.maxHp) drawBar(c, x, y + 8, 40, a.hp / a.maxHp);
 }
@@ -3827,7 +4059,9 @@ const APP_SWING_MUL = .4, APP_REST = 1, APP_SPEED = 90, APP_ROAM = 450;
 /* v74: NGƯỜI LÀM THUÊ SỢ CƯỚP: thấy cướp trong APP_FLEE_R (+APP_FLEE_RAGE x độ hung hăng) thì bỏ rìu chạy (nhanh APP_FLEE_SPEED lần, nhanh hơn cướp) về phía máy chấm công nếu không ngược chiều cướp, không thì chạy thẳng ra xa; trốn thêm APP_FLEE_HOLD giây sau khi hết thấy cướp rồi mới quay lại chặt cây.
    Cướp khó phát hiện người làm thuê: tầm nhìn của cướp với họ chỉ còn HIRED_STEALTH (x0.4) so với dân thường (sống sót nhiều hơn). Chỉnh 4 số này nếu thấy dễ/khó quá. */
 const APP_FLEE_R = 340, APP_FLEE_RAGE = 200, APP_FLEE_HOLD = 5, APP_FLEE_SPEED = 1.5, HIRED_STEALTH = .4;
-const APP_REST_HIRED = 1.7, APP_SWING_HIRED = .4, HIRE_CARRY = 10;   /* v60: người làm thuê chặt CHẬM hơn người xin việc (~2.8s/nhát so với ~2.1s); muốn chậm hơn nữa thì tăng APP_REST_HIRED */
+const APP_REST_HIRED = 1.7, APP_SWING_HIRED = .4, HIRE_CARRY = 10;
+/* v111 (Kim: 'người làm thuê chặt cây nhanh hơn, gần bằng người chơi'): người đang CHẶT CÂY / CÂU CÁ dùng APP_SWING_WOOD / APP_REST_WOOD: mỗi nhát .46/.85 + .12 = ~.66s (người chơi ~.52s, tức ~80% tốc độ người chơi; trước là ~2.85s). Người BẢO VỆ giữ nguyên APP_SWING_HIRED/APP_REST_HIRED cũ (nhịp đánh 2.2s) để không đổi cân bằng chiến đấu ngoài ý Kim: muốn bảo vệ đánh nhanh bằng người chơi thì đặt APP_REST_GUARD = APP_REST_WOOD. */
+const APP_SWING_WOOD = .85, APP_REST_WOOD = .12, APP_REST_GUARD = APP_REST_HIRED;   /* v60: người làm thuê chặt CHẬM hơn người xin việc (~2.8s/nhát so với ~2.1s); muốn chậm hơn nữa thì tăng APP_REST_HIRED */
 /* v57: NHIỆM VỤ CHIÊU MỘ (lượt 2). Mỗi người xin việc có 1 loại nhiệm vụ cố định (APP_QUEST theo thứ tự APP_DATA): 'tree' = chặt NGÃ N cây, 'bandit' = tự tay hạ N tên cướp bằng rìu (tháp bắn hạ không tính).
    Số N theo người thuê thứ mấy của máy chấm công (QUEST_DATA[số người máy đó đã thuê]): người 1 nhẹ, người 2 nặng hơn. CON SỐ TẠM. Việc khác (câu cá...) chưa có, để sau.
    Trạng thái a.st: 'new' (chưa nhận) -> 'doing' (đang làm, a.qgot/a.qneed) -> 'done' (xong, chờ nói chuyện nhận người) -> 'hired' (làm thuê, ra máy chấm công của mình chặt cây chậm). Mỗi máy chấm công: d.hires = [người đã thuê], d.questApp = người đang làm nhiệm vụ (mỗi máy 1 nhiệm vụ một lúc). */
@@ -3941,7 +4175,7 @@ function questProgress(kind){
 function hireApplicant(a){
   const c = a.clock; if (!c || a.st !== 'done' || c.removed || c.hp <= 0) return;
   if (!c.hires) c.hires = [];
-  c.hires.push(a); c.questApp = null; a.st = 'hired'; a.vm = null; a.away = false; a.restT = APP_REST_HIRED; a.swingMul = APP_SWING_HIRED; a.wood = 0;
+  c.hires.push(a); c.questApp = null; a.st = 'hired'; a.vm = null; a.away = false; a.restT = APP_REST_WOOD; a.swingMul = APP_SWING_WOOD; a.wood = 0;   /* v111 */
   a.job = 'wood'; a.maxHp0 = a.maxHp; a.en = 1; a.loy = 60; a.talkCd = 0; a.resting = false; a.fish = null; a.fishN = 0; a.fishT = null; a.fishing = false;   /* v106 */
   a.hx = c.x; a.hy = c.y1 + 60; a.ai.target = null; a.ai.wait = 0; a.stuck = 0;
   toast(a.name + ' đã nhận việc và đi tới máy chấm công của bạn.', true); sfxPick();
@@ -4175,17 +4409,36 @@ function updateVisits(dt){   /* chọn người tiếp theo tới gặp người
    Bảo vệ có 3 kiểu gác (a.gmode): 'fire' = quanh đống lửa gần máy chấm công nhất, 'point' = điểm Kim chạm trên map (a.gx, a.gy), 'follow' = đi theo Kim.
    Có cướp trong GUARD_ENGAGE quanh điểm gác (hoặc sát người) thì lao tới đánh; có báo động / cướp đánh đồ ở đâu trong GUARD_ALERT_R thì chạy tới chỗ đó rồi đánh cướp quanh đó.
    Kim chốt: sát thương VÀ máu = GUARD_POWER (80%) người chơi; bị đánh chỉ chạy khi máu dưới GUARD_FLEE_HP (8%), còn lại đứng đánh tới cùng; đổi việc lúc nào cũng được. */
-const GUARD_POWER = .8, GUARD_FLEE_HP = .08, GUARD_ENGAGE = 340, GUARD_ALERT_R = 1500, GUARD_SPEED = 1.2, GUARD_REGEN = 3;
+/* v111 (Kim: 'đánh nhau gần hết máu thì phải biết chạy thoát để sống sót'): cũ GUARD_FLEE_HP .08 là quá muộn (một nhát cướp đã quá 8% nên chết trước khi kịp chạy, và cướp ban đêm còn chạy nhanh hơn người chạy trốn). Nay: máu dưới GUARD_FLEE_HP (30%; người nhát tính 'nhat' 50%) thì RÚT: bỏ trận chạy GUARD_FLEE_SPEED (1.9x, ~171 > cướp nhanh nhất ~142) khỏi cướp; còn đang 'hồi sức' (a.recover) thì KHÔNG tự lao vào đánh hay chạy theo báo động cho tới khi máu hồi tới GUARD_RECOVER (60%), đứng chờ ở điểm gác (hồi GUARD_REGEN máu/giây khi không có cướp trong 700px). CON SỐ TẠM. */
+const GUARD_FLEE_SPEED = 1.9, GUARD_RECOVER = .6;
+const GUARD_POWER = .8, GUARD_FLEE_HP = .3, GUARD_ENGAGE = 340, GUARD_ALERT_R = 1500, GUARD_SPEED = 1.2, GUARD_REGEN = 3;
 const GUARD_ALERT = { x: 0, y: 0, until: 0 };
 let jobPickFor = null;
 function guardAlert(x, y){ GUARD_ALERT.x = x; GUARD_ALERT.y = y; GUARD_ALERT.until = performance.now() + 12000; }
+/* ---------- v114 (C3.1): CẤP BẬC KINH NGHIỆM CHO NGƯỜI BẢO VỆ ----------
+   Hạ được cướp (nhát chí mạng) thì +điểm: cướp thường 1, loại đặc biệt 2, đầu lĩnh 6. Đủ RANK_XP thì lên cấp:
+   0 Binh nhì, 1 Lính, 2 Tinh nhuệ, 3 Đội trưởng (a.rank, a.xp). Mỗi cấp thêm sát thương (RANK_DMG) và máu tối đa (RANK_HP).
+   ĐỘI TRƯỞNG toả hào quang: người bảo vệ KHÁC của cùng máy trong CAPT_AURA_R px đánh x CAPT_AURA_DMG. Người chết là mất cả cấp. CON SỐ TẠM. */
+const RANK_NAME = ['Binh nhì', 'Lính', 'Tinh nhuệ', 'Đội trưởng'], RANK_XP = [0, 4, 12, 28], RANK_DMG = [1, 1.08, 1.18, 1.3], RANK_HP = [1, 1.1, 1.25, 1.4];
+const CAPT_AURA_R = 280, CAPT_AURA_DMG = 1.1;
+function rankOf(a){ return a.rank | 0; }
+function guardMaxHp(a){ return Math.round(a.maxHp0 * GUARD_POWER * (a.trait === 'gan' ? 1.1 : 1) * RANK_HP[rankOf(a)]); }
+function captainNear(a){ if (rankOf(a) >= 3) return false; for (const o of APPLICANTS) { if (o === a || o.st !== 'hired' || o.job !== 'guard' || o.dead || o.away || rankOf(o) < 3) continue; if (Math.hypot(o.x - a.x, o.y - a.y) < CAPT_AURA_R) return true; } return false; }
+function giveXp(a, n){
+  a.xp = (a.xp | 0) + n; let up = false;
+  while (rankOf(a) < 3 && a.xp >= RANK_XP[rankOf(a) + 1]) { a.rank = rankOf(a) + 1; up = true; }
+  if (!up) return;
+  if (a.job === 'guard' && a.maxHp0) { const ratio = a.hp / a.maxHp; a.maxHp = guardMaxHp(a); a.hp = Math.min(a.maxHp, Math.max(1, Math.round(a.maxHp * ratio) + 20)); }
+  addFloat(a.x, a.y - 84, 'Lên cấp: ' + RANK_NAME[a.rank] + '!', '#ffe07a'); sfxPick();
+  toast(a.name + ' lên ' + RANK_NAME[a.rank] + (a.rank >= 3 ? '! Người bảo vệ quanh đó đánh mạnh hơn.' : '.'), true);
+}
 function setWorkerJob(a, job){
   if (job === 'fish' && !pickFishSpot(a)) { toast(a.name + ': không có bờ nước nào trong ' + FISH_R + 'px quanh máy chấm công để câu cá.', true); return; }
   if (job !== 'fish') a.fish = null; a.fishing = false;
   a.job = job; a.ai.target = null; a.path = null; a.fleeT = 0; a.noTree = false;
   if (!a.maxHp0) a.maxHp0 = a.maxHp;
-  const ratio = a.hp / a.maxHp; a.maxHp = job === 'guard' ? Math.round(a.maxHp0 * GUARD_POWER * (a.trait === 'gan' ? 1.1 : 1)) : a.maxHp0; a.hp = Math.max(1, Math.round(a.maxHp * ratio));
-  a.swingMul = job === 'guard' ? 1 : APP_SWING_HIRED;
+  const ratio = a.hp / a.maxHp; a.maxHp = job === 'guard' ? guardMaxHp(a) : a.maxHp0; a.hp = Math.max(1, Math.round(a.maxHp * ratio));
+  a.swingMul = job === 'guard' ? 1 : APP_SWING_WOOD; a.restT = job === 'guard' ? APP_REST_GUARD : APP_REST_WOOD;   /* v111 */
   if (job === 'guard' && !a.gmode) a.gmode = 'fire';
 }
 function guardPost(a){
@@ -4193,6 +4446,49 @@ function guardPost(a){
   if (a.gmode === 'point' && a.gx != null) return [a.gx, a.gy, 110];
   let best = null, bd = 1e9; for (const f of allFires()) { const d = Math.hypot(fX(f) - a.hx, fY(f) - a.hy); if (d < bd) { bd = d; best = f; } }
   return best ? [fX(best), fY(best) + 44, 110] : [a.hx, a.hy, 110];
+}
+/* ---------- v115 (C3.2): ĐỘI HÌNH NHÓM BẢO VỆ ----------
+   Người bảo vệ cùng điểm gác (cùng kiểu gác, trong 40px) thành một NHÓM. Khi rảnh, mỗi người đứng vào một CHỖ trên CUNG TRÒN bán kính FORM_R quanh điểm gác,
+   cung quay về phía cướp gần nhất trong FORM_THREAT_R (không có cướp thì quay ra ngoài từ đống lửa). Cấp cao (đội trưởng, tinh nhuệ...) và nhiều máu đứng GIỮA hàng đầu,
+   người còn lại xếp hai bên, mỗi chỗ cách nhau ~FORM_STEP rad (không chen nhau). Máu dưới FORM_BACK_HP thì LÙI ra chỗ phía sau điểm gác, không lao lên giữa lúc đánh
+   (vẫn đánh nếu cướp áp sát trong tầm). Lúc lao vào cướp xa thì mỗi người chọn một bên sườn (lệch ngang ~30px) để không dồn thành một cục. CON SỐ TẠM. */
+const FORM_R = 70, FORM_STEP = .5, FORM_BACK_HP = .5, FORM_THREAT_R = 1000, FORM_FLANK = 30;
+function guardGroup(a, px, py){
+  const g = [];
+  for (const o of APPLICANTS) { if (o.st !== 'hired' || o.job !== 'guard' || o.dead || o.away || o.gmode !== a.gmode || (o.wType === 'bow') !== (a.wType === 'bow')) continue; const q = guardPost(o); if (Math.hypot(q[0] - px, q[1] - py) < 40) g.push(o); }
+  g.sort((x, y) => (rankOf(y) - rankOf(x)) || (y.maxHp - x.maxHp) || (x.name < y.name ? -1 : 1));
+  return g;
+}
+function formThreat(px, py){
+  let best = null, bd = FORM_THREAT_R;
+  for (const b of actors) { if (b.role !== 'bandit' || b.dead || b.hp <= 0 || b.gone) continue; const d = Math.hypot(b.x - px, b.y - py); if (d < bd) { bd = d; best = b; } }
+  if (best) return Math.atan2(best.y - py, best.x - px);
+  const fx = px - FIRE.x, fy = py - FIRE.y; return Math.abs(fx) + Math.abs(fy) > 8 ? Math.atan2(fy, fx) : Math.PI / 2;
+}
+function formSlot(a, px, py, back){
+  const g = guardGroup(a, px, py), n = g.length || 1, k = Math.max(0, g.indexOf(a)), th = formThreat(px, py);
+  const off = (k === 0 ? 0 : (k % 2 === 1 ? 1 : -1) * Math.ceil(k / 2)) * FORM_STEP;
+  if (back) { const lat = (k - (n - 1) / 2) * 30; return { x: px - Math.cos(th) * FORM_R * .9 - Math.sin(th) * lat, y: py - Math.sin(th) * FORM_R * .9 + Math.cos(th) * lat, th, k, n }; }
+  return { x: px + Math.cos(th + off) * FORM_R, y: py + Math.sin(th + off) * FORM_R, th, k, n };
+}
+/* ---------- v119 (C3.3): NGƯỜI BẢO VỆ CẦM CUNG ----------
+   a.wType = 'melee' | 'bow' (đổi tự do trong menu máy chấm công, tab Công việc, dùng CHUNG cấp vũ khí a.wLv và cấp bậc, không tốn thêm tiền).
+   Cung bắn tầm xa BOW_RANGE, sát thương = cận chiến x BOW_MUL, mỗi BOW_CD giây một mũi tên (dùng lại PROJ của tháp, kind 1, đuổi theo mục tiêu).
+   Đứng HÀNG SAU (formSlot back, nhóm cung xếp riêng nhóm cận chiến); cướp áp sát trong BOW_FLEE thì lùi vừa chạy vừa bắn; không bao giờ lao vào đánh gần. CON SỐ TẠM (C3.4 cân lại). */
+const BOW_RANGE = 420, BOW_FLEE = 120, BOW_CD = 2.0, BOW_MUL = .7, BOW_SPD = 380, BOW_NAME = ['Cung gỗ', 'Cung gỗ cứng', 'Cung dài', 'Cung ghép'];
+function bowDmg(a){ return Math.max(1, Math.round(playerHitDmg() * GUARD_POWER * workerPower(a) * weaponMul(a) * RANK_DMG[rankOf(a)] * (captainNear(a) ? CAPT_AURA_DMG : 1) * BOW_MUL)); }
+function bowShoot(a, tgt){
+  a.bowCd = BOW_CD; a.swing = 0; a.hit = true;
+  PROJ.push({ x: a.x, y: a.y, z: 28, vx: 0, vy: 1, vz: 0, tgt, dmg: bowDmg(a), spd: BOW_SPD, kind: 1, life: 2.2, by: a });
+  sfxShot(hearVol(a));
+}
+function guardBowAI(a, dt, tgt, px, py){
+  const inp = a.input, ai = a.ai; a.bowCd = Math.max(0, (a.bowCd || 0) - dt);
+  const dx = tgt.x - a.x, dy = tgt.y - a.y, d = Math.hypot(dx, dy) || 1;
+  if (a.swing < 0) a.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+  if (d < BOW_FLEE) { inp.ix = -dx / d; inp.iy = -dy / d; a.wantMove = true; }   /* cướp áp sát: lùi */
+  else if (d > BOW_RANGE - 40) { ai.gRe = (ai.gRe || 0) - dt; if (ai.gRe <= 0) { ai.gRe = .4; a.pathExp = 0; } if (!hiredSteer(a, tgt.x, tgt.y, 'gtgt')) { inp.ix = dx / d; inp.iy = dy / d; a.wantMove = true; } }   /* ngoài tầm: tiến vào tầm */
+  if (a.bowCd <= 0 && a.swing < 0 && d <= BOW_RANGE) bowShoot(a, tgt);
 }
 function guardAI(a, dt){
   const ai = a.ai, inp = a.input, now = performance.now();
@@ -4205,7 +4501,8 @@ function guardAI(a, dt){
     if (da < 700) near = true;
     if ((dp < GUARD_ENGAGE || da < 190) && da < bd) { bd = da; tgt = b; }
   }
-  if (!tgt && GUARD_ALERT.until > now && Math.hypot(GUARD_ALERT.x - a.x, GUARD_ALERT.y - a.y) < GUARD_ALERT_R) {
+  if (a.recover) tgt = null;   /* v111: đang hồi sức thì không lao vào cướp */
+  if (!tgt && !a.recover && GUARD_ALERT.until > now && Math.hypot(GUARD_ALERT.x - a.x, GUARD_ALERT.y - a.y) < GUARD_ALERT_R) {
     let bb = null, bb2 = 1e9;
     for (const b of actors) { if (b.role !== 'bandit' || b.dead || b.hp <= 0) continue; const d = Math.hypot(b.x - GUARD_ALERT.x, b.y - GUARD_ALERT.y); if (d < 420 && d < bb2) { bb2 = d; bb = b; } }
     if (bb) tgt = bb;
@@ -4213,22 +4510,32 @@ function guardAI(a, dt){
   }
   if (!near && a.hp < a.maxHp) a.hp = Math.min(a.maxHp, a.hp + GUARD_REGEN * dt);
   if (tgt) {
+    if (a.wType === 'bow') { guardBowAI(a, dt, tgt, px, py); return; }
     const dx = tgt.x - a.x, dy = tgt.y - a.y, d = Math.hypot(dx, dy) || 1;
     if (a.swing < 0) a.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+    if (d > REACH + 30 && a.hp < a.maxHp * FORM_BACK_HP && guardGroup(a, px, py).length > 1) {   /* v115: người yếu lùi ra sau, nhường hàng đầu */
+      const bs = formSlot(a, px, py, true), ex = bs.x - a.x, ey = bs.y - a.y, ed = Math.hypot(ex, ey);
+      if (ed > 12) { inp.ix = ex / ed; inp.iy = ey / ed; a.wantMove = true; } return;
+    }
     if (d > REACH - 4) {
       if (d < 130) { inp.ix = dx / d; inp.iy = dy / d; a.wantMove = true; }
-      else { ai.gRe = (ai.gRe || 0) - dt; if (ai.gRe <= 0) { ai.gRe = .4; a.pathExp = 0; } if (!hiredSteer(a, tgt.x, tgt.y, 'gtgt')) { inp.ix = dx / d; inp.iy = dy / d; a.wantMove = true; } }
+      else { ai.gRe = (ai.gRe || 0) - dt; if (ai.gRe <= 0) { ai.gRe = .4; a.pathExp = 0; } const kk = Math.max(0, guardGroup(a, px, py).indexOf(a)), fo = ((kk % 3) - 1) * FORM_FLANK, tx = tgt.x - dy / d * fo, ty = tgt.y + dx / d * fo, td = Math.hypot(tx - a.x, ty - a.y) || 1; if (!hiredSteer(a, tx, ty, 'gtgt')) { inp.ix = (tx - a.x) / td; inp.iy = (ty - a.y) / td; a.wantMove = true; } }
     } else inp.act = true;
     return;
   }
   const dd = Math.hypot(px - a.x, py - a.y);
   if (dd > pr) { ai.gRe = (ai.gRe || 0) - dt; if (ai.gRe <= 0) { ai.gRe = 1; a.pathExp = 0; } if (!hiredSteer(a, px, py, 'gpost')) { inp.ix = (px - a.x) / (dd || 1); inp.iy = (py - a.y) / (dd || 1); a.wantMove = true; } }
-  else if (a.swing < 0) { const fx = (a.gmode === 'follow' ? player.x : FIRE.x) - a.x, fy = (a.gmode === 'follow' ? player.y : FIRE.y) - a.y; if (Math.abs(fx) + Math.abs(fy) > 4) a.dir = Math.abs(fx) > Math.abs(fy) ? (fx < 0 ? 'left' : 'right') : (fy < 0 ? 'up' : 'down'); }
+  else {   /* v115: vào chỗ của mình trong đội hình rồi quay mặt về hướng cướp */
+    const sl = formSlot(a, px, py, !!a.recover || a.wType === 'bow'), ex = sl.x - a.x, ey = sl.y - a.y, ed = Math.hypot(ex, ey);
+    if (ed > 14) { inp.ix = ex / ed; inp.iy = ey / ed; a.wantMove = true; }
+    else if (a.swing < 0) { const fx = Math.cos(sl.th), fy = Math.sin(sl.th); a.dir = Math.abs(fx) > Math.abs(fy) ? (fx < 0 ? 'left' : 'right') : (fy < 0 ? 'up' : 'down'); }
+  }
 }
 function guardHit(a){
+  if (a.wType === 'bow') return;   /* v119: cầm cung thì không vung rìu */
   const hb = banditInReach(a); if (!hb) return;
-  const dmg = Math.max(1, Math.round(playerHitDmg() * GUARD_POWER * workerPower(a) * weaponMul(a))), lethal = hb.hp <= dmg;
-  damageActor(hb, dmg); if (lethal) toast(a.name + ' đã hạ một tên cướp!', true);
+  const dmg = Math.max(1, Math.round(playerHitDmg() * GUARD_POWER * workerPower(a) * weaponMul(a) * RANK_DMG[rankOf(a)] * (captainNear(a) ? CAPT_AURA_DMG : 1))), lethal = hb.hp <= dmg;
+  damageActor(hb, dmg); if (lethal) { toast(a.name + ' đã hạ một tên cướp!', true); giveXp(a, hb.boss ? 6 : hb.kind ? 2 : 1); }
 }
 /* ---------- v109: GIÁP + VŨ KHÍ CHO NGƯỜI BẢO VỆ (Kim: 'Claude tự nghĩ chi tiết') ----------
    Mỗi người làm thuê có thể mang 1 VŨ KHÍ (a.wLv 0-3) và 1 GIÁP (a.aLv 0-3). Mua và trang bị ngay trong MENU MÁY CHẤM CÔNG, ở dòng của từng người bảo vệ (nút 'Nâng vũ khí / Nâng giáp'), trả gỗ + xu (GEAR_W, GEAR_A).
@@ -4286,9 +4593,12 @@ function drawGear(c, e){   /* vẽ đè lên người đã vẽ: giáp ngực + 
   }
   c.save(); c.translate(0, -66); c.lineJoin = 'round'; c.lineCap = 'round';
   let x0 = (al && wl) ? -13 : -5;
-  if (wl) {   /* kiếm nhỏ + số cấp */
-    c.save(); c.translate(x0, 0); c.strokeStyle = OUT; c.lineWidth = 3.4; c.beginPath(); c.moveTo(-4, 5); c.lineTo(4, -5); c.moveTo(-1, -1); c.lineTo(-4, 2); c.stroke();
-    c.strokeStyle = ['', '#cfd5db', '#9fc2e8', '#ffe9a8'][wl]; c.lineWidth = 1.8; c.beginPath(); c.moveTo(-4, 5); c.lineTo(4, -5); c.stroke(); c.restore();
+  if (wl) {   /* kiếm nhỏ (hoặc cung nhỏ) + số cấp */
+    c.save(); c.translate(x0, 0);
+    if (e.wType === 'bow') { c.strokeStyle = OUT; c.lineWidth = 3.4; c.beginPath(); c.moveTo(-1, -5.5); c.quadraticCurveTo(6, 0, -1, 5.5); c.stroke(); c.strokeStyle = ['', '#cfa46a', '#9fc2e8', '#ffe9a8'][wl]; c.lineWidth = 1.8; c.beginPath(); c.moveTo(-1, -5.5); c.quadraticCurveTo(6, 0, -1, 5.5); c.stroke(); c.lineWidth = .8; c.strokeStyle = '#fff'; c.beginPath(); c.moveTo(-1, -5.5); c.lineTo(-1, 5.5); c.stroke(); }
+    else { c.strokeStyle = OUT; c.lineWidth = 3.4; c.beginPath(); c.moveTo(-4, 5); c.lineTo(4, -5); c.moveTo(-1, -1); c.lineTo(-4, 2); c.stroke();
+    c.strokeStyle = ['', '#cfd5db', '#9fc2e8', '#ffe9a8'][wl]; c.lineWidth = 1.8; c.beginPath(); c.moveTo(-4, 5); c.lineTo(4, -5); c.stroke(); }
+    c.restore();
     c.font = '800 10px "Baloo 2", system-ui, sans-serif'; c.textAlign = 'left'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = OUT; c.strokeText(wl, x0 + 6, 0); c.fillStyle = '#fff'; c.fillText(wl, x0 + 6, 0); x0 += 18;
   }
   if (al) {   /* khiên nhỏ + số cấp */
@@ -4322,12 +4632,12 @@ function jobOf(a){ return a.job || 'wood'; }
 function banditNear(a, r){ for (const b of actors) if (b.role === 'bandit' && !b.dead && b.hp > 0 && !b.gone && Math.hypot(b.x - a.x, b.y - a.y) < r) return true; return false; }
 function moodMul(a){ return a.loy >= 80 ? 1.1 : a.loy < 30 ? .8 : 1; }
 function workerPower(a){ return (a.trait === 'gan' ? 1.15 : a.trait === 'nhat' ? .85 : 1) * moodMul(a); }
-function fleeHp(a){ return a.trait === 'nhat' ? .35 : GUARD_FLEE_HP; }
+function fleeHp(a){ return a.trait === 'nhat' ? .5 : GUARD_FLEE_HP; }
 function carryCap(a){ return HIRE_CARRY + (a.trait === 'cham' ? 4 : 0); }
 function workerTick(a, dt){
   const job = jobOf(a), liked = a.likes === job;
   if (a.hurt > 0) a.hurt = Math.max(0, a.hurt - dt);
-  a.swingMul = (job === 'guard' ? 1 : APP_SWING_HIRED) * (a.trait === 'cham' ? 1.15 : 1) * moodMul(a);
+  a.swingMul = (job === 'guard' ? 1 : APP_SWING_WOOD) * (a.trait === 'cham' ? 1.15 : 1) * moodMul(a); a.restT = job === 'guard' ? APP_REST_GUARD : APP_REST_WOOD;   /* v111 */
   a.loy = clamp(a.loy - dt * LOY_DECAY * (liked ? .5 : 1), 0, 100);
   if (a.talkCd > 0) a.talkCd -= dt;
   if (a.resting) {
@@ -4381,8 +4691,8 @@ function chatWorker(a){
   a.loy = Math.min(100, a.loy + LOY_TALK * (a.trait === 'yeu' ? 1.5 : 1)); a.talkCd = TALK_CD; toast(a.name + ' vui hẳn lên.', true); sfxPick();
 }
 function tipWorker(a){
-  if (player.coins < TIP_COST) { toast('Không đủ ' + TIP_COST + ' xu để thưởng.', true); return; }
-  player.coins -= TIP_COST; refreshCoins(); a.loy = Math.min(100, a.loy + LOY_TIP); toast(a.name + ' cảm ơn anh đã thưởng.', true); sfxCoin();
+  if (!TEST_FREE && player.coins < TIP_COST) { toast('Không đủ ' + TIP_COST + ' xu để thưởng.', true); return; }
+  if (!TEST_FREE) player.coins -= TIP_COST; refreshCoins(); a.loy = Math.min(100, a.loy + LOY_TIP); toast(a.name + ' cảm ơn anh đã thưởng.', true); sfxCoin();
 }
 function workerLine(a){
   const t = { cham: 'Việc nặng cứ giao em, em ít khi mệt.', gan: 'Có cướp thì cứ gọi em, em không sợ.', nhat: 'Em hơi nhát, thấy cướp là em run.', yeu: 'Sức em yếu, làm một lúc là mệt, anh thông cảm.' }[a.trait] || '';
@@ -4432,12 +4742,13 @@ function appAI(a, dt){
     ai.lastX = a.x; ai.lastY = a.y;
   }
   if (a.st !== 'hired') { visitorAI(a, dt); return; }   /* v90: người xin việc đi thăm, không đứng yên */
-  if (a.st === 'hired' && (a.job !== 'guard' || a.hp < a.maxHp * fleeHp(a))) {   /* v74: thấy cướp thì chạy trốn. v98: người bảo vệ chỉ chạy khi máu dưới GUARD_FLEE_HP */
+  if (a.st === 'hired' && a.job === 'guard') { if (a.hp < a.maxHp * fleeHp(a)) a.recover = true; else if (a.recover && a.hp >= a.maxHp * GUARD_RECOVER) a.recover = false; } else a.recover = false;   /* v111 */
+  if (a.st === 'hired' && (a.job !== 'guard' || a.recover)) {   /* v74: thấy cướp thì chạy trốn. v98: người bảo vệ chỉ chạy khi máu dưới GUARD_FLEE_HP */
     let bn = null, bdist = 1e9;
     for (const b of actors) { if (b.role !== 'bandit' || b.dead) continue; const d = Math.hypot(b.x - a.x, b.y - a.y); if (d < bdist) { bdist = d; bn = b; } }
     if (bn && bdist < APP_FLEE_R + APP_FLEE_RAGE * banditRage()) { if (!(a.fleeT > 0)) { addFloat(a.x, a.y - 70, 'Cướp!', '#ffd884'); a.path = null; } a.fleeT = APP_FLEE_HOLD; a.fleeFrom = { x: bn.x, y: bn.y }; }
     else if (a.fleeT > 0) a.fleeT -= dt;
-    a.speed = a.fleeT > 0 ? APP_SPEED * APP_FLEE_SPEED : APP_SPEED;
+    a.speed = a.fleeT > 0 ? APP_SPEED * (a.job === 'guard' ? GUARD_FLEE_SPEED : APP_FLEE_SPEED) : APP_SPEED;
     if (a.fleeT > 0 && a.fleeFrom) {
       ai.target = null; ai.wait = .3; inp.act = false;
       const fx = a.x - a.fleeFrom.x, fy = a.y - a.fleeFrom.y, fl = Math.hypot(fx, fy) || 1, ux = fx / fl, uy = fy / fl;
@@ -4975,83 +5286,108 @@ function defAtPoint(wx, wy){
 const tapDown = {};
 /* v58: MENU GIAO VIỆC của máy chấm công (bấm vào máy). Người 1: Chặt cây (mang gỗ về). Người 2: Câu cá (khoá, chưa có chế độ câu). */
 let jobClock = null, _jm = null, jobDelArm = 0;
+/* ---------- v117: MÁY CHẤM CÔNG LÀM LẠI (Kim: gọn, dễ nhìn, nhấn vào nhân viên thì mở chi tiết, nâng cấp / mua giáp chuyên nghiệp) ----------
+   Hai màn: DANH SÁCH (mỗi người một hàng gọn: chân dung có trang bị, tên, việc, tính nết, thanh Sức / Tin / Máu) và CHI TIẾT khi nhấn vào một người
+   (đầu trang: chân dung lớn + chỉ số; 3 thẻ: Công việc | Trang bị | Chăm sóc). Mọi luật cũ giữ nguyên: setWorkerJob, GEAR_W/GEAR_A + gearCost, túi trang bị,
+   điểm gác, tip / hỏi thăm (tipWorker, chatWorker), xoá máy không hoàn. Con số không đổi. */
+const _avCache = {};
+function workerAvatar(a, w, h, z){
+  const key = [a.name, a.aLv | 0, a.wLv | 0, w, z].join('|'); if (_avCache[key]) return _avCache[key];
+  const cv = document.createElement('canvas'); cv.width = w * 2; cv.height = h * 2; const g = cv.getContext('2d'); g.scale(2, 2); g.translate(w / 2, h - 7); g.scale(z, z);
+  const e = Object.assign({}, a, { dir: 'down', walkAmp: 0, walkT: 0, swing: -1, dead: false, carryG: null });
+  try { drawPerson(g, e, .5); drawGear(g, e); } catch (x) {}
+  return (_avCache[key] = cv.toDataURL());
+}
+let jobSel = null, jobTab = 'job';
 function jobMenuEl(){
   if (_jm) return _jm;
   _jm = document.createElement('div'); _jm.id = 'jobMenu';
-  _jm.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:21;display:none;width:250px;max-height:86vh;overflow-y:auto;box-sizing:border-box;padding:12px;background:rgba(12,30,20,.95);border:1px solid var(--line);border-radius:14px;color:#f4efd9;font-family:var(--font)';
+  _jm.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:21;display:none;width:min(440px,94vw);max-height:92vh;overflow-y:auto;box-sizing:border-box;padding:12px;background:rgba(10,26,17,.97);border:1px solid var(--line);border-radius:16px;color:#f4efd9;font-family:var(--font);box-shadow:0 10px 40px rgba(0,0,0,.55)';
   _jm.addEventListener('pointerdown', e => e.stopPropagation()); document.body.appendChild(_jm); return _jm;
 }
+const JOB_ICO = { wood: '🪓', guard: '🛡️', fish: '🎣' };
 function renderJobMenu(){
-  const c = jobClock; if (!c) return; const m = jobMenuEl();
-  const hires = c.hires || [];
-  const bs = (on) => 'padding:5px 9px;font:800 13px var(--font);border-radius:9px;border:2px solid #21140d;cursor:pointer;touch-action:manipulation;margin:3px 4px 0 0;color:#2b1a05;background:' + (on ? 'linear-gradient(#ffd884,#f0a840)' : 'linear-gradient(#e9dcc0,#c9b88f)');
-  const bar = (f, col) => '<span style="flex:1;height:6px;border-radius:3px;background:rgba(0,0,0,.4);display:block"><i style="display:block;height:6px;border-radius:3px;width:' + Math.round(clamp(f, 0, 1) * 10) * 10 + '%;background:' + col + '"></i></span>';
-  let h = '<div style="font-weight:800;font-size:16px;color:var(--amber)">Máy chấm công <span id="jmX" style="float:right;cursor:pointer;font-size:22px;line-height:1">&times;</span></div><div style="font-size:12px;color:var(--dim);margin:2px 0 6px">Giao việc cho người làm thuê (' + hires.length + '/' + MAX_HIRES + '). Đổi việc lúc nào cũng được.</div>';
-  for (let i = 0; i < MAX_HIRES; i++) {
-    const a = hires[i];
-    h += '<div style="margin-top:6px;padding:7px 9px;border-radius:10px;background:rgba(255,236,190,.08)">';
-    if (!a) h += '<b>Người ' + (i + 1) + '</b>: <span style="color:var(--dim)">chưa có, hãy chiêu mộ thêm</span>';
-    else {
-      const job = jobOf(a), guard = job === 'guard', tr = TRAITS[a.trait] || { n: '' };
-      h += '<b>' + a.name + '</b> · ' + JOB_NAME[job] + (a.resting ? ' <span style="color:#9fc5ff">(đang nghỉ, Zzz)</span>' : '') + '<div style="font-size:11.5px;color:var(--dim)">' + tr.n + ' · thích ' + JOB_NAME[a.likes].toLowerCase() + (a.loy >= 80 ? ' · hăng hái' : a.loy < 30 ? ' · ủ rũ' : '') + '</div>';
-      h += '<div style="display:flex;gap:6px;align-items:center;font-size:11.5px;margin-top:3px"><span>Sức</span>' + bar(a.en, a.en < .25 ? '#e0523f' : '#7fd36a') + '<span>Tin</span>' + bar(a.loy / 100, a.loy < 30 ? '#e0523f' : a.loy >= 80 ? '#ffd884' : '#8dc4ff') + '</div>';
-      h += '<div><button data-i="' + i + '" data-a="job:wood" style="' + bs(job === 'wood') + '">Chặt cây</button><button data-i="' + i + '" data-a="job:guard" style="' + bs(guard) + '">Bảo vệ</button><button data-i="' + i + '" data-a="job:fish" style="' + bs(job === 'fish') + '">Câu cá</button></div>';
+  const c = jobClock; if (!c) return; const m = jobMenuEl(), hires = c.hires || [];
+  if (jobSel && hires.indexOf(jobSel) < 0) jobSel = null;   /* người đó nghỉ việc hoặc đã mất thì về danh sách */
+  const pct = f => Math.round(clamp(f, 0, 1) * 20) * 5;
+  const bar = (lab, f, col) => '<span class="jm-bl">' + lab + '</span><span class="jm-bar"><i style="width:' + pct(f) + '%;background:' + col + '"></i></span>';
+  const bars = a => bar('Sức', a.en, a.en < .25 ? '#e0523f' : '#7fd36a') + bar('Tin', a.loy / 100, a.loy < 30 ? '#e0523f' : a.loy >= 80 ? '#ffd884' : '#8dc4ff') + bar('Máu', a.hp / a.maxHp, a.hp / a.maxHp < .35 ? '#e0523f' : '#e8774a');
+  const chip = a => { const j = jobOf(a); return '<span class="jm-chip j-' + j + '">' + JOB_ICO[j] + ' ' + JOB_NAME[j] + '</span>'; };
+  const sub = a => { const tr = TRAITS[a.trait] || { n: '' }, g = jobOf(a) === 'guard'; return tr.n + (g ? ' · ' + RANK_NAME[rankOf(a)] + (a.wType === 'bow' ? ' · 🏹' : '') : '') + (a.resting ? ' · <span style="color:#9fc5ff">nghỉ Zzz</span>' : a.loy >= 80 ? ' · hăng hái' : a.loy < 30 ? ' · ủ rũ' : ''); };
+  const afford = (cs, cls) => '<span class="jm-cost">' + '<b class="' + (player.wood >= cs.wood ? '' : 'bad') + '">' + cs.wood + ' gỗ</b><b class="' + (player.coins >= cs.coin ? '' : 'bad') + '">' + cs.coin + ' xu</b></span>';
+  let h = '';
+  if (!jobSel) {
+    h += '<div class="jm-head"><div><div class="jm-title">Máy chấm công</div><div class="jm-hint">Nhân viên ' + hires.length + '/' + MAX_HIRES + ' · chạm vào một người để giao việc, nâng cấp và mua trang bị</div></div><button class="jm-x" data-a="close">&times;</button></div>';
+    for (let i = 0; i < MAX_HIRES; i++) {
+      const a = hires[i];
+      if (!a) { h += '<div class="jm-row empty"><div class="jm-av ph">+</div><div class="jm-info"><div class="jm-name" style="color:var(--dim)">Chỗ trống ' + (i + 1) + '</div><div class="jm-sub">Chiêu mộ thêm người xin việc để lấp chỗ này</div></div></div>'; continue; }
+      h += '<button class="jm-row" data-a="open:' + i + '"><img class="jm-av" src="' + workerAvatar(a, 46, 66, .82) + '" width="46" height="66"><div class="jm-info"><div class="jm-name">' + a.name + ' ' + chip(a) + '</div><div class="jm-sub">' + sub(a) + '</div><div class="jm-bars">' + bars(a) + '</div></div><span class="jm-go">&rsaquo;</span></button>';
+    }
+    h += '<button class="jm-del" data-a="del">' + (jobDelArm > performance.now() ? 'Bấm lần nữa để xoá (không hoàn gì)' : 'Xoá máy chấm công') + '</button>';
+  } else {
+    const a = jobSel, i = hires.indexOf(a), job = jobOf(a), guard = job === 'guard', tr = TRAITS[a.trait] || { n: '', d: '' };
+    h += '<div class="jm-head"><button class="jm-back" data-a="back">&lsaquo; Danh sách</button><div class="jm-title" style="flex:1;text-align:center">' + a.name + '</div><button class="jm-x" data-a="close">&times;</button></div>';
+    h += '<div class="jm-top"><img class="jm-avl" src="' + workerAvatar(a, 78, 108, 1.3) + '" width="78" height="108"><div class="jm-stats"><div>' + chip(a) + '</div><div class="jm-sub" style="margin:4px 0">' + tr.n + ' · thích ' + JOB_NAME[a.likes].toLowerCase() + (a.resting ? ' · <span style="color:#9fc5ff">đang nghỉ Zzz</span>' : '') + '</div><div class="jm-bars big">' + bars(a) + '</div>';
+    if (guard) { const r = rankOf(a); h += '<div class="jm-rank">' + RANK_NAME[r] + (r < 3 ? ' <span>' + (a.xp | 0) + '/' + RANK_XP[r + 1] + ' điểm</span>' : ' <span>hào quang tối đa</span>') + (r < 3 ? '<span class="jm-bar" style="margin-left:6px"><i style="width:' + pct((a.xp - RANK_XP[r]) / (RANK_XP[r + 1] - RANK_XP[r])) + '%;background:#ffd884"></i></span>' : '') + '</div>'; }
+    h += '</div></div>';
+    h += '<div class="jm-tabs">' + [['job', 'Công việc'], ['gear', 'Trang bị'], ['care', 'Chăm sóc']].map(t => '<button class="jm-tab' + (jobTab === t[0] ? ' on' : '') + '" data-a="tab:' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="jm-body">';
+    if (jobTab === 'job') {
+      h += '<div class="jm-seg">' + ['wood', 'guard', 'fish'].map(j => '<button class="jm-sb' + (job === j ? ' on' : '') + '" data-a="job:' + j + '"><span>' + JOB_ICO[j] + '</span>' + JOB_NAME[j] + (a.likes === j ? '<em>thích</em>' : '') + '</button>').join('') + '</div>';
       if (guard) {
         const md = a.gmode || 'fire';
-        h += '<div style="font-size:12px;color:var(--dim);margin-top:4px">Máu ' + Math.ceil(a.hp) + '/' + a.maxHp + ' · có cướp hoặc báo động là lao tới đánh</div>';
-        { const wl = a.wLv | 0, al = a.aLv | 0, nw = GEAR_W[wl + 1], na = GEAR_A[al + 1], cw = nw && gearCost(nw), ca = na && gearCost(na);
-          h += '<div style="font-size:12px;color:var(--amber);margin-top:5px">Trang bị: ' + (wl ? GEAR_W[wl].n + ' (đánh x' + GEAR_W[wl].mul + ')' : 'tay không') + ' · ' + (al ? GEAR_A[al].n + ' (giảm ' + Math.round(GEAR_A[al].red * 100) + '% sát thương)' : 'không giáp') + '</div>';
-          h += (nw ? '<button data-i="' + i + '" data-a="gear:w" style="' + bs(false) + (player.wood >= cw.wood && player.coins >= cw.coin ? '' : ';opacity:.6') + '">' + nw.n + ' · ' + cw.wood + ' gỗ + ' + cw.coin + ' xu</button>' : '<span style="font-size:12px;color:var(--dim)">Vũ khí đã tối đa. </span>') + (na ? '<button data-i="' + i + '" data-a="gear:a" style="' + bs(false) + (player.wood >= ca.wood && player.coins >= ca.coin ? '' : ';opacity:.6') + '">' + na.n + ' · ' + ca.wood + ' gỗ + ' + ca.coin + ' xu</button>' : '<span style="font-size:12px;color:var(--dim)">Giáp đã tối đa.</span>');
-          let bag = ''; for (let k = wl + 1; k <= 3; k++) if (GEAR_BAG.w[k]) bag += '<button data-i="' + i + '" data-a="bagw:' + k + '" style="' + bs(true) + '">Dùng ' + GEAR_W[k].n + ' (túi ×' + GEAR_BAG.w[k] + ')</button>'; for (let k = al + 1; k <= 3; k++) if (GEAR_BAG.a[k]) bag += '<button data-i="' + i + '" data-a="baga:' + k + '" style="' + bs(true) + '">Dùng ' + GEAR_A[k].n + ' (túi ×' + GEAR_BAG.a[k] + ')</button>';
-          if (bag) h += '<div style="font-size:11.5px;color:var(--dim);margin-top:3px">Trong túi trang bị (miễn phí):</div>' + bag; }
-        h += '<button data-i="' + i + '" data-a="mode:fire" style="' + bs(md === 'fire') + '">Quanh đống lửa</button><button data-i="' + i + '" data-a="mode:follow" style="' + bs(md === 'follow') + '">Đi theo bạn</button><button data-i="' + i + '" data-a="pick" style="' + bs(md === 'point') + '">' + (a.gx != null ? 'Đổi điểm gác' : 'Chọn điểm gác') + '</button>';
-      } else if (job === 'fish') h += '<div style="font-size:12px;color:var(--dim)">Câu được ' + (a.fishN | 0) + ' con · mỗi con bán ngay ' + (FISH_COIN + (a.trait === 'cham' ? 1 : 0) + (a.likes === 'fish' ? 1 : 0)) + ' xu cho bạn</div>';
-      else h += '<div style="font-size:12px;color:var(--dim)">Mang gỗ: ' + (a.wood | 0) + '/' + carryCap(a) + ' · đủ thì tự về giao gỗ cho bạn</div>';
+        h += '<div class="jm-lab">Cách gác</div><div class="jm-seg s3"><button class="jm-sb sm' + (md === 'fire' ? ' on' : '') + '" data-a="mode:fire">Quanh đống lửa</button><button class="jm-sb sm' + (md === 'follow' ? ' on' : '') + '" data-a="mode:follow">Đi theo bạn</button><button class="jm-sb sm' + (md === 'point' ? ' on' : '') + '" data-a="pick">' + (a.gx != null ? 'Đổi điểm gác' : 'Chọn điểm gác') + '</button></div><div class="jm-lab">Kiểu đánh</div><div class="jm-seg"><button class="jm-sb sm' + (a.wType === 'bow' ? '' : ' on') + '" data-a="wt:melee">⚔️ Cận chiến</button><button class="jm-sb sm' + (a.wType === 'bow' ? ' on' : '') + '" data-a="wt:bow">🏹 Cung (tầm xa)</button></div><div class="jm-note">' + (a.wType === 'bow' ? 'Cung: bắn từ hàng sau, sát thương ' + Math.round(BOW_MUL * 100) + '% cận chiến, lùi khi cướp áp sát. Dùng chung cấp vũ khí.' : 'Có cướp hoặc báo động là lao tới đánh.') + ' Máu ' + Math.ceil(a.hp) + '/' + a.maxHp + '.</div>';
+      } else if (job === 'fish') h += '<div class="jm-note">Câu được ' + (a.fishN | 0) + ' con · mỗi con bán ngay ' + (FISH_COIN + (a.trait === 'cham' ? 1 : 0) + (a.likes === 'fish' ? 1 : 0)) + ' xu cho bạn.</div>';
+      else h += '<div class="jm-note">Mang gỗ ' + (a.wood | 0) + '/' + carryCap(a) + ' · đủ thì tự về giao gỗ cho bạn.</div>';
+    } else if (jobTab === 'gear') {
+      const wl = a.wLv | 0, al = a.aLv | 0, nw = GEAR_W[wl + 1], na = GEAR_A[al + 1], bw = a.wType === 'bow', wn = k => bw ? BOW_NAME[k] : GEAR_W[k].n;
+      const card = (title, ico, curTxt, nxt, cs, act) => '<div class="jm-gc"><div class="jm-gt">' + ico + ' ' + title + '</div><div class="jm-gcur">' + curTxt + '</div>' + (nxt ? '<div class="jm-gnx">Tiếp theo: <b>' + nxt + '</b></div>' + afford(cs) + '<button class="jm-buy' + (player.wood >= cs.wood && player.coins >= cs.coin ? '' : ' no') + '" data-a="' + act + '">Nâng cấp</button>' : '<div class="jm-max">Đã tối đa ✓</div>') + '</div>';
+      h += '<div class="jm-gear">' + card(bw ? 'Cung' : 'Vũ khí', bw ? '🏹' : '⚔️', wl ? wn(wl) + ' · đánh x' + GEAR_W[wl].mul : (bw ? BOW_NAME[0] : 'Tay không'), nw && (wn(wl + 1) + ' (đánh x' + nw.mul + ')'), nw && gearCost(nw), 'gear:w') + card('Giáp', '🦺', al ? GEAR_A[al].n + ' · giảm ' + Math.round(GEAR_A[al].red * 100) + '% sát thương' : 'Không giáp', na && (na.n + ' (giảm ' + Math.round(na.red * 100) + '%)'), na && gearCost(na), 'gear:a') + '</div>';
+      let bag = ''; for (let k = wl + 1; k <= 3; k++) if (GEAR_BAG.w[k]) bag += '<button class="jm-sb sm on" data-a="bagw:' + k + '">Dùng ' + wn(k) + ' (túi ×' + GEAR_BAG.w[k] + ')</button>'; for (let k = al + 1; k <= 3; k++) if (GEAR_BAG.a[k]) bag += '<button class="jm-sb sm on" data-a="baga:' + k + '">Dùng ' + GEAR_A[k].n + ' (túi ×' + GEAR_BAG.a[k] + ')</button>';
+      h += bag ? '<div class="jm-lab">Trong túi trang bị (miễn phí)</div><div class="jm-seg s3">' + bag + '</div>' : '<div class="jm-note">Giáp giảm sát thương cho mọi việc. Vũ khí chỉ có tác dụng khi làm Bảo vệ. Đồ nâng cấp thay luôn đồ cũ.</div>';
+    } else {
+      h += '<div class="jm-care"><div><div class="jm-lab" style="margin:0">' + tr.n + '</div><div class="jm-note" style="margin:2px 0 0">' + tr.d + '.</div></div></div>';
+      h += '<div class="jm-seg s3"><button class="jm-sb sm' + (player.coins >= TIP_COST ? ' on' : '') + '" data-a="tip">Thưởng ' + TIP_COST + ' xu <em>+' + LOY_TIP + ' tin</em></button><button class="jm-sb sm' + (a.talkCd > 0 ? '' : ' on') + '" data-a="chat">' + (a.talkCd > 0 ? 'Vừa hỏi thăm (' + Math.ceil(a.talkCd) + ' giây)' : 'Hỏi thăm') + ' <em>+' + Math.round(LOY_TALK * (a.trait === 'yeu' ? 1.5 : 1)) + ' tin</em></button></div><div class="jm-note">Lòng tin tụt dần theo thời gian, hết là nhân viên bỏ việc. Làm đúng việc họ thích thì tụt chậm hơn.</div>';
     }
     h += '</div>';
   }
-  h += '<button id="jmDel" style="display:block;width:100%;margin-top:8px;padding:6px 10px;font:800 14px var(--font);color:#2b1a05;background:linear-gradient(#f0a090,#d2594a);border:2px solid #21140d;border-radius:10px;cursor:pointer;text-align:left;touch-action:manipulation">' + (jobDelArm > performance.now() ? 'Bạn chắc chắn xoá?' : 'Xoá máy chấm công') + '</button>';
-  if (m._last === h) return; m._last = h;
-  m.innerHTML = h; const x = m.querySelector('#jmX'); if (x) x.onclick = closeJobMenu;
+  if (m._last === h) return; m._last = h; const keep = m.scrollTop; m.innerHTML = h; m.scrollTop = keep;
   if (!m._deleg) {
     m._deleg = true;
     m.addEventListener('click', e => {
-      const b = e.target.closest && e.target.closest('button[data-a]'); if (!b || !jobClock) return;
-      const a = (jobClock.hires || [])[+b.dataset.i], act = b.dataset.a; if (!a) return;
-      if (act === 'job:wood') setWorkerJob(a, 'wood'); else if (act === 'job:guard') setWorkerJob(a, 'guard'); else if (act === 'job:fish') setWorkerJob(a, 'fish');
-      else if (act === 'mode:fire') { a.gmode = 'fire'; if (a.job !== 'guard') setWorkerJob(a, 'guard'); } else if (act === 'mode:follow') { a.gmode = 'follow'; if (a.job !== 'guard') setWorkerJob(a, 'guard'); }
-      else if (act === 'gear:w' || act === 'gear:a') {
-        const isW = act === 'gear:w', nx = isW ? GEAR_W[(a.wLv | 0) + 1] : GEAR_A[(a.aLv | 0) + 1]; if (!nx) return;
-        const cs = gearCost(nx); if (player.wood < cs.wood || player.coins < cs.coin) { toast('Chưa đủ gỗ hoặc xu để mua ' + nx.n.toLowerCase() + '.', true); return; }
-        player.wood -= cs.wood; player.coins -= cs.coin; onWoodChange(); refreshCoins(); if (isW) a.wLv = (a.wLv | 0) + 1; else a.aLv = (a.aLv | 0) + 1;
-        if (isW ? a.wLv > 0 : a.aLv > 0) { const old = isW ? a.wLv - 1 : a.aLv - 1; /* mua nâng cấp: đồ cũ bị thay luôn, không về túi */ }
-        sfxBuild(); toast(a.name + ' đã được trang bị ' + nx.n.toLowerCase() + '.', true);
+      const b = e.target.closest && e.target.closest('button[data-a],.jm-row[data-a]'); if (!b || !jobClock) return; const act = b.dataset.a, a = jobSel;
+      if (act === 'close') { closeJobMenu(); return; }
+      if (act === 'back') { jobSel = null; jobTab = 'job'; }
+      else if (act.indexOf('open:') === 0) { const w = (jobClock.hires || [])[+act.split(':')[1]]; if (w) { jobSel = w; jobTab = 'job'; } }
+      else if (act.indexOf('tab:') === 0) jobTab = act.split(':')[1];
+      else if (act === 'del') {
+        if (jobDelArm > performance.now()) { const c2 = jobClock; jobDelArm = 0; closeJobMenu(); if (c2 && !c2.removed) { destroyDef(c2, null); toast('Đã xoá máy chấm công.', true); } return; }   /* v68: xoá KHÔNG hoàn gỗ/xu (Kim chốt) */
+        jobDelArm = performance.now() + 4000; setTimeout(() => { if (jobClock) { m._last = ''; renderJobMenu(); } }, 4100);
       }
-      else if (act.indexOf('bagw:') === 0 || act.indexOf('baga:') === 0) {
-        const isW = act[3] === 'w', k = +act.split(':')[1], bag = isW ? GEAR_BAG.w : GEAR_BAG.a; if (!bag[k]) return;
-        const cur = isW ? (a.wLv | 0) : (a.aLv | 0); bag[k]--; if (cur) bag[cur]++; if (isW) a.wLv = k; else a.aLv = k;
-        sfxPick(); toast(a.name + ' đã dùng ' + (isW ? GEAR_W[k].n : GEAR_A[k].n).toLowerCase() + ' từ túi.', true);
+      else if (a) {
+        if (act === 'job:wood' || act === 'job:guard' || act === 'job:fish') setWorkerJob(a, act.split(':')[1]);
+        else if (act === 'mode:fire' || act === 'mode:follow') { a.gmode = act.split(':')[1]; if (a.job !== 'guard') setWorkerJob(a, 'guard'); }
+        else if (act === 'wt:melee' || act === 'wt:bow') { a.wType = act.split(':')[1]; if (a.job !== 'guard') setWorkerJob(a, 'guard'); a.bowCd = 0; sfxPick(); toast(a.name + (a.wType === 'bow' ? ' cầm cung, đứng hàng sau bắn từ xa.' : ' cầm vũ khí cận chiến, ra hàng đầu.'), true); }
+        else if (act === 'gear:w' || act === 'gear:a') {
+          const isW = act === 'gear:w', nx = isW ? GEAR_W[(a.wLv | 0) + 1] : GEAR_A[(a.aLv | 0) + 1]; if (!nx) return;
+          const cs = gearCost(nx); if (player.wood < cs.wood || player.coins < cs.coin) { toast('Chưa đủ gỗ hoặc xu để mua ' + nx.n.toLowerCase() + '.', true); return; }
+          player.wood -= cs.wood; player.coins -= cs.coin; onWoodChange(); refreshCoins(); if (isW) a.wLv = (a.wLv | 0) + 1; else a.aLv = (a.aLv | 0) + 1;   /* nâng cấp thay luôn đồ cũ, không về túi */
+          sfxBuild(); toast(a.name + ' đã được trang bị ' + (isW && a.wType === 'bow' ? BOW_NAME[a.wLv] : nx.n).toLowerCase() + '.', true);
+        }
+        else if (act.indexOf('bagw:') === 0 || act.indexOf('baga:') === 0) {
+          const isW = act[3] === 'w', k = +act.split(':')[1], bag = isW ? GEAR_BAG.w : GEAR_BAG.a; if (!bag[k]) return;
+          const cur = isW ? (a.wLv | 0) : (a.aLv | 0); bag[k]--; if (cur) bag[cur]++; if (isW) a.wLv = k; else a.aLv = k;
+          sfxPick(); toast(a.name + ' đã dùng ' + (isW ? GEAR_W[k].n : GEAR_A[k].n).toLowerCase() + ' từ túi.', true);
+        }
+        else if (act === 'tip') tipWorker(a);
+        else if (act === 'chat') chatWorker(a);
+        else if (act === 'pick') { jobPickFor = a; closeJobMenu(); toast('Chạm vào bản đồ để chọn điểm gác cho ' + a.name + '.', true); return; }
       }
-      else if (act === 'pick') { jobPickFor = a; closeJobMenu(); toast('Chạm vào bản đồ để chọn điểm gác cho ' + a.name + '.', true); return; }
       m._last = ''; renderJobMenu();
     });
   }
-  const dl = m.querySelector('#jmDel');
-  if (dl) dl.onclick = () => {
-    if (jobDelArm > performance.now()) {
-      const c = jobClock; jobDelArm = 0; closeJobMenu();
-      if (c && !c.removed) {
-        destroyDef(c, null);
-        toast('Đã xoá máy chấm công.', true);   /* v68: xoá KHÔNG hoàn gỗ/xu (Kim chốt) */
-      }
-    } else {
-      jobDelArm = performance.now() + 4000; renderJobMenu();
-      setTimeout(() => { if (jobClock) renderJobMenu(); }, 4100);
-    }
-  };
 }
-function openJobMenu(c){ jobClock = c; jobDelArm = 0; renderJobMenu(); jobMenuEl().style.display = 'block'; if (!openJobMenu.t) openJobMenu.t = setInterval(() => { if (!jobClock) return; if (jobClock.removed || jobClock.hp <= 0 || player.dead || ended || Math.hypot(player.x - jobClock.x, player.y - jobClock.y) > 700) closeJobMenu(); else renderJobMenu(); }, 400); }
-function closeJobMenu(){ jobClock = null; if (_jm) _jm.style.display = 'none'; }
+function openJobMenu(c){ jobClock = c; jobSel = null; jobTab = 'job'; jobDelArm = 0; renderJobMenu(); jobMenuEl().style.display = 'block'; if (!openJobMenu.t) openJobMenu.t = setInterval(() => { if (!jobClock) return; if (jobClock.removed || jobClock.hp <= 0 || player.dead || ended || Math.hypot(player.x - jobClock.x, player.y - jobClock.y) > 700) closeJobMenu(); else renderJobMenu(); }, 400); }
+function closeJobMenu(){ jobClock = null; jobSel = null; if (_jm) _jm.style.display = 'none'; }
 function worldTap(cx, cy){
   if (!started || ended || player.dead || placing || shopOpen || player.role === 'bandit') return;
   if (!$('start').classList.contains('hide') || document.querySelector('.modal.open')) return;
@@ -5302,7 +5638,7 @@ function showResult(winner){
   const h = document.createElement('h2'); h.style.cssText = 'margin:0 0 4px;font-size:26px;color:#f2b84b'; h.textContent = winner === 'farmer' ? 'DÂN LÀNG THẮNG' : (dead ? 'BẠN ĐÃ BỊ HẠ' : 'CƯỚP THẮNG'); card.appendChild(h);
   const sub = document.createElement('p'); sub.style.cssText = 'margin:0 0 14px;opacity:.85'; sub.textContent = winner === 'farmer' ? 'Hết giờ, vẫn còn dân sống sót.' : (dead ? 'Bạn đã chơi đến khi gục ngã.' : 'Toàn bộ dân làng đã bị hạ.'); card.appendChild(sub);
   for (const l of r.lines) { const row = document.createElement('div'); row.style.cssText = 'display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.12)'; const a = document.createElement('span'); a.textContent = l[0]; const b = document.createElement('b'); b.textContent = '+' + l[1]; row.appendChild(a); row.appendChild(b); card.appendChild(row); }
-  const tot = document.createElement('div'); tot.style.cssText = 'margin:14px 0;font-size:22px;font-weight:800'; tot.textContent = 'Thưởng của bạn: ' + r.total + ' xu'; card.appendChild(tot);
+  const tot = document.createElement('div'); tot.style.cssText = 'margin:14px 0;font-size:22px;font-weight:800'; tot.textContent = 'Thưởng của bạn: ' + r.total + ' 💎'; card.appendChild(tot);
   awardMeta(card, winner, r);
   const btn = document.createElement('button'); btn.textContent = 'Chơi lại'; btn.style.cssText = 'font:inherit;font-weight:700;font-size:18px;padding:10px 28px;border-radius:12px;border:2px solid #21140d;background:#f2b84b;color:#2b1a05'; btn.onclick = () => location.reload(); card.appendChild(btn);
   box.id = 'resultBox'; box.appendChild(card); document.body.appendChild(box);
@@ -5443,8 +5779,8 @@ const waveBoss = n => n % 3 === 0, waveMoon = n => n % 5 === 0, waveStartT = n =
 const hostSide = () => !Net.on || Net.host;
 function bloodMoon(){ return started && !lobbyMode && waveMoon(dayNo()); }
 function waveCount(n){
-  let c = clamp(Math.ceil(n * 1.1) + Math.min(2, humanCount() - 1), 2, 9);   /* v81: bớt 1 cướp mỗi đợt (trước 1 + ...) */
-  if (waveMoon(n)) c = Math.round(c * 1.4);
+  let c = clamp(Math.ceil(n * 1.1) + Math.min(2, humanCount() - 1), 2, BAND_COUNT_CAP);   /* v112: trần 9 -> BAND_COUNT_CAP (14) để đoạn sau còn tăng */   /* v81: bớt 1 cướp mỗi đợt (trước 1 + ...) */
+  if (waveMoon(n)) c = Math.min(BAND_COUNT_CAP, Math.round(c * 1.4));
   return waveBoss(n) ? Math.max(2, c - 3) : c;
 }
 function retreatBandit(a){
@@ -5462,6 +5798,7 @@ function spawnWave(n){
   }
   const plan = specialPlan(n); let idx = list.length - 1;   /* v100: loại đặc biệt thay các cướp thường ở cuối danh sách (không thay đầu lĩnh) */
   for (const k of ['thief', 'ram', 'archer']) for (let j = 0; j < plan[k] && idx > (boss ? 0 : -1); j++, idx--) { const b = list[idx]; b.kind = k; b.name = KIND_NAME[k]; }
+  for (const b of list) assignBandPers(b);   /* v113: đã biết ai là đầu lĩnh / loại đặc biệt / cướp đợt nên gán tính cách (Tay Sai chỉ trong đợt) */
   return list;
 }
 function startWave(n){
@@ -5573,7 +5910,7 @@ function step(dt){
   if (started) { const cdt = clockDtOverride != null ? clockDtOverride : dt; matchLeft = Math.max(0, matchLeft - cdt); clockT += cdt * clockSlew; }   /* v94: đồng hồ chạy theo giờ THẬT (khung hình dài tới 2 giây vẫn tính đủ), không bị chặn 0,05 như vật lý */
   sf('input', () => { readPlayerInput(); updateBiomeToast(); });
   sf('misc', () => { updateRespawns(dt); updateGraves(); updateRevive(dt); updateSacks(dt); updateStamina(dt); updateApplicants(dt); });
-  sf('spawn', () => { updateBanditSpawner(); updateFire(dt); envUpdate(dt); updateWaves(dt); });
+  sf('spawn', () => { updateBanditSpawner(); updateCampBandits(dt); updateFire(dt); envUpdate(dt); updateWaves(dt); });
   for (const a of actors.slice()) if (!a.isPlayer && !a.remote) { try { if (a.role === 'bandit') banditAI(a, dt); else botAI(a, dt); } catch (e) { noteLoopErr('ai', e); } }
   for (const a of actors.slice()) { try { if (a.remote) updateRemote(a, dt); else updateActor(a, dt); } catch (e) { noteLoopErr('actor', e); } }
   sf('trees', () => updateTrees(dt)); sf('farms', () => updateFarms(dt)); sf('defs', () => updateDefs(dt)); sf('proj', () => updateProj(dt)); sf('arrows', () => updateArrows(dt));
@@ -5710,6 +6047,7 @@ function netOnMsgRaw(m){
       seen[q[0]] = 1; let g = Net.ghosts[q[0]];
       if (!g) { g = makeActor(q[6] || 'Cướp', LOOKS[2], q[1], q[2], false); g.role = 'bandit'; g.remote = true; g.ghost = true; g.gid = q[0]; g.boss = g.name === 'Đầu lĩnh'; g.kind = KIND_BY_NAME[g.name]; g.tx = q[1]; g.ty = q[2]; Net.ghosts[q[0]] = g; actors.push(g); }
       g.seen = now; g.tx = q[1]; g.ty = q[2]; g.dir = q[3]; g.hp = q[4]; g.maxHp = q[5]; if (q[7] && g.swing < 0) g.swing = 0;
+ if (q[8] && !(g.sayUntil > now)) { g.sayUntil = now + 2800; addFloat(g.x, g.y - 96, q[8], '#ffcf8a'); }
       if (Math.hypot(g.tx - g.x, g.ty - g.y) > 300) { g.x = g.tx; g.y = g.ty; }
     }
     for (const id in Net.ghosts) if (!seen[id]) { const g = Net.ghosts[id]; const i = actors.indexOf(g); if (i >= 0) actors.splice(i, 1); delete Net.ghosts[id]; }
@@ -5749,7 +6087,7 @@ function netTick(){
   const p = player;
   Net.send({ t: 's', pq: lobbyMode && inPortal(p) ? 1 : 0, n: p.name, lk: Net.lk, cz: curCz(), x: Math.round(p.x), y: Math.round(p.y), d: p.dir, sw: p.swing >= 0, r: p.role, dd: p.dead ? 1 : 0, cr: (p.carryG && p.carryG.a.remote) ? ((() => { for (const f in Net.remotes) if (Net.remotes[f] === p.carryG.a) return f; return ''; })()) : '', h: Net.host ? 1 : 0, st: started ? 1 : 0, ml: Math.round(matchLeft), ck: Math.round(clockT), fl: Math.round(FIRE.fuel), fv: FIRE.lv });
   if (Net.host && started) {
-    const l = []; for (const a of actors) if (a.role === 'bandit' && !a.remote) l.push([a.gid, Math.round(a.x), Math.round(a.y), a.dir, Math.round(a.hp), a.maxHp, a.name, a.swing >= 0 ? 1 : 0]);
+    const l = []; for (const a of actors) if (a.role === 'bandit' && !a.remote) l.push([a.gid, Math.round(a.x), Math.round(a.y), a.dir, Math.round(a.hp), a.maxHp, a.name, a.swing >= 0 ? 1 : 0, a.sayT > 0 ? (a.say || '') : '']);   /* v113: q[8] = bong bóng chữ */
     Net.send({ t: 'bs', l });
   }
   const now = performance.now(); let n = 1;
@@ -5848,7 +6186,7 @@ function netReconnect(succ, tries){
 function adoptBandits(){
   for (const id in Net.ghosts) {
     const g = Net.ghosts[id]; g.remote = false; g.ghost = false; g.speed = BANDIT_SPEED; g.px = g.x; g.py = g.y; g.vx = g.vy = 0; g.swing = -1;
-    g.ai = g.ai || {}; Object.assign(g.ai, { bt: null, wp: null, wpT: 0, stuck: 0, hitT: 0, side: 0, sx: 0, sy: 0, wait: 0 });
+    g.ai = g.ai || {}; Object.assign(g.ai, { bt: null, wp: null, wpT: 0, stuck: 0, hitT: 0, side: 0, sx: 0, sy: 0, wait: 0 }); g.bpers = (g.boss || g.kind) ? null : persFromName(g.name);   /* v113: đổi chủ phòng thì khôi phục tính cách từ tên */
     banditGid = Math.max(banditGid, g.gid); banditCount = Math.max(banditCount, +((g.name || '').match(/\d+/) || [0])[0]);
   }
   Net.ghosts = {}; if (started) { banditsSpawned = true; autoBandits = true; }
@@ -6325,10 +6663,10 @@ setInterval(saveNow, SAVE_EVERY);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
 window.addEventListener('pagehide', () => { saveNow(); });
 /* ================= v108: R6 LƯU THƯỞNG GIỮA CÁC TRẬN + TỦ ĐỒ =================
-   META (localStorage 'rh-meta1', bọc try/catch, chịu được rỗng/hỏng): pts = xu thưởng đang có để tiêu, total = tổng đã kiếm, own = đồ đã mở,
+   META (localStorage 'rh-meta1', bọc try/catch, chịu được rỗng/hỏng): pts = KIM CƯƠNG 💎 đang có để tiêu (v116: trước gọi là xu thưởng, số liệu giữ nguyên), total = tổng đã kiếm, own = đồ đã mở,
    eq = đang mặc/dùng {h mũ, f áo, t danh hiệu, p khởi đầu}, st = thống kê (trận, ngày dài nhất, xu kiếm, thắng, phút).
    Cuối trận (showResult -> awardMeta) cộng thưởng REWARD vào pts, cập nhật thống kê, tự mở danh hiệu đạt mốc. Tủ đồ (nút trên màn đầu và thẻ kết quả):
-   mua MŨ / ÁO bằng xu thưởng, danh hiệu mở theo MỐC, chọn 1 món KHỞI ĐẦU NHỎ (không phá cân bằng). Mũ, áo, danh hiệu gửi cho người khác qua 's'.cz.
+   mua MŨ / ÁO bằng kim cương, danh hiệu mở theo MỐC, chọn 1 món KHỞI ĐẦU NHỎ (không phá cân bằng). Mũ, áo, danh hiệu gửi cho người khác qua 's'.cz.
    Mọi con số TẠM. */
 const HATS = [
   { id: 'h0', name: 'Mũ rơm', cost: 0, desc: 'Mũ mặc định.' },
@@ -6375,7 +6713,8 @@ function loadMeta(){
   return m;
 }
 let META = loadMeta();
-const saveMeta = () => lsSet(META_KEY, JSON.stringify(META));
+const saveMeta = () => { const ok = lsSet(META_KEY, JSON.stringify(META)); updateWdBtn(); return ok; };
+function updateWdBtn(){ const b = document.getElementById('wdBtn'); if (b) b.textContent = 'Tủ đồ \u00b7 💎 ' + META.pts + ' (mũ, áo, danh hiệu)'; }   /* v116: số kim cương hiện ngay trên nút ở màn đầu */
 const byId = (arr, id) => arr.find(x => x.id === id) || arr[0];
 function mergedLook(base, hatId, fitId){
   const f = byId(FITS, fitId), o = Object.assign({}, base);
@@ -6410,9 +6749,12 @@ function awardMeta(card, winner, r){
     for (const T of TITLES) if (!META.own[T.id] && T.test(st)) { META.own[T.id] = 1; fresh.push(T.name); }
     saveMeta();
     const box = document.createElement('div'); box.style.cssText = 'margin:0 0 10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.07);font-size:15px';
-    box.innerHTML = 'Xu thưởng đã tích: <b style="color:#ffe08a">' + META.pts + '</b> (+' + r.total + ')' + (fresh.length ? '<br><span style="color:#9be08a">Mở khoá danh hiệu: <b>' + fresh.join(', ') + '</b></span>' : '');
+    box.innerHTML = '💎 Kim cương đã tích: <b id=\"gemCount\" style=\"color:#8fe3ff;text-shadow:0 0 10px rgba(120,220,255,.5)\">' + META.pts + '</b> <span style=\"color:#9be08a\">(+' + r.total + ')</span>' + (fresh.length ? '<br><span style="color:#9be08a">Mở khoá danh hiệu: <b>' + fresh.join(', ') + '</b></span>' : '');
     const wb = document.createElement('button'); wb.textContent = 'Mở Tủ đồ'; wb.style.cssText = 'display:block;margin:8px auto 0;font:inherit;font-weight:700;font-size:15px;padding:7px 18px;border-radius:12px;border:2px solid #9be08a;background:transparent;color:#9be08a';
     wb.onclick = () => openWardrobe(); box.appendChild(wb); card.appendChild(box);
+    { const el = box.querySelector('#gemCount'), to = META.pts, from = Math.max(0, to - r.total), t0 = performance.now();   /* v116: số kim cương đếm lên */
+      const tick = now => { const k = Math.min(1, (now - t0) / 900); el.textContent = Math.round(from + (to - from) * (1 - (1 - k) * (1 - k))); if (k < 1) requestAnimationFrame(tick); };
+      if (r.total > 0) requestAnimationFrame(tick); }
   } catch (e) {}
 }
 
@@ -6464,7 +6806,7 @@ function wdAct(k, it){
 function renderWd(){
   $('wdPts').textContent = META.pts;
   const s = META.st;
-  $('wdStat').textContent = 'Đã chơi ' + s.matches + ' trận · ngày dài nhất ' + s.bestDay + ' · thắng ' + s.wins + ' · tổng thưởng ' + META.total + ' xu';
+  $('wdStat').textContent = 'Đã chơi ' + s.matches + ' trận · ngày dài nhất ' + s.bestDay + ' · thắng ' + s.wins + ' · tổng kim cương kiếm được ' + META.total + ' 💎';
   const tabs = $('wdTabs'); tabs.innerHTML = '';
   for (const [k, name] of WD_TABS) { const b = document.createElement('button'); b.className = 'tab' + (k === wdTab ? ' active' : ''); b.textContent = name; b.onclick = () => { wdTab = k; renderWd(); }; tabs.appendChild(b); }
   const grid = $('wdGrid'); grid.innerHTML = '';
@@ -6477,7 +6819,7 @@ function renderWd(){
     if (eq) { btn.textContent = 'Đang dùng'; btn.disabled = true; }
     else if (own) btn.textContent = wdTab === 'p' ? 'Chọn' : 'Mặc / dùng';
     else if (wdTab === 't') { btn.textContent = 'Chưa đạt'; btn.disabled = true; }
-    else { btn.textContent = 'Mở khoá ' + it.cost + ' xu'; btn.disabled = META.pts < it.cost; }
+    else { btn.textContent = 'Mở khoá ' + it.cost + ' 💎'; btn.disabled = META.pts < it.cost; }
     btn.onclick = e => { e.stopPropagation(); wdAct(wdTab, it); }; card.appendChild(btn);
     card.onclick = () => { wdTry[wdTab] = it.id; renderWd(); };
     grid.appendChild(card);
@@ -6498,7 +6840,8 @@ function wdLoop(ts){
   requestAnimationFrame(wdLoop);
 }
 function wdSetup(){
-  const b = $('wdBtn'); if (b) b.addEventListener('click', openWardrobe);
+  const b = $('wdBtn'); if (b) b.addEventListener('click', openWardrobe); updateWdBtn();
+  { const ft = $('shopFreeTag'); if (ft && TEST_FREE) ft.style.display = ''; }   /* v120: nhãn nhắc đang ở chế độ mua miễn phí */
   $('wdClose').addEventListener('click', closeWardrobe);
   $('wd').addEventListener('pointerdown', e => { if (e.target === $('wd')) closeWardrobe(); });
   $('wdCv').addEventListener('click', () => { wdDir = (wdDir + 1) % 4; });
@@ -6527,7 +6870,7 @@ function init(){
   initEconomy();
   onWoodChange();
   $('wood').textContent = '0';
-  window.__rh = { META, HATS, FITS, TITLES, PERKS, openWardrobe, awardMeta, applyEquip, applyCzTo, applyPerk, curCz, loadMeta, appGap, get STAMINA_DRAIN() { return STAMINA_DRAIN; }, get STAMINA_MAX() { return STAMINA_MAX; }, setWorkerJob, workerTick, damageWorker, workerDown, chatWorker, tipWorker, TOMBS, pickFishSpot, jobOf, hitTree, trees, envUpdate, matOK, gainMat, MAT_REQ, biomeAt, specialPlan, scanBandit, bTier, pickBanditTarget, litList, litMul, nightGoal, raidGoal, pickBanditWaypoint, PM, get clockSlew() { return clockSlew; }, saveNow, restoreSave, snapshotSave, saveKey, get loopErrs() { return loopErrs; }, sf, startMoveDef, defAtPoint, get placing() { return placing; }, Visit, startVisit, updateVisits, netOnMsg, netApplyHp, netSnapshot, netHostPeer, netGuestPeer, FIRE, get clockT() { return clockT; }, set clockT(v) { clockT = v; }, Wave, startWave, endWave, waveStartT, setClock: v => { clockT = v; }, getClock: () => clockT, bloodMoon, FIRE, night, nightAt, fireAddWood, fireUpgrade, openFireMenu, setClock: v => { clockT = v; }, setElapsed: v => { matchLeft = MATCH_SECONDS - v; }, get clock() { return clockT; }, get started() { return started; }, RoleSel, rsPick, rsSplit, humanBandits, banditHold, openRoleSel, get perf() { return { DPR, DPRCAP, ema: perfEma, up: perfUpTried }; }, openJobMenu, placeDef, APPLICANTS, APP_POOL, QUEST_DATA, ownClocks, freeClock, acceptQuest, questProgress, hireApplicant, resetApplicant, applicantTarget, fillApplicants, removeApplicant, clockCount, talkNearest, hasPunchClock, GRAVES, addGrave, slideOut, waterBlocked, BRIDGES, openFarmMenu, upgradeFarm, deleteFarm, startMoveFarm, moveFarmTo, farmAtWorld, netOnMsg, netBuilt, netSnapshot, banditTarget, humanCount, biomeAt, BIOME_SLOW, Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), damageActor, ARROWS, specialPlan, KIND_NAME, player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
+  window.__rh = { bowShoot, bowDmg, guardBowAI, BOW_CD, BOW_MUL, BOW_RANGE, BOW_FLEE, weaponMul, guardHit, guardGroup, formSlot, guardGroup, formSlot, guardPost, giveXp, rankOf, guardHit, captainNear, guardMaxHp, RANK_XP, PERS, assignBandPers, persAI, bpHas, persFromName, persName, findBandBoss, spawnBanditBot, damageActor, downBandit, banditPow, banditRage, banditMaxHp, dmgMul, waveCount, bandDays, META, HATS, FITS, TITLES, PERKS, openWardrobe, awardMeta, applyEquip, applyCzTo, applyPerk, curCz, loadMeta, appGap, get STAMINA_DRAIN() { return STAMINA_DRAIN; }, get STAMINA_MAX() { return STAMINA_MAX; }, setWorkerJob, workerTick, damageWorker, workerDown, chatWorker, tipWorker, TOMBS, pickFishSpot, jobOf, hitTree, trees, envUpdate, matOK, gainMat, MAT_REQ, biomeAt, specialPlan, scanBandit, bTier, pickBanditTarget, litList, litMul, nightGoal, raidGoal, pickBanditWaypoint, PM, get clockSlew() { return clockSlew; }, saveNow, restoreSave, snapshotSave, saveKey, get loopErrs() { return loopErrs; }, sf, startMoveDef, defAtPoint, get placing() { return placing; }, Visit, startVisit, updateVisits, netOnMsg, netApplyHp, netSnapshot, netHostPeer, netGuestPeer, FIRE, get clockT() { return clockT; }, set clockT(v) { clockT = v; }, Wave, startWave, endWave, waveStartT, setClock: v => { clockT = v; }, getClock: () => clockT, bloodMoon, FIRE, night, nightAt, fireAddWood, fireUpgrade, openFireMenu, setClock: v => { clockT = v; }, setElapsed: v => { matchLeft = MATCH_SECONDS - v; }, get clock() { return clockT; }, get started() { return started; }, RoleSel, rsPick, rsSplit, humanBandits, banditHold, openRoleSel, get perf() { return { DPR, DPRCAP, ema: perfEma, up: perfUpTried }; }, openJobMenu, placeDef, APPLICANTS, APP_POOL, QUEST_DATA, ownClocks, freeClock, acceptQuest, questProgress, hireApplicant, resetApplicant, applicantTarget, fillApplicants, removeApplicant, clockCount, talkNearest, hasPunchClock, GRAVES, addGrave, slideOut, waterBlocked, BRIDGES, openFarmMenu, upgradeFarm, deleteFarm, startMoveFarm, moveFarmTo, farmAtWorld, netOnMsg, netBuilt, netSnapshot, banditTarget, humanCount, biomeAt, BIOME_SLOW, Lob, get PORTAL() { return PORTAL; }, tryPlace, trees, hitTree, Net, ORES, endGame, get ended() { return ended; }, spawnBandit: () => spawnBanditBot(), appAI, guardAI, campQueue, CAMP_N, updateCampBandits, daySafe, damageActor, ARROWS, specialPlan, KIND_NAME, player, actors, FARMS, DEFS, PROJ, camera, buyItem, placeDef, checkDef, damageDef, step, render, rotatePlacing, slots: () => slots, checkPlace, placeFarm, selectSlot, startPlacing, get placing() { return placing; }, set wood(v) { player.wood = v; onWoodChange(); }, giveCoins(v) { player.coins = v; refreshCoins(); } };
   const menu = $('menuModal'), openMenu = () => { if (lobbyMode) { $('start').classList.remove('hide'); return; } $('menuNote').textContent = Net.on && Net.host ? 'Bạn là chủ phòng: thoát thì người khác trong phòng sẽ tự chuyển sang chủ mới (mất vài giây).' : 'Thoát game sẽ rời trận và quay về màn hình đầu. Trận vẫn chạy khi bạn mở menu.'; menu.classList.add('open'); }, closeMenu = () => menu.classList.remove('open');
   $('menuBtn').addEventListener('click', openMenu); $('menuClose').addEventListener('click', closeMenu); $('menuResume').addEventListener('click', closeMenu);
   $('menuExit').addEventListener('click', () => { saveNow(); location.href = location.pathname + (location.search.includes('net=bc') ? '?net=bc' : ''); });
