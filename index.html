@@ -39,6 +39,12 @@ html,body{
 #envPill{ display:none; align-items:center; gap:8px; padding:4px 10px; border-radius:12px; background:rgba(12,30,20,.86); border:1.5px solid #21140d; font-family:var(--font); font-weight:800; font-size:13px; color:#f4efd9; }
 #envBar{ display:inline-block; width:64px; height:8px; border-radius:4px; background:rgba(255,255,255,.18); overflow:hidden; }
 #envBar i{ display:block; height:100%; width:0; background:#ff8a3d; }
+#buffRow{ display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
+.bchip{ display:flex; align-items:center; gap:7px; padding:3px 10px; border-radius:12px; background:rgba(12,30,20,.86); border:1.5px solid #21140d; font-family:var(--font); font-weight:800; font-size:13px; color:#f4efd9; }
+.bchip b{ font-variant-numeric:tabular-nums; color:#8dff9f; min-width:30px; text-align:right; }
+.bchip .bbar{ display:inline-block; width:52px; height:7px; border-radius:4px; background:rgba(255,255,255,.18); overflow:hidden; }
+.bchip .bbar i{ display:block; height:100%; background:#8dff9f; }
+.bchip.soon{ animation:envFull .7s ease-in-out infinite; } .bchip.soon b{ color:#ffb36b; } .bchip.soon .bbar i{ background:#ffb36b; }
 #envPill.full{ animation:envFull .7s ease-in-out infinite; } @keyframes envFull{ 50%{ opacity:.55; } }
 .tl{ top:calc(env(safe-area-inset-top,0px) + 10px); left:calc(env(safe-area-inset-left,0px) + 10px); }
 .tc{ top:calc(env(safe-area-inset-top,0px) + 10px); left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:3px; }
@@ -385,7 +391,7 @@ body.lobby .hud.tl, body.lobby #hotbar, body.lobby #chopBtn, body.lobby .timer, 
   <button class="btn shopBtn" id="shopBtn">Cửa hàng (B)</button>
 </div>
 
-<div id="envHud"><div id="matRow"></div><div id="envPill"><span id="envTxt"></span><span id="envBar"><i></i></span></div></div>
+<div id="envHud"><div id="matRow"></div><div id="buffRow"></div><div id="envPill"><span id="envTxt"></span><span id="envBar"><i></i></span></div></div>
 
 <div class="hud tc">
   <div class="pill" id="dayPill" style="display:none" title="Ngày và giờ trong ngày (vạch trắng là bây giờ; vàng sáng, cam chiều, xanh đêm, tím rạng sáng)"><svg id="dpSun" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="8" fill="#ffd24a" stroke="#21140d" stroke-width="2.4"/><g stroke="#ffd24a" stroke-width="3" stroke-linecap="round"><path d="M20 4v5M20 31v5M4 20h5M31 20h5M9 9l3.5 3.5M27.5 27.5L31 31M31 9l-3.5 3.5M12.5 27.5L9 31"/></g></svg><svg id="dpMoon" viewBox="0 0 40 40" aria-hidden="true" style="display:none"><path d="M27 6a14 14 0 1 0 8 22A12 12 0 0 1 27 6z" fill="#dfe6ff" stroke="#21140d" stroke-width="2.4" stroke-linejoin="round"/></svg><div id="dpCol"><div id="dpRow"><span id="dpTxt"></span><span id="dpNext"></span></div><div id="dpTrack"><div id="dpSeg"><i></i><i></i><i></i><i></i></div><div id="dpVeil"></div><b id="dpCur"></b></div></div></div>
@@ -1366,6 +1372,9 @@ function drawBowInHand(c, lv){   /* v119 C3.3; v128: mỗi cấp một hình */
   drawArrow(c, lv, 6, 32 + lv);
   c.restore();
 }
+function wGuardy(a){ return !a.job || a.job === 'guard'; }   /* v135: người làm thuê chuyển sang chặt cây / câu cá thì cầm RÌU, không cầm cung / giáo / kiếm */
+function wBow(a){ return wGuardy(a) && a.wType === 'bow' ? (a.wLv | 0) : undefined; }
+function wMel(a){ return wGuardy(a) && a.wType !== 'bow' ? (a.wLv | 0) : 0; }
 function drawWeapon(c, role, hx, hy, th, bow, mlv){
   c.save(); c.translate(hx, hy); c.rotate(th * Math.PI / 180);
   if (role === 'farmer' && bow >= 0 && bow !== undefined) { drawBowInHand(c, bow); c.restore(); return; }
@@ -1594,7 +1603,7 @@ function legSide(c, ang, a, dark){
   box(c, -3.6, 9, 9.6, 6.2, 2.6, boot, 1.1);
   c.restore();
 }
-function sleeveOf(a){ return a.role === 'bandit' ? '#3a3844' : a.look.shirt; }
+function sleeveOf(a){ return a.role === 'bandit' ? '#3a3844' : a.coat ? '#3f78b5' : a.look.shirt; }
 
 /* ---------- v129: 7D-C GIÁP NHIỀU MÓN (mũ, bao tay, đai lưng, giáp ngực, vai, váy giáp), mỗi cấp một hình ----------
    a.aLv 1 GIÁP DA (nón da có tai, bao tay da, áo da có dây lacing, vai da, đai da khoá đồng), 2 GIÁP SẮT (mũ sắt có che mũi + đinh tán, bao tay sắt, ức sắt có gờ giữa, vai tròn có viền, đai đinh),
@@ -1662,6 +1671,20 @@ function helmSide(c, lv){
   c.restore();
 }
 const GLOVE_C = [null, ['#8a5a30', '#5b3a1e'], ['#a9b1b9', '#6e7780'], ['#8db4e0', GOLD]];
+function coatBody(c, view){   /* v134 (áo lông thông): áo khoác xanh, cổ + gấu áo lông trắng; gọi sau torso, trước đầu */
+  const side = view === 'side', x0 = side ? -6.8 : -10.2, w = side ? 13.6 : 20.4, FUR = '#f4f8fb';
+  c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(x0, -33.2); c.quadraticCurveTo(x0 + w / 2, -35.4, x0 + w, -33.2); c.lineTo(x0 + w + .7, -14.6); c.lineTo(x0 - .7, -14.6); c.closePath(); shape(c, '#3f78b5', 1.2);
+  c.fillStyle = '#2a5a8a'; c.globalAlpha = .32; c.beginPath(); c.moveTo(x0 + w * .58, -34); c.lineTo(x0 + w, -33.2); c.lineTo(x0 + w + .7, -14.6); c.lineTo(x0 + w * .58, -14.6); c.closePath(); c.fill(); c.globalAlpha = 1;
+  c.strokeStyle = '#8fbbea'; c.globalAlpha = .6; c.lineWidth = 1; c.beginPath(); c.moveTo(x0 + 2, -31); c.lineTo(x0 + 1.6, -19); c.stroke(); c.globalAlpha = 1;
+  if (view === 'down') { c.strokeStyle = '#2a5a8a'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(0, -31.5); c.lineTo(0, -15.6); c.stroke(); for (const y of [-27, -22.4, -18.4]) ell(c, 2.4, y, .9, .9, FUR, .5); }
+  else if (view === 'up') { c.strokeStyle = '#2a5a8a'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, -31); c.lineTo(0, -16); c.stroke(); }
+  else { c.strokeStyle = '#2a5a8a'; c.lineWidth = 1; c.beginPath(); c.moveTo(-3, -23); c.lineTo(3.4, -23); c.stroke(); }
+  box(c, x0 - 1.1, -18, w + 2.2, 4.8, 2.3, FUR, 1);   /* gấu áo lông */
+  c.strokeStyle = '#c9d6e0'; c.lineWidth = .7; c.beginPath(); for (let x = x0 + 2; x < x0 + w; x += 3.4) { c.moveTo(x, -17); c.lineTo(x + .4, -14.8); } c.stroke();
+  box(c, x0 - 1.4, -36.6, w + 2.8, 5, 2.5, FUR, 1);   /* cổ lông */
+  c.restore();
+}
 function armorBody(c, lv, view){   /* gọi ngay sau torsoFront/Back/Side, trong khung nhún của người */
   const k = HELM_C[lv], side = view === 'side', x0 = side ? -6.2 : -9.4, w = side ? 12.4 : 18.8;
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
@@ -1722,10 +1745,10 @@ function drawPerson(c, a, time){
     c.save(); c.translate(0, -bob);
     const fhy = -19 - s * 3.4;
     drawArm(c, -9.5, -30, -11.6, fhy, shade(sleeve, .85), skin); drawHand(c, -11.6, fhy, skin);
-    torsoFront(c, a); if (AL) armorBody(c, AL, 'down');
+    torsoFront(c, a); if (a.coat) coatBody(c, 'down'); if (AL) armorBody(c, AL, 'down');
     if (dead) { c.save(); c.translate(0, -28); c.rotate(.2); c.translate(0, 28); headFront(c, a, true); c.restore(); } else headFront(c, a, blink);
     drawArm(c, 9.5, -30, P.hx, P.hy, sleeve, skin); if (AL) armorShoulders(c, AL, 'down');
-    if (!dead) { drawWeapon(c, a.role, P.hx, P.hy, P.th, a.wType === 'bow' ? (a.wLv | 0) : undefined, a.wType === 'bow' ? 0 : (a.wLv | 0)); if (sw >= 0) drawTrail(c, P.hx, P.hy, P.th, sw, a.wType === 'bow' ? 0 : (a.wLv | 0)); }
+    if (!dead) { drawWeapon(c, a.role, P.hx, P.hy, P.th, wBow(a), wMel(a)); if (sw >= 0) drawTrail(c, P.hx, P.hy, P.th, sw, wMel(a)); }
     drawHand(c, P.hx, P.hy, skin);
     c.restore();
   } else if (dir === 'up') {
@@ -1733,11 +1756,11 @@ function drawPerson(c, a, time){
     const o1 = s * 3.2, o2 = -s * 3.2;
     if (o1 < o2) { legFront(c, -4, o1, a); legFront(c, 4, o2, a); } else { legFront(c, 4, o2, a); legFront(c, -4, o1, a); }
     c.save(); c.translate(0, -bob);
-    if (!dead) drawWeapon(c, a.role, P.hx, P.hy, P.th, a.wType === 'bow' ? (a.wLv | 0) : undefined, a.wType === 'bow' ? 0 : (a.wLv | 0));
+    if (!dead) drawWeapon(c, a.role, P.hx, P.hy, P.th, wBow(a), wMel(a));
     drawArm(c, 9.5, -30, P.hx, P.hy, sleeve, skin); drawHand(c, P.hx, P.hy, skin);
     const fhy = -19 - s * 3.4;
     drawArm(c, -9.5, -30, -11.6, fhy, shade(sleeve, .85), skin); drawHand(c, -11.6, fhy, skin);
-    torsoBack(c, a); if (AL) { armorBody(c, AL, 'up'); armorShoulders(c, AL, 'up'); }
+    torsoBack(c, a); if (a.coat) coatBody(c, 'up'); if (AL) { armorBody(c, AL, 'up'); armorShoulders(c, AL, 'up'); }
     headBack(c, a);
     c.restore();
   } else {
@@ -1749,10 +1772,10 @@ function drawPerson(c, a, time){
     legSide(c, -s * .55, a, true);
     legSide(c, s * .55, a, false);
     c.save(); c.translate(0, -bob);
-    torsoSide(c, a); if (AL) armorBody(c, AL, 'side');
+    torsoSide(c, a); if (a.coat) coatBody(c, 'side'); if (AL) armorBody(c, AL, 'side');
     headSide(c, a, blink);
     drawArm(c, .5, -30, P.hx, P.hy, sleeve, skin); if (AL) armorShoulders(c, AL, 'side');
-    if (!dead) { drawWeapon(c, a.role, P.hx, P.hy, P.th, a.wType === 'bow' ? (a.wLv | 0) : undefined, a.wType === 'bow' ? 0 : (a.wLv | 0)); if (sw >= 0) drawTrail(c, P.hx, P.hy, P.th, sw, a.wType === 'bow' ? 0 : (a.wLv | 0)); }
+    if (!dead) { drawWeapon(c, a.role, P.hx, P.hy, P.th, wBow(a), wMel(a)); if (sw >= 0) drawTrail(c, P.hx, P.hy, P.th, sw, wMel(a)); }
     drawHand(c, P.hx, P.hy, skin);
     c.restore();
   }
@@ -4823,6 +4846,7 @@ function updateVisits(dt){   /* chọn người tiếp theo tới gặp người
    Kim chốt: sát thương VÀ máu = GUARD_POWER (80%) người chơi; bị đánh chỉ chạy khi máu dưới GUARD_FLEE_HP (8%), còn lại đứng đánh tới cùng; đổi việc lúc nào cũng được. */
 /* v111 (Kim: 'đánh nhau gần hết máu thì phải biết chạy thoát để sống sót'): cũ GUARD_FLEE_HP .08 là quá muộn (một nhát cướp đã quá 8% nên chết trước khi kịp chạy, và cướp ban đêm còn chạy nhanh hơn người chạy trốn). Nay: máu dưới GUARD_FLEE_HP (30%; người nhát tính 'nhat' 50%) thì RÚT: bỏ trận chạy GUARD_FLEE_SPEED (1.9x, ~171 > cướp nhanh nhất ~142) khỏi cướp; còn đang 'hồi sức' (a.recover) thì KHÔNG tự lao vào đánh hay chạy theo báo động cho tới khi máu hồi tới GUARD_RECOVER (60%), đứng chờ ở điểm gác (hồi GUARD_REGEN máu/giây khi không có cướp trong 700px). CON SỐ TẠM. */
 const GUARD_FLEE_SPEED = 1.9, GUARD_RECOVER = .6;
+const MELEE_BONUS = 1.5;   /* v135: cận chiến (giáo / kiếm) đánh mạnh hơn hẳn đánh xa vì phải đứng sát, dễ chết */
 const GUARD_POWER = .8, GUARD_FLEE_HP = .3, GUARD_ENGAGE = 340, GUARD_ALERT_R = 1500, GUARD_SPEED = 1.2, GUARD_REGEN = 3;
 const GUARD_ALERT = { x: 0, y: 0, until: 0 };
 let jobPickFor = null;
@@ -4946,7 +4970,7 @@ function guardAI(a, dt){
 function guardHit(a){
   if (a.wType === 'bow') return;   /* v119: cầm cung thì không vung rìu */
   const hb = banditInReach(a); if (!hb) return;
-  const dmg = Math.max(1, Math.round(playerHitDmg() * GUARD_POWER * workerPower(a) * weaponMul(a) * RANK_DMG[rankOf(a)] * (captainNear(a) ? CAPT_AURA_DMG : 1))), lethal = hb.hp <= dmg;
+  const dmg = Math.max(1, Math.round(playerHitDmg() * GUARD_POWER * workerPower(a) * weaponMul(a) * MELEE_BONUS * RANK_DMG[rankOf(a)] * (captainNear(a) ? CAPT_AURA_DMG : 1))), lethal = hb.hp <= dmg;
   const ghost = !!hb.ghost; damageActor(hb, dmg, a);
   if (lethal && !ghost) { toast(a.name + ' đã hạ một tên cướp!', true); giveXp(a, hb.boss ? 6 : hb.kind ? 2 : 1); creditKill(myKbKey(), hb); }   /* v126: cướp ma (máy khách) thì chủ phòng quyết rồi báo lại bằng tin 'kl' */
 }
@@ -5483,9 +5507,9 @@ MAT_REQ['mda:2'] = { hat: 2 }; MAT_REQ['mdong:2'] = { hat: 2, nhua: 2 }; MAT_REQ
 const ENV_KIND = { heat: { name: 'Nóng', col: '#ff8a3d', hint: 'Uống nước xương rồng hoặc vào vùng ấm của lửa trại.' }, cold: { name: 'Lạnh', col: '#7fd0ff', hint: 'Mặc áo lông thông hoặc vào vùng ấm của lửa trại.' }, poison: { name: 'Độc', col: '#a6e05a', hint: 'Uống thuốc thảo dược hoặc vào vùng ấm của lửa trại.' } };
 const ENV_FILL = { heat: 55, cold: 70, poison: 60 }, ENV_DRAIN = 14, ENV_SAFE_DRAIN = 5, ENV_DMG = 3, ENV_BUFF = { heat: 150, cold: 180, poison: 150 };
 Object.assign(ITEM_DATA, {
-  nuoc: { name: 'Nước xương rồng', wood: 0, coin: 10, mat: { nhua: 2 }, buff: 'heat', blurb: 'Uống: chịu nóng sa mạc ' + ENV_BUFF.heat + ' giây. Chạm ô đồ để dùng.' },
-  thuoc: { name: 'Thuốc thảo dược', wood: 0, coin: 10, mat: { thao: 2 }, buff: 'poison', heal: 60, blurb: 'Giải độc đầm lầy ' + ENV_BUFF.poison + ' giây và hồi 60 máu. Chạm ô đồ để dùng.' },
-  ao: { name: 'Áo lông thông', wood: 0, coin: 10, mat: { hat: 2 }, buff: 'cold', blurb: 'Mặc: chịu lạnh vùng tuyết ' + ENV_BUFF.cold + ' giây. Chạm ô đồ để dùng.' }
+  nuoc: { name: 'Nước xương rồng', wood: 0, coin: 10, mat: { nhua: 2 }, buff: 'heat', blurb: 'Uống: chịu nóng sa mạc ' + ENV_BUFF.heat + ' giây. ' },
+  thuoc: { name: 'Thuốc thảo dược', wood: 0, coin: 10, mat: { thao: 2 }, buff: 'poison', heal: 60, blurb: 'Giải độc đầm lầy ' + ENV_BUFF.poison + ' giây và hồi 60 máu. ' },
+  ao: { name: 'Áo lông thông', wood: 0, coin: 10, mat: { hat: 2 }, buff: 'cold', blurb: 'Mặc: chịu lạnh vùng tuyết ' + ENV_BUFF.cold + ' giây. ' }
 });
 function envInit(){ player.mat = player.mat || { nhua: 0, thao: 0, hat: 0 }; player.env = { heat: 0, cold: 0, poison: 0, imm: { heat: 0, cold: 0, poison: 0 }, dmgT: 0, warn: {} }; if (!player.matSeen) player.matSeen = false; matChanged(); }
 const matOK = D => TEST_FREE || !D.mat || !player.mat || MAT_KEYS.every(k => (player.mat[k] | 0) >= (D.mat[k] || 0));
@@ -5509,12 +5533,24 @@ function gainMat(t){
 function envKindHere(){ const b = biomeAt(player.x, player.y); return b === 1 ? (night() > .5 ? null : 'heat') : b === 3 ? 'cold' : b === 2 ? 'poison' : null; }
 function inWarmZone(){ if (lobbyMode) return false; for (const f of allFires()) if (fireLit(f) && Math.hypot(player.x - fX(f), player.y - fY(f)) < fireDef(f).safe) return true; return false; }
 let _envHud = 0;
+const BUFF_ITEM = { heat: 'nuoc', cold: 'ao', poison: 'thuoc' }, BUFF_ICON = { heat: '🌵', cold: '🧥', poison: '🌿' };
+let _buffHtml = '';
+function updateBuffRow(){   /* v134: ô hiện đồ đang có tác dụng + đếm ngược, ở mọi vùng */
+  const row = $('buffRow'); if (!row) return;
+  const E = player && player.env; let html = '';
+  if (started && !lobbyMode && !ended && E && !player.dead && player.role !== 'bandit') for (const k in ENV_KIND) if (E.imm[k] > 0) {
+    const left = E.imm[k], tot = Math.ceil(left), m = Math.floor(tot / 60), sc = tot % 60;
+    html += '<div class="bchip' + (left <= 15 ? ' soon' : '') + '"><span>' + BUFF_ICON[k] + ' ' + ITEM_DATA[BUFF_ITEM[k]].name + '</span><b>' + m + ':' + String(sc).padStart(2, '0') + '</b><span class="bbar"><i style="width:' + (left / ENV_BUFF[k] * 100).toFixed(1) + '%"></i></span></div>';
+  }
+  if (html !== _buffHtml) { _buffHtml = html; row.innerHTML = html; }
+}
 function envUpdate(dt){
   if (!started || lobbyMode || ended || !player || !player.env) return;
+  player.coat = !!(player.env && player.env.imm.cold > 0 && !player.dead && player.role !== 'bandit');   /* v134: áo lông thông hiện trên người khi còn tác dụng */
   if (player.dead || player.role === 'bandit') { _envHud -= dt; if (_envHud <= 0) { _envHud = .5; updateEnvHud(); } return; }
   const E = player.env, here = envKindHere(), safe = inWarmZone();
   for (const k in ENV_KIND) {
-    if (E.imm[k] > 0) E.imm[k] = Math.max(0, E.imm[k] - dt);
+    if (E.imm[k] > 0) { E.imm[k] = Math.max(0, E.imm[k] - dt); if (E.imm[k] <= 0) toast(ITEM_DATA[BUFF_ITEM[k]].name + ' đã hết tác dụng.', true); }   /* v134 */
     if (k === here && !safe && E.imm[k] <= 0) E[k] = Math.min(100, E[k] + 100 / (ENV_FILL[k] * (k === 'cold' && night() > .5 ? .5 : 1)) * dt);
     else E[k] = Math.max(0, E[k] - 100 / (safe ? ENV_SAFE_DRAIN : ENV_DRAIN) * dt);
     if (E[k] >= 60 && !E.warn[k]) { E.warn[k] = 1; toast(ENV_KIND[k].name + ' quá! ' + ENV_KIND[k].hint, true); }
@@ -5525,14 +5561,15 @@ function envUpdate(dt){
   _envHud -= dt; if (_envHud <= 0) { _envHud = .2; updateEnvHud(); }
 }
 function updateEnvHud(){
+  updateBuffRow();
   const pill = $('envPill'); if (!pill) return;
   if (!started || lobbyMode || ended || !player.env || player.dead) { pill.style.display = 'none'; return; }
   const E = player.env, here = envKindHere(); let k = null, v = 0;
   for (const q in ENV_KIND) if (E[q] > v + .01) { v = E[q]; k = q; }
-  if (!k && here && E.imm[here] > 0) k = here;
   if (!k && !(here && !inWarmZone())) { pill.style.display = 'none'; return; }
   if (!k) k = here;
   const info = ENV_KIND[k], imm = E.imm[k] > 0;
+  if (imm && E[k] <= .01) { pill.style.display = 'none'; return; }   /* v134: đang được chống thì thanh đếm ngược nằm ở ô riêng */
   pill.style.display = 'flex'; pill.className = E[k] >= 100 ? 'full' : '';
   $('envTxt').textContent = info.name + (imm ? ' \u00b7 đã chống ' + Math.floor(E.imm[k] / 60) + ':' + String(Math.ceil(E.imm[k]) % 60).padStart(2, '0') : ' ' + Math.round(E[k]) + '%');
   const bar = $('envBar').firstChild; bar.style.width = (imm ? E.imm[k] / ENV_BUFF[k] * 100 : E[k]) + '%'; bar.style.background = imm ? '#8dff9f' : info.col;
@@ -5540,11 +5577,11 @@ function updateEnvHud(){
 function useBuff(i){
   const it = slots[i], D = ITEM_DATA[it.kind]; if (player.dead || ended) return;
   const now = performance.now(); if (now - lastEat < 400) return; lastEat = now;
-  const E = player.env; E.imm[D.buff] = ENV_BUFF[D.buff]; E[D.buff] = 0; E.warn[D.buff] = 0;
+  const E = player.env; E.imm[D.buff] = ENV_BUFF[D.buff]; E[D.buff] = 0; E.warn[D.buff] = 0; player.coat = E.imm.cold > 0;
   let heal = 0; if (D.heal && player.hp < player.maxHp) { heal = Math.min(D.heal, player.maxHp - player.hp); player.hp += heal; addFloat(player.x, player.y - 82, '+' + Math.round(heal), '#8dff9f'); }
   sfxPick(); for (let k = 0; k < 10; k++) spawn({ k: 'leaf', x: player.x + rand(-10, 10), y: player.y - 30 + rand(-6, 6), z: rand(20, 50), vx: rand(-20, 20), vy: rand(-8, 8), vz: rand(20, 60), rot: rand(0, 6), vr: rand(-6, 6), size: rand(2.4, 3.4), color: ENV_KIND[D.buff].col, life: .9, g: 90 });
   it.n--; if (it.n <= 0) slots[i] = null;
-  buildHotbar(); updateEnvHud(); toast(D.name + ': chống ' + ENV_KIND[D.buff].name.toLowerCase() + ' ' + ENV_BUFF[D.buff] + ' giây' + (heal ? ', +' + Math.round(heal) + ' máu' : '') + (slots[i] ? ' (còn ' + slots[i].n + ').' : '.'), true);
+  buildHotbar(); updateEnvHud(); toast('Đã ' + (D.buff === 'cold' ? 'mặc ' : 'dùng ') + D.name + ': chống ' + ENV_KIND[D.buff].name.toLowerCase() + ' ' + ENV_BUFF[D.buff] + ' giây' + (heal ? ', +' + Math.round(heal) + ' máu' : '') + (slots[i] ? ' (còn ' + slots[i].n + ').' : '.'), true);
 }
 const _r4Img = {};
 function r4Img(kind){   /* biểu tượng cửa hàng/ô đồ cho 3 món vùng xa */
@@ -5820,7 +5857,7 @@ function renderJobMenu(){
     } else if (jobTab === 'gear') {
       const wl = a.wLv | 0, al = a.aLv | 0, nw = GEAR_W[wl + 1], na = GEAR_A[al + 1], bw = a.wType === 'bow', wn = k => bw ? BOW_NAME[k] : GEAR_W[k].n;
       const card = (title, ico, curTxt, nxt, cs, act) => '<div class="jm-gc"><div class="jm-gt">' + ico + ' ' + title + '</div><div class="jm-gcur">' + curTxt + '</div>' + (nxt ? '<div class="jm-gnx">Tiếp theo: <b>' + nxt + '</b></div>' + afford(cs) + '<button class="jm-buy' + (player.wood >= cs.wood && player.coins >= cs.coin ? '' : ' no') + '" data-a="' + act + '">Nâng cấp</button>' : '<div class="jm-max">Đã tối đa ✓</div>') + '</div>';
-      h += '<div class="jm-gear">' + card(bw ? 'Cung' : 'Vũ khí', bw ? '🏹' : '⚔️', wl ? wn(wl) + ' · đánh x' + GEAR_W[wl].mul : (bw ? BOW_NAME[0] : 'Tay không'), nw && (wn(wl + 1) + ' (đánh x' + nw.mul + ')'), nw && gearCost(nw), 'gear:w') + card('Giáp', '🦺', al ? GEAR_A[al].n + ' · giảm ' + Math.round(GEAR_A[al].red * 100) + '% sát thương' : 'Không giáp', na && (na.n + ' (giảm ' + Math.round(na.red * 100) + '%)'), na && gearCost(na), 'gear:a') + '</div>';
+      h += '<div class="jm-gear">' + card(bw ? 'Cung' : 'Vũ khí', bw ? '🏹' : '⚔️', wl ? wn(wl) + ' · đánh x' + +(GEAR_W[wl].mul * (bw ? 1 : MELEE_BONUS)).toFixed(2) : (bw ? BOW_NAME[0] : 'Tay không'), nw && (wn(wl + 1) + ' (đánh x' + +(nw.mul * (bw ? 1 : MELEE_BONUS)).toFixed(2) + ')'), nw && gearCost(nw), 'gear:w') + card('Giáp', '🦺', al ? GEAR_A[al].n + ' · giảm ' + Math.round(GEAR_A[al].red * 100) + '% sát thương' : 'Không giáp', na && (na.n + ' (giảm ' + Math.round(na.red * 100) + '%)'), na && gearCost(na), 'gear:a') + '</div>';
       let bag = ''; for (let k = wl + 1; k <= 3; k++) if (GEAR_BAG.w[k]) bag += '<button class="jm-sb sm on" data-a="bagw:' + k + '">Dùng ' + wn(k) + ' (túi ×' + GEAR_BAG.w[k] + ')</button>'; for (let k = al + 1; k <= 3; k++) if (GEAR_BAG.a[k]) bag += '<button class="jm-sb sm on" data-a="baga:' + k + '">Dùng ' + GEAR_A[k].n + ' (túi ×' + GEAR_BAG.a[k] + ')</button>';
       h += bag ? '<div class="jm-lab">Trong túi trang bị (miễn phí)</div><div class="jm-seg s3">' + bag + '</div>' : '<div class="jm-note">Giáp giảm sát thương cho mọi việc. Vũ khí chỉ có tác dụng khi làm Bảo vệ. Đồ nâng cấp thay luôn đồ cũ.</div>';
     } else {
@@ -6437,6 +6474,7 @@ function netRemote(f, m){
   let a = Net.remotes[f];
   if (!a) { a = makeActor(m.n || 'Người chơi', LOOKS[m.lk % LOOKS.length], m.x, m.y, false); a.remote = true; a.tx = m.x; a.ty = m.y; Net.remotes[f] = a; actors.push(a); }
   if (m.cz != null && a.cz !== m.cz) applyCzTo(a, m.cz, m.lk);
+  if (m.co !== undefined) a.coat = !!m.co;   /* v134 */
   return a;
 }
 function updateRemote(a, dt){
@@ -6590,7 +6628,7 @@ function netOnMsgRaw(m){
 function netTick(){
   netFlushBuilt(); netApplyHp(); wkNetTick();
   const p = player;
-  Net.send({ t: 's', pq: lobbyMode && inPortal(p) ? 1 : 0, n: p.name, lk: Net.lk, cz: curCz(), x: Math.round(p.x), y: Math.round(p.y), d: p.dir, sw: p.swing >= 0, r: p.role, dd: p.dead ? 1 : 0, cr: (p.carryG && p.carryG.a.remote) ? ((() => { for (const f in Net.remotes) if (Net.remotes[f] === p.carryG.a) return f; return ''; })()) : '', h: Net.host ? 1 : 0, st: started ? 1 : 0, ml: Math.round(matchLeft), ck: Math.round(clockT), fl: Math.round(FIRE.fuel), fv: FIRE.lv });
+  Net.send({ t: 's', pq: lobbyMode && inPortal(p) ? 1 : 0, n: p.name, lk: Net.lk, cz: curCz(), co: p.coat ? 1 : 0, x: Math.round(p.x), y: Math.round(p.y), d: p.dir, sw: p.swing >= 0, r: p.role, dd: p.dead ? 1 : 0, cr: (p.carryG && p.carryG.a.remote) ? ((() => { for (const f in Net.remotes) if (Net.remotes[f] === p.carryG.a) return f; return ''; })()) : '', h: Net.host ? 1 : 0, st: started ? 1 : 0, ml: Math.round(matchLeft), ck: Math.round(clockT), fl: Math.round(FIRE.fuel), fv: FIRE.lv });
   if (Net.host && started) {
     const l = []; for (const a of actors) if (a.role === 'bandit' && !a.remote) l.push([a.gid, Math.round(a.x), Math.round(a.y), a.dir, Math.round(a.hp), a.maxHp, a.name, a.swing >= 0 ? 1 : 0, a.sayT > 0 ? (a.say || '') : '']);   /* v113: q[8] = bong bóng chữ */
     Net.send({ t: 'bs', l });
